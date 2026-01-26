@@ -1,0 +1,24 @@
+# Build artifacts
+bin/
+obj/
+
+# IDE and tooling
+.vs/
+.vscode/
+*.user
+*.suo
+
+# Git
+.git/
+.gitignore
+
+# Environment and secrets
+.env
+*.secrets.json
+secrets.dev.yaml
+
+# Documentation
+*.md
+
+# Docker compose (not needed inside image)
+docker-compose.yml
