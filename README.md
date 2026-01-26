@@ -107,6 +107,53 @@ The frontend is deliberately kept **simple**, as the focus of this repository is
 
 ---
 
+## Repository Structure
+
+This project is intentionally structured as a **monorepo** to simplify exploration and demonstration.
+
+In a real production environment, each service would typically live in its own repository.  
+For portfolio purposes, a monorepo allows showcasing **end-to-end architecture, service boundaries, and cross-cutting concerns** in a single place.
+
+- **event-driven-microservices-orders/**
+  - **README.md**  
+    Project overview and architecture summary
+
+  - **docker-compose.yml**  
+    Run the full system locally
+
+  - **docs/**
+    - **architecture.md**  
+      Architecture notes, workflows, and design decisions
+
+  - **services/**
+    - **order-accept/**
+      - **src/**  
+        HTTP API for order intake
+      - **Dockerfile**
+      - **README.md**
+
+    - **order-process/**
+      - **src/**  
+        Asynchronous background worker
+      - **Dockerfile**
+      - **README.md**
+
+    - **order-notification/**
+      - **src/**  
+        WebSocket notification service
+      - **Dockerfile**
+      - **README.md**
+
+  - **frontend/**
+    - **src/**  
+      Minimal SPA for demo purposes
+    - **Dockerfile**
+    - **README.md**
+
+  - **infra/**
+    - **local/**  
+      Local infrastructure (Service Bus emulator, Redis)
+
 ## Identity and Authentication
 
 Authentication is assumed to be handled by an external Identity Provider (IdP).
@@ -149,41 +196,3 @@ The code and architecture examples:
 - Do not represent any real customer or system
 
 
-## Repository Structure
-
-This project is intentionally structured as a **monorepo** for ease of exploration and demonstration.
-
-In a real production environment, each service would typically live in its own repository.
-
-
-event-driven-microservices-orders/
-│
-├── README.md                  # Project overview and architecture summary
-├── docker-compose.yml         # Run the full system locally
-│
-├── docs/
-│   └── architecture.md        # Architecture notes, workflows, and decisions
-│
-├── services/
-│   ├── order-accept/
-│   │   ├── src/               # HTTP API for order intake
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   ├── order-process/
-│   │   ├── src/               # Asynchronous background worker
-│   │   ├── Dockerfile
-│   │   └── README.md
-│   │
-│   └── order-notification/
-│       ├── src/               # WebSocket notification service
-│       ├── Dockerfile
-│       └── README.md
-│
-├── frontend/
-│   ├── src/                   # Minimal SPA for demo purposes
-│   ├── Dockerfile
-│   └── README.md
-│
-└── infra/
-    └── local/                 # Local infrastructure (Service Bus emulator, Redis)
