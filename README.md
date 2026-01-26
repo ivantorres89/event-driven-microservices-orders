@@ -89,6 +89,12 @@ This repository contains **three backend microservices** and a **lightweight fro
 - Uses a Redis backplane for session resolution
 - Pushes real-time notifications when orders are completed
 
+#### Data Ownership
+- This service owns the relational database schema and is responsible for:
+- Schema creation and migrations
+- Persisting business entities
+- Emitting domain events after successful persistence
+
 ### 4. Frontend Application (SPA)
 
 - Minimal Single Page Application
@@ -152,34 +158,32 @@ In a real production environment, each service would typically live in its own r
 
 event-driven-microservices-orders/
 │
-├── README.md                  # Project overview
+├── README.md                  # Project overview and architecture summary
 ├── docker-compose.yml         # Run the full system locally
 │
 ├── docs/
-│   └── architecture.md        # Architecture notes and workflows
+│   └── architecture.md        # Architecture notes, workflows, and decisions
 │
 ├── services/
 │   ├── order-accept/
-│   │   ├── src/
+│   │   ├── src/               # HTTP API for order intake
 │   │   ├── Dockerfile
 │   │   └── README.md
 │   │
 │   ├── order-process/
-│   │   ├── src/
+│   │   ├── src/               # Asynchronous background worker
 │   │   ├── Dockerfile
 │   │   └── README.md
 │   │
 │   └── order-notification/
-│       ├── src/
+│       ├── src/               # WebSocket notification service
 │       ├── Dockerfile
 │       └── README.md
 │
 ├── frontend/
-│   ├── src/
+│   ├── src/                   # Minimal SPA for demo purposes
 │   ├── Dockerfile
-│   └── README.md              # Minimal SPA for demo purposes
+│   └── README.md
 │
 └── infra/
-    └── local/                 # Local infrastructure (messaging, redis)
-
-
+    └── local/                 # Local infrastructure (Service Bus emulator, Redis)
