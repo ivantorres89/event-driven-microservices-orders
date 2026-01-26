@@ -23,7 +23,7 @@ This repository represents the **implementation layer** of a broader architectur
 The **conceptual architecture, requirements, and design decisions** behind this system are documented in a separate repository:
 
 👉 **Azure Architecture Solutions**  
-https://github.com/ivantorres89/azure-architecture-solutions
+https://github.com/ivantorres89/azure-architecture-solutions/tree/main/case-studies/k8s-websockets-apporders
 
 That repository covers:
 
@@ -120,10 +120,6 @@ For portfolio purposes, a monorepo allows showcasing **end-to-end architecture, 
 
   - **docker-compose.yml**  
     Run the full system locally
-
-  - **docs/**
-    - **architecture.md**  
-      Architecture notes, workflows, and design decisions
 
   - **services/**
     - **order-accept/**
