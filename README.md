@@ -107,6 +107,21 @@ The frontend is deliberately kept **simple**, as the focus of this repository is
 
 ---
 
+## Messaging Infrastructure
+
+This system is designed around **asynchronous, message-based communication**.
+
+- **Azure Service Bus** is used in production environments.
+- Azure Service Bus does not provide a local development emulator.
+- For local development and validation, a **RabbitMQ broker** is provisioned via Docker.
+
+The application code depends exclusively on **messaging abstractions**.
+The underlying broker can be replaced without affecting business logic.
+
+RabbitMQ is used **only** for local development and integration testing purposes.
+
+---
+
 ## Repository Structure
 
 This project is intentionally structured as a **monorepo** to simplify exploration and demonstration.
@@ -125,18 +140,33 @@ For portfolio purposes, a monorepo allows showcasing **end-to-end architecture, 
     - **order-accept/**
       - **src/**  
         HTTP API for order intake
+        - **tests/**
+          - **unit/**
+            Unit tests focused on service behavior
+          - **integration/**
+            Integration tests validating messaging contracts
       - **Dockerfile**
       - **README.md**
 
     - **order-process/**
       - **src/**  
         Asynchronous background worker
+      - **tests/**
+        - **unit/**
+          Unit tests focused on service behavior
+        - **integration/**
+          Integration tests validating messaging contracts        
       - **Dockerfile**
       - **README.md**
 
     - **order-notification/**
       - **src/**  
         WebSocket notification service
+      - **tests/**
+        - **unit/**
+          Unit tests focused on service behavior
+        - **integration/**
+          Integration tests validating messaging contracts
       - **Dockerfile**
       - **README.md**
 
@@ -148,7 +178,36 @@ For portfolio purposes, a monorepo allows showcasing **end-to-end architecture, 
 
   - **infra/**
     - **local/**  
-      Local infrastructure (Service Bus emulator, Redis)
+      Local infrastructure (RabbitMQ, Redis)
+
+---
+
+## Testing Strategy
+
+This repository applies a **layered testing approach**:
+
+### Unit Tests
+- Validate service behavior in isolation
+- Focus on domain logic, request validation, and error handling
+- External dependencies are mocked via abstractions
+
+### Integration Tests
+Integration tests are intentionally **limited in scope** and focus on validating:
+
+- HTTP request handling at service boundaries
+- Message publishing and consumption behavior
+- Messaging contracts and serialization
+- Interaction with a real message broker
+
+Integration tests **do not** cover:
+- Frontend behavior
+- End-to-end user workflows
+- Cloud infrastructure provisioning
+- Azure-managed services
+
+Their purpose is to validate **service contracts and distributed behavior**, not infrastructure correctness.
+
+---
 
 ## Identity and Authentication
 
