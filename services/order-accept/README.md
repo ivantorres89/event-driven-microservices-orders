@@ -155,6 +155,65 @@ are applied around external infrastructure dependencies to prevent resource exha
 
 ---
 
+## API Documentation (OpenAPI)
+
+In development and test environments, this service exposes an interactive **Swagger UI**
+to facilitate exploration and validation of the HTTP API.
+
+
+- The API contract is defined using **OpenAPI**
+- Swagger UI is enabled only in non-production environments
+- The OpenAPI specification can be used for:
+    - Manual testing
+    - Contract validation
+    - Client generation
+    - Integration with API gateways
+
+
+In production environments, the service relies on the API Gateway
+as the primary interface and governance layer.
+
+---
+
+## Logging
+
+The service uses **structured logging** with correlation-aware context.
+
+- Logs are emitted using the standard .NET logging abstractions
+- The `CorrelationId` is included in log scopes for end-to-end traceability
+- Logs are designed to be consumed by centralized logging platforms
+
+Logging focuses on **diagnostic value**, not verbose tracing of normal execution paths.
+
+---
+
+## Telemetry and Observability
+
+The service emits telemetry using **OpenTelemetry** standards.
+
+- Distributed traces propagate the `CorrelationId` across service boundaries
+- Metrics and traces are emitted in a vendor-neutral format
+- Telemetry data can be consumed by multiple backends (e.g. Azure Monitor, Grafana)
+
+Observability focuses on **system behavior and flow tracking**, not on low-level infrastructure metrics.
+
+---
+
+## Health Checks
+
+This service exposes basic health check endpoints for container orchestration platforms.
+
+
+- **Liveness**: indicates whether the service process is running
+- **Readiness**: indicates whether the service is ready to accept traffic
+
+
+Health checks validate **service availability**, not downstream infrastructure.
+External dependencies such as message brokers are intentionally excluded
+to prevent cascading failures and unnecessary restarts.
+
+---
+
 ## Testing Strategy
 
 The service is covered by **unit tests** focusing on:
@@ -183,7 +242,7 @@ used solely for development and validation purposes.
 
 Azure Service Bus is used in production environments, as it does not provide a local development emulator.
 
-
+---
 
 ## Out of Scope
 
