@@ -1,0 +1,17 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OrderAccept.Api/OrderAccept.Api.csproj" Id="1749c281-79b7-44f7-a7bf-dc22f0c2725a" />
+    <Project Path="src/OrderAccept.Application/OrderAccept.Application.csproj" Id="aa368d07-3172-45b8-923b-5ab89fcc13ff" />
+    <Project Path="src/OrderAccept.Infrastructure/OrderAccept.Infrastructure.csproj" Id="b4c0679e-51be-4177-a741-7156e4fb7547" />
+    <Project Path="src/OrderAccept.Shared/OrderAccept.Shared.csproj" Id="48c0d94c-a2a4-4d0f-9a09-564c89d0e773" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OrderAccept.IntegrationTests/OrderAccept.IntegrationTests.csproj" Id="92e9bc05-d448-4c0e-a865-eb648e6dcbce">
+      <BuildDependency Project="src/OrderAccept.Api/OrderAccept.Api.csproj" />
+    </Project>
+    <Project Path="tests/OrderAccept.UnitTests/OrderAccept.UnitTests.csproj" Id="fc139d60-a03a-4fec-afa8-8138307904fe">
+      <BuildDependency Project="src/OrderAccept.Application/OrderAccept.Application.csproj" />
+      <BuildDependency Project="src/OrderAccept.Shared/OrderAccept.Shared.csproj" />
+    </Project>
+  </Folder>
+</Solution>
