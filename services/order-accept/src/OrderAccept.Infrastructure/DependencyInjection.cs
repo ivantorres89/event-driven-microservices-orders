@@ -14,11 +14,14 @@ public static class DependencyInjection
         IConfiguration configuration)
     {
         var redisConnectionString = configuration.GetConnectionString("Redis");
-        
+
         if (string.IsNullOrWhiteSpace(redisConnectionString))
         {
             throw new InvalidOperationException("Redis connection string is required.");
         }
+
+        // Registering the implementation at the composition root
+        services.AddSingleton<ICorrelationIdProvider, Correlation.CorrelationIdProvider>();
 
         // Register Redis connection as singleton
         services.AddSingleton<IConnectionMultiplexer>(
