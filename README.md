@@ -1,4 +1,4 @@
-# Event-Driven Microservices Orders
+# Contoso — Event-Driven Order Processing Microservices (Azure)
 
 ## Overview
 
@@ -11,6 +11,7 @@ The project is intended as a **technical portfolio**, demonstrating:
 - Messaging-based integration
 - Real-time communication using WebSockets
 - Clean service boundaries and stateless services
+- Observability concerns (logging, metrics, tracing) are implemented at service boundaries to support debugging and distributed traceability.
 
 The implementation is inspired by **real-world cloud-native architectures**, focusing on **system behavior, responsibilities, and interactions** rather than production hardening.
 
@@ -82,18 +83,18 @@ This repository contains **three backend microservices** and a **lightweight fro
 - Performs idempotent processing
 - Persists orders and emits completion events
 
+#### Persistence Responsibility
+- This service owns the relational database schema and is responsible for:
+- Schema creation and migrations
+- Persisting business entities
+- Emitting domain events after successful persistence
+
 ### 3. Order Notification Service
 
 - WebSocket server
 - Manages client connections
 - Uses a Redis backplane for session resolution
 - Pushes real-time notifications when orders are completed
-
-#### Data Ownership
-- This service owns the relational database schema and is responsible for:
-- Schema creation and migrations
-- Persisting business entities
-- Emitting domain events after successful persistence
 
 ### 4. Frontend Application (SPA)
 
