@@ -11,4 +11,10 @@
     <ProjectReference Include="..\OrderAccept.Shared\OrderAccept.Shared.csproj" />
   </ItemGroup>
 
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" Version="2.8.16" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.0" />
+  </ItemGroup>
+
 </Project>
