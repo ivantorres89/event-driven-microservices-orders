@@ -1,5 +1,5 @@
 ﻿using OrderAccept.Application.Contracts.Requests;
-using OrderAccept.Shared;
+using OrderAccept.Shared.Correlation;
 
 namespace OrderAccept.Application.Contracts.Events
 {
