@@ -12,8 +12,7 @@ namespace OrderAccept.Api.Endpoints
         public static void MapOrderAcceptEndpoints(this WebApplication app)
         {
             var group = app.MapGroup("/api/orders")
-                .WithName("Orders")
-                .WithOpenApi();
+                .WithName("Orders");
 
             group.MapPost("/accept", AcceptOrder)
                 .WithName("AcceptOrder")
@@ -26,21 +25,22 @@ namespace OrderAccept.Api.Endpoints
             CreateOrderRequest request,
             IAcceptOrderHandler handler,
             ICorrelationIdProvider correlationIdProvider,
+            HttpContext http,
             CancellationToken cancellationToken)
         {
-            // Generate correlation ID at the API entry point
             var correlationId = correlationIdProvider.GenerateCorrelationId();
-
-            // Create command with correlation ID
             var command = new AcceptOrderCommand(request, correlationId);
 
-            // Execute handler
             await handler.HandleAsync(command, cancellationToken);
 
-            // Return response with correlation ID (para tracing del cliente)
-            return Results.Accepted(
-                $"/api/orders/{correlationId}",
-                new { correlationId = correlationId.Value });
+            // Expose correlation id in response header for tracing
+            http.Response.Headers["X-Correlation-ID"] = correlationId.Value.ToString();
+
+            // Return just correlationId on body with HTTP status 202 (Accepted) for tracing SPA purposes.
+            http.Response.StatusCode = StatusCodes.Status202Accepted;
+            await http.Response.WriteAsJsonAsync(new { correlationId = correlationId.Value }, cancellationToken);
+
+            return Results.StatusCode(StatusCodes.Status202Accepted);
         }
     }
 }

@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OrderAccept.Application\OrderAccept.Application.csproj" />
+    <ProjectReference Include="..\OrderAccept.Infrastructure\OrderAccept.Infrastructure.csproj" />
     <ProjectReference Include="..\OrderAccept.Shared\OrderAccept.Shared.csproj" />
   </ItemGroup>
 
