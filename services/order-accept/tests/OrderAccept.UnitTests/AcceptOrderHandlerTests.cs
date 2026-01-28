@@ -5,6 +5,7 @@ using OrderAccept.Application.Commands;
 using OrderAccept.Application.Contracts.Events;
 using OrderAccept.Application.Contracts.Requests;
 using OrderAccept.Application.Handlers;
+using OrderAccept.Shared.Correlation;
 
 namespace OrderAccept.UnitTests.Handlers;
 
@@ -21,6 +22,7 @@ public sealed class AcceptOrderHandlerTests
             publisherMock.Object,
             workflowMock.Object);
 
+        var correlationId = CorrelationId.New();
         var request = new CreateOrderRequest(
             CustomerId: "customer-123",
             Items: new[]
@@ -28,7 +30,7 @@ public sealed class AcceptOrderHandlerTests
                 new CreateOrderItem("product-1", 2)
             });
 
-        var command = new AcceptOrderCommand(request);
+        var command = new AcceptOrderCommand(request, correlationId);
 
         // Act
         await handler.HandleAsync(command);
@@ -36,7 +38,7 @@ public sealed class AcceptOrderHandlerTests
         // Assert
         workflowMock.Verify(
             s => s.SetStatusAsync(
-                It.IsAny<OrderAccept.Shared.Correlation.CorrelationId>(),
+                correlationId,
                 OrderAccept.Shared.Workflow.OrderWorkflowStatus.Accepted,
                 It.IsAny<CancellationToken>()),
             Times.Once);
@@ -45,7 +47,7 @@ public sealed class AcceptOrderHandlerTests
             p => p.PublishAsync(
                 It.Is<OrderAcceptedEvent>(e =>
                     e.Order == request &&
-                    e.CorrelationId.Value != Guid.Empty),
+                    e.CorrelationId == correlationId),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -65,6 +67,7 @@ public sealed class AcceptOrderHandlerTests
             publisherMock.Object,
             workflowMock.Object);
 
+        var correlationId = CorrelationId.New();
         var request = new CreateOrderRequest(
             CustomerId: "customer-123",
             Items: new[]
@@ -72,7 +75,7 @@ public sealed class AcceptOrderHandlerTests
                 new CreateOrderItem("product-1", 2)
             });
 
-        var command = new AcceptOrderCommand(request);
+        var command = new AcceptOrderCommand(request, correlationId);
 
         // Act
         var act = async () => await handler.HandleAsync(command);
@@ -82,7 +85,7 @@ public sealed class AcceptOrderHandlerTests
 
         workflowMock.Verify(
             s => s.RemoveStatusAsync(
-                It.IsAny<OrderAccept.Shared.Correlation.CorrelationId>(),
+                correlationId,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }

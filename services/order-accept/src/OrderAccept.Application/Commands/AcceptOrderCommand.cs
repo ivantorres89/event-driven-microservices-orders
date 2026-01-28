@@ -1,10 +1,14 @@
 ﻿using OrderAccept.Application.Contracts.Requests;
+using OrderAccept.Shared.Correlation;
 
 namespace OrderAccept.Application.Commands
 {
     /// <summary>
-    /// Represents a command to accept and process a new order request.
+    /// Represents a command to accept an order.
     /// </summary>
-    /// <param name="Order">The order request to be accepted and processed. Cannot be null.</param>
-    public sealed record AcceptOrderCommand(CreateOrderRequest Order);
+    /// <param name="Order">The order request containing customer and item details.</param>
+    /// <param name="CorrelationId">The correlation identifier used to track this operation across the system.</param>
+    public record AcceptOrderCommand(
+        CreateOrderRequest Order,
+        CorrelationId CorrelationId);
 }
