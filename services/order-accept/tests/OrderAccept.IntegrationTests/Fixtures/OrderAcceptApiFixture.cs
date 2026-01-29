@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
@@ -13,7 +12,7 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
     private readonly ITestcontainersContainer _redis;
     private readonly ITestcontainersContainer _rabbit;
 
-    public WebApplicationFactory<OrderAccept.Api.Program> Factory { get; private set; } = default!;
+    public WebApplicationFactory<Program> Factory { get; private set; } = default!;
 
     public string RedisConnectionString => $"{_redis.Hostname}:{_redis.GetMappedPublicPort(6379)}";
     public string RabbitConnectionString => $"amqp://guest:guest@{_rabbit.Hostname}:{_rabbit.GetMappedPublicPort(5672)}/";
@@ -21,13 +20,13 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
 
     public OrderAcceptApiFixture()
     {
-        _redis = new ContainerBuilder()
+        _redis = new TestcontainersBuilder<TestcontainersContainer>()
             .WithImage("redis:7-alpine")
             .WithPortBinding(6379, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(6379))
             .Build();
 
-        _rabbit = new ContainerBuilder()
+        _rabbit = new TestcontainersBuilder<TestcontainersContainer>()
             .WithImage("rabbitmq:3.13-alpine")
             .WithPortBinding(5672, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5672))
