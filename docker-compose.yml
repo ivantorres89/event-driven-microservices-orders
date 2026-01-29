@@ -88,7 +88,7 @@ services:
 
       # RabbitMQ (local dev broker)
       RabbitMQ__ConnectionString: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
-      RabbitMQ__QueueName: OrderAccepted
+      RabbitMQ__QueueName: order.accepted
 
       # OpenTelemetry (send to collector facade)
       OpenTelemetry__Enabled: "true"

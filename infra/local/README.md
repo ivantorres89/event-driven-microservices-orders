@@ -16,8 +16,8 @@ The local stack is designed to be:
 ## What Gets Deployed Locally
 
 ### Backend Services
-- **order-accept** (HTTP API + publishes `OrderAccepted`)
-- **order-process** (background worker + persists state + publishes `OrderProcessed`)
+- **order-accept** (HTTP API + publishes `order.accepted`)
+- **order-process** (background worker + persists state + publishes `order.processed`)
 - **order-notification** (WebSockets/SignalR + pushes real-time updates)
 
 ### Frontend
