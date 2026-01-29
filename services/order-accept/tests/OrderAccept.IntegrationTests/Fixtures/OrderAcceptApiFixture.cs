@@ -1,5 +1,3 @@
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
@@ -9,47 +7,29 @@ namespace OrderAccept.IntegrationTests.Fixtures;
 
 public sealed class OrderAcceptApiFixture : IAsyncLifetime
 {   
-    private readonly ITestcontainersContainer _redis;
-    private readonly ITestcontainersContainer _rabbit;
-    private readonly bool _useLocalInfra;
     private bool _useLocalInfraResolved;
     
     public WebApplicationFactory<Program> Factory { get; private set; } = default!;
 
-    public string RedisConnectionString => _useLocalInfraResolved ? "localhost:6379" : $"{_redis.Hostname}:{_redis.GetMappedPublicPort(6379)}";
-    public string RabbitConnectionString => _useLocalInfraResolved ? "amqp://guest:guest@localhost:5672/" : $"amqp://guest:guest@{_rabbit.Hostname}:{_rabbit.GetMappedPublicPort(5672)}/";
+    public string RedisConnectionString => "localhost:6379";
+    public string RabbitConnectionString => "amqp://guest:guest@localhost:5672/";
     public string RabbitQueueName => "order.accepted.it";
 
     public OrderAcceptApiFixture()
     {
-        Environment.SetEnvironmentVariable("TESTCONTAINERS_RYUK_DISABLED", "true");
-
-        _useLocalInfra = string.Equals(Environment.GetEnvironmentVariable("USE_LOCAL_INFRA"), "true", StringComparison.OrdinalIgnoreCase);
-
-        _redis = new TestcontainersBuilder<TestcontainersContainer>()
-            .WithImage("redis:7-alpine")
-            .WithPortBinding(6379, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(6379))
-            .Build();
-
-        _rabbit = new TestcontainersBuilder<TestcontainersContainer>()
-            .WithImage("rabbitmq:3.13-alpine")
-            .WithPortBinding(5672, true)
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilPortIsAvailable(5672))
-            .Build();
     }
 
     public async Task InitializeAsync()
     {
-        _useLocalInfraResolved = _useLocalInfra || IsLocalInfraAvailable();
+        _useLocalInfraResolved = IsLocalInfraAvailable();
 
         if (!_useLocalInfraResolved)
         {
-            await _redis.StartAsync();
-            await _rabbit.StartAsync();
+            throw new InvalidOperationException("Local infra not detected. Run 'docker compose up -d' in infra/local before running integration tests.");
         }
 
         Factory = new CustomWebApplicationFactory(this);
+        await Task.CompletedTask;
     }
 
     public async Task DisposeAsync()
@@ -57,11 +37,7 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
         if (Factory is not null)
             Factory.Dispose();
 
-        if (!_useLocalInfraResolved)
-        {
-            await _rabbit.DisposeAsync();
-            await _redis.DisposeAsync();
-        }
+        await Task.CompletedTask;
     }
 
     private static bool IsLocalInfraAvailable()
