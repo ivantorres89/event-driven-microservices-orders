@@ -70,6 +70,10 @@ public partial class Program
         var app = builder.Build();
 
         // --- HTTP pipeline ---
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();

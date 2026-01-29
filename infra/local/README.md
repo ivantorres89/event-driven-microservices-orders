@@ -132,6 +132,12 @@ predictable driver compatibility
 
 Note: you may need to adjust SA_PASSWORD in the compose file depending on local security policies.
 
+Use SQL Server Management Studio to connect to the SQL Server database with these params:
+- server name: localhost, 1433
+- login: sa
+- password: Your_strong_Password123!
+- Encryption: Optional or trust the certificate.
+
 ### Demo Walkthrough (Suggested)
 
 1. Open the SPA: http://localhost:8080

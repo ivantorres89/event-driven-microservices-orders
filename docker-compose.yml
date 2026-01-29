@@ -63,18 +63,18 @@ services:
     hostname: otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
-      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+      - ./infra/local/otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
     ports:
-      - "4319:4317"  # OTLP gRPC from host -> collector (optional)
-      - "4320:4318"  # OTLP HTTP from host -> collector (optional)
+      - "4319:4317"
+      - "4320:4318"
     depends_on:
       jaeger:
         condition: service_started
     networks: [contoso-net]
-
+  
   order-accept:
     build:
-      context: ../../services/order-accept
+      context: ./services/order-accept
       dockerfile: Dockerfile
     image: contoso/order-accept:local
     hostname: order-accept
