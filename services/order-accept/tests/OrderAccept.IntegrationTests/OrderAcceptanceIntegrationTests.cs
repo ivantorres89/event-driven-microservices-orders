@@ -29,7 +29,7 @@ public sealed class OrderAcceptanceIntegrationTests : IClassFixture<OrderAcceptA
             Items: new[] { new CreateOrderItemDto("product-it-1", 1) });
 
         // Act
-        var response = await client.PostAsJsonAsync("/orders", request);
+        var response = await client.PostAsJsonAsync("/api/orders/accept", request);
 
         // Assert: API
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);

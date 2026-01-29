@@ -11,15 +11,21 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
 {   
     private readonly ITestcontainersContainer _redis;
     private readonly ITestcontainersContainer _rabbit;
-
+    private readonly bool _useLocalInfra;
+    private bool _useLocalInfraResolved;
+    
     public WebApplicationFactory<Program> Factory { get; private set; } = default!;
 
-    public string RedisConnectionString => $"{_redis.Hostname}:{_redis.GetMappedPublicPort(6379)}";
-    public string RabbitConnectionString => $"amqp://guest:guest@{_rabbit.Hostname}:{_rabbit.GetMappedPublicPort(5672)}/";
+    public string RedisConnectionString => _useLocalInfraResolved ? "localhost:6379" : $"{_redis.Hostname}:{_redis.GetMappedPublicPort(6379)}";
+    public string RabbitConnectionString => _useLocalInfraResolved ? "amqp://guest:guest@localhost:5672/" : $"amqp://guest:guest@{_rabbit.Hostname}:{_rabbit.GetMappedPublicPort(5672)}/";
     public string RabbitQueueName => "order.accepted.it";
 
     public OrderAcceptApiFixture()
     {
+        Environment.SetEnvironmentVariable("TESTCONTAINERS_RYUK_DISABLED", "true");
+
+        _useLocalInfra = string.Equals(Environment.GetEnvironmentVariable("USE_LOCAL_INFRA"), "true", StringComparison.OrdinalIgnoreCase);
+
         _redis = new TestcontainersBuilder<TestcontainersContainer>()
             .WithImage("redis:7-alpine")
             .WithPortBinding(6379, true)
@@ -35,8 +41,13 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-        await _redis.StartAsync();
-        await _rabbit.StartAsync();
+        _useLocalInfraResolved = _useLocalInfra || IsLocalInfraAvailable();
+
+        if (!_useLocalInfraResolved)
+        {
+            await _redis.StartAsync();
+            await _rabbit.StartAsync();
+        }
 
         Factory = new CustomWebApplicationFactory(this);
     }
@@ -46,8 +57,30 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
         if (Factory is not null)
             Factory.Dispose();
 
-        await _rabbit.DisposeAsync();
-        await _redis.DisposeAsync();
+        if (!_useLocalInfraResolved)
+        {
+            await _rabbit.DisposeAsync();
+            await _redis.DisposeAsync();
+        }
+    }
+
+    private static bool IsLocalInfraAvailable()
+    {
+        return IsPortOpen("localhost", 6379) && IsPortOpen("localhost", 5672);
+    }
+
+    private static bool IsPortOpen(string host, int port)
+    {
+        try
+        {
+            using var client = new System.Net.Sockets.TcpClient();
+            var connectTask = client.ConnectAsync(host, port);
+            return connectTask.Wait(TimeSpan.FromSeconds(1));
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     private sealed class CustomWebApplicationFactory : WebApplicationFactory<OrderAccept.Api.Program>
