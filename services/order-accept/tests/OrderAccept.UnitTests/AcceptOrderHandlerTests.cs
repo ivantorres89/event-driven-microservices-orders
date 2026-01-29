@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Moq;
 using OrderAccept.Application.Abstractions;
 using OrderAccept.Application.Commands;
@@ -6,87 +7,121 @@ using OrderAccept.Application.Contracts.Events;
 using OrderAccept.Application.Contracts.Requests;
 using OrderAccept.Application.Handlers;
 using OrderAccept.Shared.Correlation;
+using OrderAccept.Shared.Workflow;
 
-namespace OrderAccept.UnitTests.Handlers;
+namespace OrderAccept.UnitTests;
 
 public sealed class AcceptOrderHandlerTests
 {
     [Fact]
-    public async Task HandleAsync_WhenCalled_PublishesOrderAcceptedEvent_AndSetsWorkflowStatus()
+    public async Task HandleAsync_WhenRequestIsValid_SetsAcceptedStatusAndPublishesEvent()
     {
         // Arrange
-        var publisherMock = new Mock<IMessagePublisher>();
-        var workflowMock = new Mock<IOrderWorkflowStateStore>();
+        var publisher = new Mock<IMessagePublisher>(MockBehavior.Strict);
+        var stateStore = new Mock<IOrderWorkflowStateStore>(MockBehavior.Strict);
+        var correlationIdProvider = new Mock<ICorrelationIdProvider>(MockBehavior.Strict);
+        var logger = Mock.Of<ILogger<AcceptOrderHandler>>();
 
-        var handler = new AcceptOrderHandler(
-            publisherMock.Object,
-            workflowMock.Object);
-
-        var correlationId = CorrelationId.New();
         var request = new CreateOrderRequest(
             CustomerId: "customer-123",
-            Items: new[]
-            {
-                new CreateOrderItem("product-1", 2)
-            });
+            Items: new[] { new CreateOrderItem("product-1", 2) });
 
-        var command = new AcceptOrderCommand(request, correlationId);
+        var command = new AcceptOrderCommand(request);
+
+        stateStore
+            .Setup(s => s.SetStatusAsync(It.IsAny<CorrelationId>(), OrderWorkflowStatus.Accepted, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        publisher
+            .Setup(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        var handler = new AcceptOrderHandler(
+            publisher.Object, stateStore.Object, correlationIdProvider.Object, logger);
 
         // Act
         await handler.HandleAsync(command);
 
         // Assert
-        workflowMock.Verify(
-            s => s.SetStatusAsync(
-                correlationId,
-                OrderAccept.Shared.Workflow.OrderWorkflowStatus.Accepted,
+
+        stateStore.Verify(s =>
+            s.SetStatusAsync(
+                It.IsAny<CorrelationId>(),
+                OrderWorkflowStatus.Accepted,
                 It.IsAny<CancellationToken>()),
             Times.Once);
 
-        publisherMock.Verify(
-            p => p.PublishAsync(
+        publisher.Verify(p =>
+            p.PublishAsync(
                 It.Is<OrderAcceptedEvent>(e =>
-                    e.Order == request &&
-                    e.CorrelationId == correlationId),
+                    e.Order == request),
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
 
     [Fact]
-    public async Task HandleAsync_WhenPublishFails_RemovesWorkflowStatus()
+    public async Task HandleAsync_WhenStateStoreFails_DoesNotPublishEvent()
     {
         // Arrange
-        var publisherMock = new Mock<IMessagePublisher>();
-        var workflowMock = new Mock<IOrderWorkflowStateStore>();
+        var publisher = new Mock<IMessagePublisher>(MockBehavior.Strict);
+        var stateStore = new Mock<IOrderWorkflowStateStore>(MockBehavior.Strict);
+        var correlationIdProvider = new Mock<ICorrelationIdProvider>(MockBehavior.Strict);
+        var logger = Mock.Of<ILogger<AcceptOrderHandler>>();
 
-        publisherMock
-            .Setup(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()))
-            .ThrowsAsync(new InvalidOperationException("broker unavailable"));
+        var request = new CreateOrderRequest("customer-123", new[] { new CreateOrderItem("product-1", 1) });
+        
+        var command = new AcceptOrderCommand(request);
+
+        stateStore
+            .Setup(s => s.SetStatusAsync(It.IsAny<CorrelationId>(), OrderWorkflowStatus.Accepted, It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Redis down"));
 
         var handler = new AcceptOrderHandler(
-            publisherMock.Object,
-            workflowMock.Object);
-
-        var correlationId = CorrelationId.New();
-        var request = new CreateOrderRequest(
-            CustomerId: "customer-123",
-            Items: new[]
-            {
-                new CreateOrderItem("product-1", 2)
-            });
-
-        var command = new AcceptOrderCommand(request, correlationId);
+            publisher.Object, stateStore.Object, correlationIdProvider.Object, logger);
 
         // Act
         var act = async () => await handler.HandleAsync(command);
 
         // Assert
-        await act.Should().ThrowAsync<InvalidOperationException>();
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Redis down");
 
-        workflowMock.Verify(
-            s => s.RemoveStatusAsync(
-                correlationId,
-                It.IsAny<CancellationToken>()),
-            Times.Once);
+        publisher.Verify(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task HandleAsync_WhenPublishFails_RemovesTransientStateAndRethrows()
+    {
+        // Arrange
+        var publisher = new Mock<IMessagePublisher>(MockBehavior.Strict);
+        var stateStore = new Mock<IOrderWorkflowStateStore>(MockBehavior.Strict);
+        var correlationIdProvider = new Mock<ICorrelationIdProvider>(MockBehavior.Strict);
+        var logger = Mock.Of<ILogger<AcceptOrderHandler>>();
+
+        var request = new CreateOrderRequest("customer-123", new[] { new CreateOrderItem("product-1", 1) });
+        
+        var command = new AcceptOrderCommand(request);
+
+        stateStore
+            .Setup(s => s.SetStatusAsync(It.IsAny<CorrelationId>(), OrderWorkflowStatus.Accepted, It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        stateStore
+            .Setup(s => s.RemoveStatusAsync(It.IsAny<CorrelationId>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        publisher
+            .Setup(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Broker down"));
+
+        var handler = new AcceptOrderHandler(publisher.Object, stateStore.Object, correlationIdProvider.Object, logger);
+
+        // Act
+        var act = async () => await handler.HandleAsync(command);
+
+        // Assert
+        await act.Should().ThrowAsync<Exception>().WithMessage("Broker down");
+
+        stateStore.Verify(s => s.RemoveStatusAsync(It.IsAny<CorrelationId>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 }

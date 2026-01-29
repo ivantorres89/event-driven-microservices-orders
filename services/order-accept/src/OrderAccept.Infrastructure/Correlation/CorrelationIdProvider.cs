@@ -8,6 +8,6 @@ namespace OrderAccept.Infrastructure.Correlation
     /// </summary>
     public sealed class CorrelationIdProvider : ICorrelationIdProvider
     {
-        public CorrelationId GenerateCorrelationId() => CorrelationId.New();
+        public CorrelationId GetCorrelationId() => CorrelationId.New();
     }
 }

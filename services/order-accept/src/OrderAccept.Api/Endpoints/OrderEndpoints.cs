@@ -28,8 +28,8 @@ namespace OrderAccept.Api.Endpoints
             HttpContext http,
             CancellationToken cancellationToken)
         {
-            var correlationId = correlationIdProvider.GenerateCorrelationId();
-            var command = new AcceptOrderCommand(request, correlationId);
+            var correlationId = correlationIdProvider.GetCorrelationId();
+            var command = new AcceptOrderCommand(request);
 
             await handler.HandleAsync(command, cancellationToken);
 

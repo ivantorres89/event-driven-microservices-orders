@@ -1,7 +1,8 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using OrderAccept.Application.Abstractions;
-using OrderAccept.Application.Handlers;
+using OrderAccept.Infrastructure.Messaging;
 using OrderAccept.Infrastructure.Workflow;
 using StackExchange.Redis;
 
@@ -9,37 +10,26 @@ namespace OrderAccept.Infrastructure;
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddOrderAcceptInfrastructure(
-        this IServiceCollection services,
-        IConfiguration configuration)
+    public static IServiceCollection AddOrderAcceptInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var redisConnectionString = configuration.GetConnectionString("Redis");
+        services.AddOptions<RabbitMqOptions>()
+            .Bind(configuration.GetSection(RabbitMqOptions.SectionName))
+            .Validate(o => !string.IsNullOrWhiteSpace(o.ConnectionString), "RabbitMQ:ConnectionString is required")
+            .Validate(o => !string.IsNullOrWhiteSpace(o.QueueName), "RabbitMQ:QueueName is required");
 
-        if (string.IsNullOrWhiteSpace(redisConnectionString))
-        {
-            throw new InvalidOperationException("Redis connection string is required.");
-        }
+        services.AddOptions<WorkflowStateOptions>()
+            .Bind(configuration.GetSection(WorkflowStateOptions.SectionName));
 
-        // Registering the implementation at the composition root
-        services.AddSingleton<ICorrelationIdProvider, Correlation.CorrelationIdProvider>();
+        var redisConn = configuration.GetConnectionString("Redis");
+        if (string.IsNullOrWhiteSpace(redisConn))
+            throw new InvalidOperationException("ConnectionStrings:Redis is required");
 
-        // Register Redis connection as singleton
-        services.AddSingleton<IConnectionMultiplexer>(
-            _ => ConnectionMultiplexer.Connect(redisConnectionString));
+        services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
 
-        // Register store as singleton (stateless, thread-safe)
+        services.AddSingleton<IMessagePublisher, RabbitMqMessagePublisher>();
         services.AddSingleton<IOrderWorkflowStateStore, RedisOrderWorkflowStateStore>();
 
-        //ToDo@IVAN: Replace with actual implementation
-        //services.AddSingleton<IMessagePublisher, ConcreteMessagePublisher>();
-        services.AddSingleton<IAcceptOrderHandler, AcceptOrderHandler>();
-
-        // Configure options
-        services.Configure<WorkflowStateOptions>(
-            configuration.GetSection(WorkflowStateOptions.SectionName));
-
-        // ToDo@IVAN: Replace with actual implementation
-        //services.AddScoped<IMessagePublisher, >();
+        services.AddScoped<ICorrelationIdProvider, CorrelationIdProvider>();
 
         return services;
     }

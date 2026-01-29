@@ -1,15 +1,15 @@
-﻿namespace OrderAccept.Application.Abstractions
+using OrderAccept.Shared.Correlation;
+
+namespace OrderAccept.Application.Abstractions;
+
+/// <summary>
+/// Defines a contract for asynchronously publishing messages of a specified type to a message bus or transport.
+/// </summary>
+/// <remarks>Implementations may deliver messages to various back-end systems, such as message queues, event
+/// streams, or other messaging infrastructures. Thread safety and delivery guarantees depend on the specific
+/// implementation.</remarks>
+public interface IMessagePublisher
 {
-    public interface IMessagePublisher
-    {
-        /// <summary>
-        /// Publishes a message asynchronously to the underlying message bus or transport.
-        /// </summary>
-        /// <typeparam name="T">The type of the message to publish. Must be a reference type.</typeparam>
-        /// <param name="message">The message instance to publish. Cannot be null.</param>
-        /// <param name="cancellationToken">A cancellation token that can be used to cancel the publish operation.</param>
-        /// <returns>A task that represents the asynchronous publish operation.</returns>
-        Task PublishAsync<T>(T message, CancellationToken cancellationToken = default)
-            where T : class;
-    }
+    Task PublishAsync<T>(T message, CancellationToken cancellationToken = default)
+        where T : class;
 }

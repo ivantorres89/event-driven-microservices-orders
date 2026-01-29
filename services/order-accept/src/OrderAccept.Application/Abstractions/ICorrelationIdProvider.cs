@@ -11,6 +11,6 @@ namespace OrderAccept.Application.Abstractions
         /// Generates a new correlation identifier.
         /// </summary>
         /// <returns>A newly generated correlation identifier.</returns>
-        CorrelationId GenerateCorrelationId();
+        CorrelationId GetCorrelationId();
     }
 }

@@ -1,48 +1,59 @@
+using Microsoft.Extensions.Logging;
 using OrderAccept.Application.Abstractions;
 using OrderAccept.Application.Commands;
 using OrderAccept.Application.Contracts.Events;
+using OrderAccept.Shared.Correlation;
 using OrderAccept.Shared.Workflow;
 
-namespace OrderAccept.Application.Handlers
+namespace OrderAccept.Application.Handlers;
+
+public sealed class AcceptOrderHandler : IAcceptOrderHandler
 {
-    public sealed class AcceptOrderHandler : IAcceptOrderHandler
+    private readonly IMessagePublisher _publisher;
+    private readonly ICorrelationIdProvider _correlationIdProvider;
+    private readonly IOrderWorkflowStateStore _workflowState;
+    private readonly ILogger<AcceptOrderHandler> _logger;
+
+    public AcceptOrderHandler(
+        IMessagePublisher publisher,
+        IOrderWorkflowStateStore workflowState,
+        ICorrelationIdProvider correlationIdProvider,
+        ILogger<AcceptOrderHandler> logger)
     {
-        private readonly IMessagePublisher _publisher;
-        private readonly IOrderWorkflowStateStore _workflowState;
+        _publisher = publisher;
+        _correlationIdProvider = correlationIdProvider;
+        _workflowState = workflowState;
+        _logger = logger;
+    }
 
-        public AcceptOrderHandler(
-            IMessagePublisher publisher,
-            IOrderWorkflowStateStore workflowState)
+    public async Task HandleAsync(
+        AcceptOrderCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        using (_logger.BeginScope(new Dictionary<string, object?>
         {
-            _publisher = publisher ?? throw new ArgumentNullException(nameof(publisher));
-            _workflowState = workflowState ?? throw new ArgumentNullException(nameof(workflowState));
-        }
-
-        public async Task HandleAsync(
-            AcceptOrderCommand command,
-            CancellationToken cancellationToken = default)
+            ["CorrelationId"] = _correlationIdProvider.GetCorrelationId().ToString()
+        }))
         {
-            var correlationId = command.CorrelationId;
+            _logger.LogInformation("Accepting order request for CustomerId={CustomerId}", command.Order.CustomerId);
 
-            // Initialize transient workflow state first.
-            // If publishing fails, we compensate by removing the key.
+            // 1) Initialize transient workflow state for notifications/reconnection
             await _workflowState.SetStatusAsync(
-                correlationId,
-                OrderWorkflowStatus.Accepted,
-                cancellationToken);
+                _correlationIdProvider.GetCorrelationId(), OrderWorkflowStatus.Accepted, cancellationToken);
+            _logger.LogInformation("Initialized workflow state in Redis: {Status}", OrderWorkflowStatus.Accepted);
 
-            var @event = new OrderAcceptedEvent(
-                correlationId,
-                command.Order
-            );
+            // 2) Publish integration event
+            var @event = new OrderAcceptedEvent(_correlationIdProvider.GetCorrelationId(), command.Order);
 
             try
             {
                 await _publisher.PublishAsync(@event, cancellationToken);
+                _logger.LogInformation("Published OrderAccepted integration event");
             }
-            catch
+            catch (Exception ex)
             {
-                await _workflowState.RemoveStatusAsync(correlationId, cancellationToken);
+                _logger.LogError(ex, "Failed to publish OrderAccepted event. Rolling back transient workflow state.");
+                await _workflowState.RemoveStatusAsync(_correlationIdProvider.GetCorrelationId(), cancellationToken);
                 throw;
             }
         }

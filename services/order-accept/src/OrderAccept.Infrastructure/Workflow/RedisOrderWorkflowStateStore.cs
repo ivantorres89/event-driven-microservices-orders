@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OrderAccept.Application.Abstractions;
 using OrderAccept.Shared.Correlation;
@@ -8,33 +9,37 @@ namespace OrderAccept.Infrastructure.Workflow;
 
 public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
 {
-    private readonly IDatabase _db;
-    private readonly TimeSpan _ttl;
+    private readonly IConnectionMultiplexer _redis;
+    private readonly WorkflowStateOptions _options;
+    private readonly ILogger<RedisOrderWorkflowStateStore> _logger;
 
     public RedisOrderWorkflowStateStore(
-        IConnectionMultiplexer connectionMultiplexer,
-        IOptions<WorkflowStateOptions> options)
+        IConnectionMultiplexer redis,
+        IOptions<WorkflowStateOptions> options,
+        ILogger<RedisOrderWorkflowStateStore> logger)
     {
-        _db = connectionMultiplexer.GetDatabase();
-        _ttl = options.Value.Ttl;
+        _redis = redis;
+        _options = options.Value;
+        _logger = logger;
     }
 
-    public Task SetStatusAsync(
-        CorrelationId correlationId,
-        OrderWorkflowStatus status,
-        CancellationToken cancellationToken = default)
+    public async Task SetStatusAsync(CorrelationId correlationId, OrderWorkflowStatus status, CancellationToken cancellationToken = default)
     {
-        // StackExchange.Redis does not accept CancellationToken; we keep the signature for consistency. 
+        var db = _redis.GetDatabase();
         var key = WorkflowRedisKeys.OrderStatus(correlationId);
-        var value = status.ToString().ToUpperInvariant();
-        return _db.StringSetAsync(key, value, _ttl);
+
+        // Note: StackExchange.Redis does not accept CancellationToken, but we keep it in the contract.
+        await db.StringSetAsync(key, status.ToString().ToUpperInvariant(), _options.Ttl);
+
+        _logger.LogInformation("Set workflow status in Redis: {Key}={Status} (TTL={Ttl})", key, status, _options.Ttl);
     }
 
-    public Task RemoveStatusAsync(
-        CorrelationId correlationId,
-        CancellationToken cancellationToken = default)
+    public async Task RemoveStatusAsync(CorrelationId correlationId, CancellationToken cancellationToken = default)
     {
+        var db = _redis.GetDatabase();
         var key = WorkflowRedisKeys.OrderStatus(correlationId);
-        return _db.KeyDeleteAsync(key);
+
+        await db.KeyDeleteAsync(key);
+        _logger.LogInformation("Removed workflow status key from Redis: {Key}", key);
     }
 }
