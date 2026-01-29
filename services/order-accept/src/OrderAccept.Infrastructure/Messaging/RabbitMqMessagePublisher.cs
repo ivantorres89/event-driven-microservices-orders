@@ -28,7 +28,7 @@ public sealed class RabbitMqMessagePublisher : IMessagePublisher, IDisposable
         var factory = new ConnectionFactory
         {
             Uri = new Uri(_options.ConnectionString)
-        };
+        };        
 
         _connection = factory.CreateConnectionAsync().GetAwaiter().GetResult();
         _channel = _connection.CreateChannelAsync().GetAwaiter().GetResult();

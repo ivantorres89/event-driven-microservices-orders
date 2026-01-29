@@ -53,6 +53,7 @@ public partial class Program
                 .WithTracing(tracing =>
                 {
                     tracing
+                        .AddSource(Observability.ActivitySourceName)
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));
