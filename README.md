@@ -196,6 +196,7 @@ This repository applies a **layered testing approach**:
 Integration tests are intentionally **limited in scope** and focus on validating:
 
 - HTTP request handling at service boundaries
+- REDIS Operations: GET, SET, DEL.
 - Message publishing and consumption behavior
 - Messaging contracts and serialization
 - Interaction with a real message broker

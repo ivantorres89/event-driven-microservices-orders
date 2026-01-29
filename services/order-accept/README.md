@@ -262,8 +262,8 @@ Integration tests validate boundary behavior:
 - Message publishing behavior
 - Messaging contracts and serialization
 
-Integration tests run against a local message broker (**RabbitMQ**),
-used solely for development and validation purposes.
+Integration tests run against actual local message broker (**RabbitMQ**) and actual database cache (**Redis**)
+used solely for development and validation purposes, to run the integration tests we must run the actual infra locally, check README.md on /infra/local for more details.
 
 Azure Service Bus is used in production environments, as it does not provide a local development emulator.
 
