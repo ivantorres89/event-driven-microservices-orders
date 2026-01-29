@@ -13,6 +13,8 @@ namespace OrderAccept.UnitTests;
 
 public sealed class AcceptOrderHandlerTests
 {
+    Guid _correlationId = Guid.NewGuid();
+
     [Fact]
     public async Task HandleAsync_WhenRequestIsValid_SetsAcceptedStatusAndPublishesEvent()
     {
@@ -35,6 +37,9 @@ public sealed class AcceptOrderHandlerTests
         publisher
             .Setup(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+
+        correlationIdProvider
+            .Setup(c => c.GetCorrelationId()).Returns(new CorrelationId(_correlationId));
 
         var handler = new AcceptOrderHandler(
             publisher.Object, stateStore.Object, correlationIdProvider.Object, logger);
@@ -76,6 +81,9 @@ public sealed class AcceptOrderHandlerTests
             .Setup(s => s.SetStatusAsync(It.IsAny<CorrelationId>(), OrderWorkflowStatus.Accepted, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Redis down"));
 
+        correlationIdProvider
+            .Setup(c => c.GetCorrelationId()).Returns(new CorrelationId(_correlationId));
+
         var handler = new AcceptOrderHandler(
             publisher.Object, stateStore.Object, correlationIdProvider.Object, logger);
 
@@ -113,6 +121,9 @@ public sealed class AcceptOrderHandlerTests
         publisher
             .Setup(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Broker down"));
+
+        correlationIdProvider
+            .Setup(c => c.GetCorrelationId()).Returns(new CorrelationId(_correlationId));
 
         var handler = new AcceptOrderHandler(publisher.Object, stateStore.Object, correlationIdProvider.Object, logger);
 
