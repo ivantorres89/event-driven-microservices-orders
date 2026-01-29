@@ -1,6 +1,8 @@
+using OpenTelemetry;
 using OrderAccept.Application.Abstractions;
 using OrderAccept.Application.Commands;
 using OrderAccept.Application.Contracts.Requests;
+using System.Diagnostics;
 
 namespace OrderAccept.Api.Endpoints
 {
@@ -29,12 +31,18 @@ namespace OrderAccept.Api.Endpoints
             CancellationToken cancellationToken)
         {
             var correlationId = correlationIdProvider.GetCorrelationId();
+
+            // HTTP Request generated Correlation Id
+            // Attach correlation id to the current OpenTelemetry context
+            var correlationValue = correlationId.Value.ToString();
+            Activity.Current?.SetTag("correlation_id", correlationValue);
+            Baggage.SetBaggage("correlation_id", correlationValue);
             var command = new AcceptOrderCommand(request);
 
             await handler.HandleAsync(command, cancellationToken);
 
             // Expose correlation id in response header for tracing
-            http.Response.Headers["X-Correlation-ID"] = correlationId.Value.ToString();
+            http.Response.Headers["X-Correlation-Id"] = correlationValue;
 
             // Return 202 + JSON body
             return Results.Json(

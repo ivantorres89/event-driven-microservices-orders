@@ -35,7 +35,7 @@ public sealed class AcceptOrderHandlerTests
             .Returns(Task.CompletedTask);
 
         publisher
-            .Setup(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), null, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
         correlationIdProvider
@@ -48,7 +48,6 @@ public sealed class AcceptOrderHandlerTests
         await handler.HandleAsync(command);
 
         // Assert
-
         stateStore.Verify(s =>
             s.SetStatusAsync(
                 It.IsAny<CorrelationId>(),
@@ -60,6 +59,7 @@ public sealed class AcceptOrderHandlerTests
             p.PublishAsync(
                 It.Is<OrderAcceptedEvent>(e =>
                     e.Order == request),
+                null,
                 It.IsAny<CancellationToken>()),
             Times.Once);
     }
@@ -94,7 +94,8 @@ public sealed class AcceptOrderHandlerTests
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("Redis down");
 
-        publisher.Verify(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()), Times.Never);
+        publisher.Verify(p => p.PublishAsync(
+            It.IsAny<OrderAcceptedEvent>(), null, It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -119,7 +120,8 @@ public sealed class AcceptOrderHandlerTests
             .Returns(Task.CompletedTask);
 
         publisher
-            .Setup(p => p.PublishAsync(It.IsAny<OrderAcceptedEvent>(), It.IsAny<CancellationToken>()))
+            .Setup(p => p.PublishAsync(
+                It.IsAny<OrderAcceptedEvent>(), null, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new Exception("Broker down"));
 
         correlationIdProvider

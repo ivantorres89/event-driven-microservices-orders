@@ -47,7 +47,7 @@ public sealed class AcceptOrderHandler : IAcceptOrderHandler
 
             try
             {
-                await _publisher.PublishAsync(@event, cancellationToken);
+                await _publisher.PublishAsync(@event, null, cancellationToken);
                 _logger.LogInformation("Published OrderAccepted integration event");
             }
             catch (Exception ex)

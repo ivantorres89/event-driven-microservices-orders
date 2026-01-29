@@ -18,7 +18,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\OrderAccept.Application\OrderAccept.Application.csproj" />
-    <ProjectReference Include="..\..\src\OrderAccept.Infrastructure\OrderAccept.Infrastructure.csproj" />
     <ProjectReference Include="..\..\src\OrderAccept.Shared\OrderAccept.Shared.csproj" />
   </ItemGroup>
 

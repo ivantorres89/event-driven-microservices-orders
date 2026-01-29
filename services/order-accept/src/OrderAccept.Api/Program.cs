@@ -53,9 +53,9 @@ public partial class Program
                 .WithTracing(tracing =>
                 {
                     tracing
-                        .AddSource(Observability.ActivitySourceName)
                         .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
+                        .AddProcessor(new Observability.CorrelationIdActivityProcessor())
                         .AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));
                 }).WithMetrics(metrics =>
 

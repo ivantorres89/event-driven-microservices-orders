@@ -10,6 +10,6 @@ namespace OrderAccept.Application.Abstractions;
 /// implementation.</remarks>
 public interface IMessagePublisher
 {
-    Task PublishAsync<T>(T message, CancellationToken cancellationToken = default)
+    Task PublishAsync<T>(T message, string? routingKey = null, CancellationToken cancellationToken = default)
         where T : class;
 }

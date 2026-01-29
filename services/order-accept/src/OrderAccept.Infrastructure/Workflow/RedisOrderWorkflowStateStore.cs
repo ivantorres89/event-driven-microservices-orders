@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OrderAccept.Application.Abstractions;
@@ -28,6 +29,15 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
         var db = _redis.GetDatabase();
         var key = WorkflowRedisKeys.OrderStatus(correlationId);
 
+        // Create an explicit client span for Redis so it always shows up in traces,
+        // even if automatic StackExchange.Redis instrumentation is not active.
+        using var activity = Observability.ActivitySource.StartActivity("Redis SET", ActivityKind.Client);
+        activity?.SetTag("db.system", "redis");
+        activity?.SetTag("db.operation", "SET");
+        activity?.SetTag("db.statement", $"SET {key}");
+        activity?.SetTag("db.redis.key", key);
+        activity?.SetTag("workflow.status", status.ToString());
+
         // Note: StackExchange.Redis does not accept CancellationToken, but we keep it in the contract.
         await db.StringSetAsync(key, status.ToString().ToUpperInvariant(), _options.Ttl);
 
@@ -38,6 +48,12 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
     {
         var db = _redis.GetDatabase();
         var key = WorkflowRedisKeys.OrderStatus(correlationId);
+
+        using var activity = Observability.ActivitySource.StartActivity("Redis DEL", ActivityKind.Client);
+        activity?.SetTag("db.system", "redis");
+        activity?.SetTag("db.operation", "DEL");
+        activity?.SetTag("db.statement", $"DEL {key}");
+        activity?.SetTag("db.redis.key", key);
 
         await db.KeyDeleteAsync(key);
         _logger.LogInformation("Removed workflow status key from Redis: {Key}", key);
