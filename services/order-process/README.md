@@ -14,7 +14,7 @@ This service has **no synchronous HTTP business API**. It runs as a **background
 
 This service is responsible for:
 
-- Subscribing to the `OrderAccepted` FIFO queue and consuming messages asynchronously
+- Subscribing to the `OrderProcessed` FIFO queue and consuming messages asynchronously
 - Performing **idempotent** order processing (safe under at-least-once delivery)
 - Executing the **OLTP transaction** that persists the order into SQL
 - Generating the business `OrderId` **via database-generated primary key**
@@ -52,8 +52,8 @@ This separation allows:
 
 ## Workflow Overview
 
-1. **Order Accept** publishes an `OrderAccepted` message with a `CorrelationId`.
-2. This service consumes the message from `OrderAccepted` (FIFO).
+1. **Order Accept** publishes an `OrderProcessed` message with a `CorrelationId`.
+2. This service consumes the message from `OrderProcessed` (FIFO).
 3. The service updates Redis workflow state:
    - `order:status:{CorrelationId} = PROCESSING` (TTL-based).
 4. The service executes a **single OLTP transaction** to persist the order in SQL:
@@ -142,7 +142,7 @@ Redis is **not** a system of record. The authoritative business state remains in
 
 ### Queues
 
-- **Inbound**: `OrderAccepted` (FIFO)
+- **Inbound**: `OrderProcessed` (FIFO)
 - **Outbound**: `OrdersProcessed` (FIFO)
 
 ### Broker Choice
@@ -164,7 +164,7 @@ Application code depends on messaging **abstractions**, allowing broker replacem
 
 This service defines/owns the following integration contracts:
 
-### `OrderAccepted` (consumed)
+### `OrderProcessed` (consumed)
 Represents an order that has been accepted at the API boundary.
 
 **Key fields**
@@ -339,7 +339,7 @@ Validate:
 - Consumption and publishing contracts (serialization + headers)
 - SQL persistence behavior
 - Redis state updates
-- End-to-end processing of a single `OrderAccepted` message in a local environment
+- End-to-end processing of a single `OrderProcessed` message in a local environment
 
 Integration tests typically run against:
 - Local RabbitMQ

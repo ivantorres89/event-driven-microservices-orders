@@ -1,0 +1,15 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/OrderProcess.Worker/OrderProcess.Worker.csproj" Id="9a39b62d-7413-4577-9e1b-c95e93e7d693" />
+    <Project Path="src/OrderProcess.Application/OrderProcess.Application.csproj" Id="aa368d07-3172-45b8-923b-5ab89fcc13ff" />
+    <Project Path="src/OrderProcess.Infrastructure/OrderProcess.Infrastructure.csproj" Id="b4c0679e-51be-4177-a741-7156e4fb7547" />
+    <Project Path="src/OrderProcess.Shared/OrderProcess.Shared.csproj" Id="48c0d94c-a2a4-4d0f-9a09-564c89d0e773" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/OrderProcess.IntegrationTests/OrderProcess.IntegrationTests.csproj" Id="92e9bc05-d448-4c0e-a865-eb648e6dcbce" />
+    <Project Path="tests/OrderProcess.UnitTests/OrderProcess.UnitTests.csproj" Id="fc139d60-a03a-4fec-afa8-8138307904fe">
+      <BuildDependency Project="src/OrderProcess.Application/OrderProcess.Application.csproj" />
+      <BuildDependency Project="src/OrderProcess.Shared/OrderProcess.Shared.csproj" />
+    </Project>
+  </Folder>
+</Solution>
