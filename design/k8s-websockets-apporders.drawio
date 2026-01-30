@@ -1,0 +1,283 @@
+<mxfile host="Electron" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) draw.io/29.3.0 Chrome/140.0.7339.249 Electron/38.7.2 Safari/537.36" version="29.3.0">
+  <diagram name="Page-1" id="V0MmyuDpE63pXciobZnX">
+    <mxGraphModel dx="1678" dy="1131" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-26" parent="1" style="rounded=0;whiteSpace=wrap;html=1;" value="" vertex="1">
+          <mxGeometry height="630" width="382" x="450" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="hqy1qkleqE4f_aJoNf-f-14" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="202" y="625" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hqy1qkleqE4f_aJoNf-f-15" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="182" y="717" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hqy1qkleqE4f_aJoNf-f-48" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="201" y="736" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="hqy1qkleqE4f_aJoNf-f-50" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="220" y="717" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="NebWJtjN_IMYLuVvaxee-12" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="290.9000000000001" y="811" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="cn2QgUoSajOXAjX1I2ST-19" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=1.024;entryY=0.165;entryDx=0;entryDy=0;entryPerimeter=0;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="149.14999999999964" y="1074.80055" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="HL3scC-EMn6qaeURWS98-1" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/SQL_Database.svg;" value="&lt;div&gt;Azure SQL Database (Primary)&lt;/div&gt;&lt;div&gt;- Business Critical tier&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;-Automatic failover&lt;br&gt;-HA platform managed (1 primary + 3 replicas)&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;-RO replicas enabled&amp;nbsp;&lt;br&gt;&lt;/span&gt;&lt;span style=&quot;color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;b&gt;GENERATES OrderId PK&amp;nbsp;&lt;/b&gt;&lt;/span&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="30" x="1340" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-2" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/databases/Cache_Redis.svg;" value="&lt;div class=&quot;cm-line&quot;&gt;Redis&amp;nbsp; – Sessions &amp;amp; Order Workflow State&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;&lt;div class=&quot;cm-line&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="52" width="64" x="1110" y="669.5" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-3" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/app_services/API_Management_Services.svg;" value="Azure APIManager- Public Perimeter security:&lt;br&gt;JWT authentication valid (issuer, audience)&lt;br&gt;API Governance/Rate limiting/quotas/Traffic protection&lt;br&gt;K8S cluster does not process invalid traffic&amp;nbsp;&lt;br&gt;Gets UserId from JWT and forwards to K8S&lt;br&gt;&amp;nbsp;/api/* -&amp;gt; K8S Ingress" vertex="1">
+          <mxGeometry height="40" width="43.33" x="260" y="474" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-4" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.7;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-3">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="124" y="502" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-58" connectable="0" parent="RMAeVSShHTEY-Qpviwvw-4" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="2. POST: api/orders" vertex="1">
+          <mxGeometry relative="1" x="-0.0543" y="5" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-5" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/compute/Kubernetes_Services.svg;" value="&lt;font style=&quot;font-size: 11px;&quot;&gt;AKS (K8S) Cluster prod-zone1&lt;br&gt;AKS Cluster (managed node pools)&lt;br&gt;Min order accepted pods:2&lt;br&gt;Min order-process pods: 3&lt;br&gt;Min order notification pod:2&lt;/font&gt;" vertex="1">
+          <mxGeometry height="60" width="68" x="510" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-6" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/general/Browser.svg;" value="ClientApp/SPA" vertex="1">
+          <mxGeometry height="52" width="65" x="130" y="384" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-8" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Virtual_Networks.svg;" value="VNET Zone1" vertex="1">
+          <mxGeometry height="30" width="50.25" x="370" y="150" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-13" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.545;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.969;exitY=0.688;exitDx=0;exitDy=0;exitPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-15">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="381" y="565" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-15" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/other/Local_Network_Gateways.svg;" value="Ingress&lt;br&gt;controller (NGINX)&lt;br&gt;- Routing L7 HTTPS" vertex="1">
+          <mxGeometry height="44" width="44" x="534" y="430" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-29" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="746" y="220" as="sourcePoint" />
+            <mxPoint x="1080" y="246" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-34" connectable="0" parent="RMAeVSShHTEY-Qpviwvw-29" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Publish:OrderAccepted" vertex="1">
+          <mxGeometry relative="1" x="-0.1111" y="2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-16" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="order-accept-pod1" vertex="1">
+          <mxGeometry height="40" width="50" x="696" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-17" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="order-accept-pod2" vertex="1">
+          <mxGeometry height="40" width="50" x="696" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-38" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="RMAeVSShHTEY-Qpviwvw-35">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-39" connectable="0" parent="RMAeVSShHTEY-Qpviwvw-38" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Publisher: OrderProcessed (orderId)" vertex="1">
+          <mxGeometry relative="1" x="-0.3424" y="4" as="geometry">
+            <mxPoint x="99" y="4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Sj17ovOa7jTzTq15Y_1N-10" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="RMAeVSShHTEY-Qpviwvw-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="721" y="370" />
+              <mxPoint x="1210" y="370" />
+              <mxPoint x="1210" y="710" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-18" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="order-process-pod1&lt;br&gt;Idempotent consumer (OrderId)" vertex="1">
+          <mxGeometry height="40" width="50" x="696" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-19" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="order-process-pod2 (replica)" vertex="1">
+          <mxGeometry height="40" width="50" x="696" y="472" as="geometry" />
+        </mxCell>
+        <mxCell id="Sj17ovOa7jTzTq15Y_1N-5" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="RMAeVSShHTEY-Qpviwvw-19" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-20" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="order-process-pod3 (replica)" vertex="1">
+          <mxGeometry height="40" width="50" x="696" y="549.5" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-21" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=-0.02;entryY=0.55;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-16">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="610" y="450" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-22" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=-0.02;entryY=0.65;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-17">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="580" y="450" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-25" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.813;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.909;exitY=0.5;exitDx=0;exitDy=0;exitPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-20">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="654" y="452" />
+              <mxPoint x="654" y="582" />
+            </Array>
+            <mxPoint x="610" y="398" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-28" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/storage/Storage_Accounts_Classic.svg;" value="Azure ServiceBus queue&lt;br&gt;OrderAccepted (FIFO)" vertex="1">
+          <mxGeometry height="52" width="65" x="1080" y="230" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-30" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.808;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-28">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-35" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/storage/Storage_Accounts_Classic.svg;" value="Azure ServiceBus queue&lt;br&gt;OrdersProcessed (FIFO)" vertex="1">
+          <mxGeometry height="52" width="65" x="1090" y="472" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-36" edge="1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.123;entryY=1.038;entryDx=0;entryDy=0;entryPerimeter=0;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="721" y="358" />
+              <mxPoint x="1010" y="358" />
+              <mxPoint x="1010" y="282" />
+            </Array>
+            <mxPoint x="721" y="390" as="sourcePoint" />
+            <mxPoint x="1087.995" y="281.9960000000001" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-37" connectable="0" parent="RMAeVSShHTEY-Qpviwvw-36" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Suscriber: OrderAccepted" vertex="1">
+          <mxGeometry relative="1" x="0.028" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-42" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.096;entryY=0.664;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-53">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="92" y="906" />
+              <mxPoint x="580" y="906" />
+              <mxPoint x="580" y="670" />
+              <mxPoint x="701" y="670" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-66" connectable="0" parent="RMAeVSShHTEY-Qpviwvw-42" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="1. SPA connects to WebSocket Hub&lt;br&gt;Persistent WebSocket connection" vertex="1">
+          <mxGeometry relative="1" x="-0.2987" y="4" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-48" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.513;entryDx=0;entryDy=0;entryPerimeter=0;" target="HL3scC-EMn6qaeURWS98-1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="933" y="430" />
+              <mxPoint x="933" y="610" />
+              <mxPoint x="1280" y="610" />
+              <mxPoint x="1280" y="331" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-49" connectable="0" parent="RMAeVSShHTEY-Qpviwvw-48" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="OLTP transaction for order" vertex="1">
+          <mxGeometry relative="1" x="0.426" y="3" as="geometry">
+            <mxPoint x="-207" y="37" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-51" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.06;entryY=0.775;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-19">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-52" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.06;entryY=0.8;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-18">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-72" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="RMAeVSShHTEY-Qpviwvw-6">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="120" y="649" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-73" connectable="0" parent="RMAeVSShHTEY-Qpviwvw-72" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="2.1 WSS PUSH message:ORDER COMPLETED&lt;br&gt;&amp;nbsp;by UserId + CorrelationId.&lt;br&gt;Includes in message PK OrderId generated by Database" vertex="1">
+          <mxGeometry relative="1" x="0.3856" y="-4" as="geometry">
+            <mxPoint x="146" y="4" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-53" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="order-notification-pod1&lt;br&gt;WebSocket server (SignalR, not Azure SignalR)" vertex="1">
+          <mxGeometry height="40" width="50" x="696" y="629.5" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-54" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.176;entryY=0.954;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-35">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="970" y="649" />
+              <mxPoint x="970" y="380" />
+              <mxPoint x="1101" y="380" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-55" connectable="0" parent="RMAeVSShHTEY-Qpviwvw-54" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="Subscriber:OrderProcessed" vertex="1">
+          <mxGeometry relative="1" x="-0.5668" y="-2" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-56" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=-0.021;entryY=0.517;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-53">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-60" parent="1" style="image;sketch=0;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/mscae/ResourceGroup.svg;" value="order-notification-pod2 (replica)&lt;br&gt;WSS (SignalR)&lt;div&gt;&lt;br&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="40" width="50" x="696" y="720" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-61" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.002;entryY=0.549;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-60">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-68" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.013;entryY=0.083;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-2">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="860" y="230" />
+              <mxPoint x="860" y="794" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-70" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="1076" y="670" />
+            </Array>
+            <mxPoint x="1110" y="690" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="Sj17ovOa7jTzTq15Y_1N-1" edge="1" parent="1" source="RMAeVSShHTEY-Qpviwvw-74" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="RMAeVSShHTEY-Qpviwvw-2" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-74" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="Sessions &amp;amp; Status notes:&lt;br&gt;&lt;div class=&quot;cm-line&quot;&gt;&lt;div class=&quot;cm-line&quot;&gt;order-accept:&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;- Generates CorrelationId (UUID)&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;- Registers WebSocket session (if available)&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;- Initializes order workflow state: ACCEPTED&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;order-process:&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;- Updates order workflow state:&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;&amp;nbsp; SET order:status:{CorrelationId} = PROCESSING&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;&amp;nbsp; SET order:status:{CorrelationId} = COMPLETED&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;order-notification:&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;- Resolves WebSocket session by CorrelationId&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;&amp;nbsp; GET ws:session:{CorrelationId}&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;- Reads current order workflow state&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;&amp;nbsp; GET order:status:{CorrelationId}&lt;/div&gt;&lt;div class=&quot;cm-line&quot;&gt;- Pushes real-time WebSocket notifications&lt;/div&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="530" x="600" y="990" as="geometry" />
+        </mxCell>
+        <mxCell id="RMAeVSShHTEY-Qpviwvw-75" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="For ApplicationInsights &amp;amp; Monitoring:&amp;nbsp;&lt;span style=&quot;background-color: rgb(18, 18, 18);&quot;&gt;&lt;span style=&quot;font-size: 11px; text-wrap-mode: nowrap;&quot;&gt;CorrelationId propagated across logs and traces&lt;/span&gt;&lt;br&gt;&lt;div style=&quot;&quot;&gt;&lt;div&gt;DLQ → Monitoring / Ops workflow&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 11px; text-wrap-mode: nowrap;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;/span&gt;" vertex="1">
+          <mxGeometry height="30" width="450" x="950" y="160" as="geometry" />
+        </mxCell>
+        <mxCell id="Sj17ovOa7jTzTq15Y_1N-11" edge="1" parent="1" source="Sj17ovOa7jTzTq15Y_1N-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="RMAeVSShHTEY-Qpviwvw-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Sj17ovOa7jTzTq15Y_1N-8" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;Redis acts as a shared backplane between pods and fulfills two responsibilities:&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;1) WebSocket session registry&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;&amp;nbsp; &amp;nbsp;- Key: ws:session:{CorrelationId}&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;&amp;nbsp; &amp;nbsp;- Value: userId, connectionId&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;&amp;nbsp; &amp;nbsp;- TTL: 30–60 minutes&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;2) Order workflow state (transient)&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;&amp;nbsp; &amp;nbsp;- Key: order:status:{CorrelationId}&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;&amp;nbsp; &amp;nbsp;- Values: ACCEPTED | PROCESSING | COMPLETED&lt;/div&gt;&lt;div class=&quot;cm-line&quot; style=&quot;text-wrap-mode: nowrap; background-color: rgb(18, 18, 18);&quot;&gt;&amp;nbsp; &amp;nbsp;- TTL aligned with WebSocket session lifetime&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="60" x="1370" y="840" as="geometry" />
+        </mxCell>
+        <mxCell id="Sj17ovOa7jTzTq15Y_1N-9" edge="1" parent="1" source="Sj17ovOa7jTzTq15Y_1N-8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="Sj17ovOa7jTzTq15Y_1N-8">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Sj17ovOa7jTzTq15Y_1N-12" parent="1" style="text;html=1;whiteSpace=wrap;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;rounded=0;" value="&lt;div&gt;- Redis is not a system of record&lt;/div&gt;&lt;div&gt;- All data is ephemeral and TTL-based&lt;/div&gt;&lt;div&gt;- SQL Database remains the source of truth&lt;/div&gt;&lt;div&gt;- Enables multi-pod, multi-tab, and reconnection scenarios&lt;/div&gt;" vertex="1">
+          <mxGeometry height="30" width="240" x="1260" y="680.5" as="geometry" />
+        </mxCell>
+        <mxCell id="Sj17ovOa7jTzTq15Y_1N-13" edge="1" parent="1" source="Sj17ovOa7jTzTq15Y_1N-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.96;entryY=0.488;entryDx=0;entryDy=0;entryPerimeter=0;" target="RMAeVSShHTEY-Qpviwvw-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -185,6 +185,8 @@ For portfolio purposes, a monorepo allows showcasing **end-to-end architecture, 
 
 ## Testing Strategy
 
+![All tests passing](/docs/images/order-accept-tests.png)
+
 This repository applies a **layered testing approach**:
 
 ### Unit Tests

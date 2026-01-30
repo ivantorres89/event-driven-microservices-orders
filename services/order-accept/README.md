@@ -186,6 +186,35 @@ are applied around external infrastructure dependencies to prevent resource exha
 
 ---
 
+## Resilience
+
+---
+
+## Resilience
+
+This service relies on critical external infrastructure to maintain traceability and operate the workflow:
+
+- **Redis**: required to record the workflow's transient state (`ACCEPTED`) and enable downstream traceability.
+- **Message broker (RabbitMQ on-premises / Azure Service Bus in production)**: required to publish the `OrderAccepted` event.
+
+### Applied Policy (Polly)
+#### RabbitMQ (publisher)
+- **Short timeouts** per attempt to avoid blocked threads.
+- **Retries**: 3 retries with backoff (200ms, 500ms, 1s).
+- **Publisher Confirms** enabled to increase publishing guarantees.
+- If the service fails to publish after retries, the broker is considered unavailable and the request is **rejected** (HTTP **503**).
+
+#### Redis (Workflow State)
+- Short timeouts per attempt.
+- Retries: 2 retries with backoff (transients only).
+- Circuit breaker (fail-fast) to prevent Redis from becoming overloaded in case of degradation.
+- Redis is critical: if the transient state cannot be persisted, the request is rejected (HTTP 503).
+
+### HTTP Error Handling
+- `DependencyUnavailableException` is caught in middleware and a 503 Service Unavailable error is returned with a standard JSON payload.
+
+> Note: Outbox is not implemented in this microservice. The current strategy is fail-fast to maintain consistency and traceability.
+
 ## API Documentation (OpenAPI)
 
 In development and test environments, this service exposes an interactive **Swagger UI**
@@ -242,6 +271,8 @@ to prevent cascading failures and unnecessary restarts.
 ---
 
 ## Testing Strategy
+
+![All tests passing](../../docs/images/order-accept-tests.png)
 
 ### Unit Tests
 
