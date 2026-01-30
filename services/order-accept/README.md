@@ -103,6 +103,51 @@ Contracts are treated as **public interfaces** and evolve in a backward-compatib
 
 ---
 
+## HTTP API
+
+### `POST /api/orders/accept`
+
+Accepts an incoming order request and immediately enqueues it for asynchronous processing.
+
+This endpoint is intentionally **non-blocking**: it does not persist business data or wait for downstream processing to complete.
+
+#### Request
+
+**Headers**
+- `Content-Type: application/json`
+
+**Body**
+
+{
+  "customerId": "customer-123",
+  "items": [
+    { "productId": "product-abc", "quantity": 2 }
+  ]
+}
+
+#### Response
+
+- Success — 202 Accepted
+
+The service generates a CorrelationId and returns it immediately.
+
+#### Headers
+
+X-Correlation-Id: <uuid>
+
+#### Body
+
+{
+  "correlationId": "b2cdbb90-3efc-4a79-b095-3d3d2b8c2ce2"
+}
+
+#### Error responses
+- 400 Bad Request
+- 503 Service Unavailable
+
+
+---
+
 ## Messaging
 
 - Publishes messages to a **FIFO message queue**
