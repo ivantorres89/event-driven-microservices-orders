@@ -2,6 +2,7 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 using OrderAccept.Api.Endpoints;
+using OrderAccept.Api.Middleware;
 using OrderAccept.Application;
 using OrderAccept.Infrastructure;
 using Serilog;
@@ -82,6 +83,9 @@ public partial class Program
         }
 
         app.UseSerilogRequestLogging();
+
+        // Convert critical dependency outages (Redis/RabbitMQ) into 503 responses.
+        app.UseDependencyUnavailableHandling();
 
         app.UseHttpsRedirection();
         app.UseAuthorization();

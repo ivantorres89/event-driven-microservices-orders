@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using OrderAccept.Application.Abstractions;
 using OrderAccept.Application.Commands;
 using OrderAccept.Application.Contracts.Events;
-using OrderAccept.Shared.Correlation;
 using OrderAccept.Shared.Workflow;
 
 namespace OrderAccept.Application.Handlers;

@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Polly" Version="7.2.4" />
     <PackageReference Include="OpenTelemetry.Instrumentation.StackExchangeRedis" Version="1.15.0-beta.1" />
     <PackageReference Include="RabbitMQ.Client" Version="7.2.0" />
     <PackageReference Include="RabbitMQ.Client.OpenTelemetry" Version="1.0.0-rc.2" />

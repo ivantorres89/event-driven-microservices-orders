@@ -1,12 +1,15 @@
-using System.Text;
-using System.Text.Json;
+using Castle.Core.Logging;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using OpenTelemetry;
 using OrderAccept.Infrastructure.Messaging;
+using OrderAccept.Infrastructure.Workflow;
 using OrderAccept.Shared.Correlation;
 using RabbitMQ.Client;
+using System.Text;
+using System.Text.Json;
 
 namespace OrderAccept.UnitTests;
 
@@ -27,6 +30,7 @@ public sealed class RabbitMqMessagePublisherTests
         var factory = new Mock<IConnectionFactory>(MockBehavior.Strict);
         var connection = new Mock<IConnection>(MockBehavior.Strict);
         var channel = new Mock<IChannel>(MockBehavior.Strict);
+        var logger = Mock.Of<ILogger<RabbitMqMessagePublisher>>();
 
         factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(connection.Object);
@@ -72,7 +76,7 @@ public sealed class RabbitMqMessagePublisherTests
 
         try
         {
-            var publisher = new RabbitMqMessagePublisher(options, factory.Object);
+            var publisher = new RabbitMqMessagePublisher(options, logger, factory.Object);
             var message = new TestMessage("id-1");
 
             // Act
@@ -109,6 +113,7 @@ public sealed class RabbitMqMessagePublisherTests
         var factory = new Mock<IConnectionFactory>(MockBehavior.Strict);
         var connection = new Mock<IConnection>(MockBehavior.Strict);
         var channel = new Mock<IChannel>(MockBehavior.Strict);
+        var logger = Mock.Of<ILogger<RabbitMqMessagePublisher>>();
 
         factory.Setup(f => f.CreateConnectionAsync(It.IsAny<CancellationToken>()))
             .ReturnsAsync(connection.Object);
@@ -130,7 +135,7 @@ public sealed class RabbitMqMessagePublisherTests
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Queue declare failed"));
 
-        var publisher = new RabbitMqMessagePublisher(options, factory.Object);
+        var publisher = new RabbitMqMessagePublisher(options, logger, factory.Object);
 
         // Act
         var act = async () => await publisher.PublishAsync(new TestMessage("id-1"));

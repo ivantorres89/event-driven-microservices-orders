@@ -20,7 +20,8 @@ namespace OrderAccept.Api.Endpoints
                 .WithName("AcceptOrder")
                 .WithSummary("Accept an order")
                 .Produces(StatusCodes.Status202Accepted)
-                .Produces(StatusCodes.Status400BadRequest);
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status503ServiceUnavailable);
         }
 
         private static async Task<IResult> AcceptOrder(
