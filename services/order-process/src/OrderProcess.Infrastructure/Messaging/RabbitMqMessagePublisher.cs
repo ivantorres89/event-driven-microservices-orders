@@ -83,7 +83,7 @@ public sealed class RabbitMqMessagePublisher : IMessagePublisher
             kind: ActivityKind.Producer);
 
         activity?.SetTag("messaging.system", "rabbitmq");
-        activity?.SetTag("messaging.destination", _options.QueueName);
+        activity?.SetTag("messaging.destination", _options.OutboundQueueName);
         activity?.SetTag("messaging.destination_kind", "queue");
         activity?.SetTag("messaging.operation", "publish");
         activity?.SetTag("messaging.message_type", typeof(T).FullName);
@@ -109,7 +109,7 @@ public sealed class RabbitMqMessagePublisher : IMessagePublisher
 
                 // Declare queue (idempotent)
                 await channel.QueueDeclareAsync(
-                    queue: _options.QueueName,
+                    queue: _options.OutboundQueueName,
                     durable: true,
                     exclusive: false,
                     autoDelete: false,
@@ -139,7 +139,7 @@ public sealed class RabbitMqMessagePublisher : IMessagePublisher
 
                 await channel.BasicPublishAsync(
                     exchange: "",
-                    routingKey: routingKey ?? _options.QueueName,
+                    routingKey: routingKey ?? _options.OutboundQueueName,
                     mandatory: false,
                     basicProperties: props,
                     body: body,

@@ -117,6 +117,37 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
         }
     }
 
+    public async Task SetCompletedAsync(CorrelationId correlationId, long orderId, CancellationToken cancellationToken = default)
+    {
+        var db = _redis.GetDatabase();
+        var key = WorkflowRedisKeys.OrderStatus(correlationId);
+        var value = $"COMPLETED|{orderId}";
+
+        using var activity = Observability.ActivitySource.StartActivity("Redis SET", ActivityKind.Client);
+        activity?.SetTag("db.system", "redis");
+        activity?.SetTag("db.operation", "SET");
+        activity?.SetTag("db.statement", $"SET {key}");
+        activity?.SetTag("db.redis.key", key);
+        activity?.SetTag("workflow.status", "COMPLETED");
+        activity?.SetTag("order.id", orderId);
+
+        try
+        {
+            await _redisPolicy.ExecuteAsync(async ct =>
+            {
+                await db.StringSetAsync(key, value, _options.Ttl);
+            }, cancellationToken);
+
+            _logger.LogInformation("Set workflow status in Redis: {Key}={Value} (ttl={Ttl})",
+                key, value, _options.Ttl);
+        }
+        catch (Exception ex) when (ex is RedisException or TimeoutRejectedException or BrokenCircuitException)
+        {
+            throw new DependencyUnavailableException("Redis is unavailable. Failed to set workflow state.", ex);
+        }
+    }
+
+
     public async Task RemoveStatusAsync(CorrelationId correlationId, CancellationToken cancellationToken = default)
     {
         var db = _redis.GetDatabase();
