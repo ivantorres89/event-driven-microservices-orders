@@ -30,30 +30,30 @@ BEGIN TRY
 
     INSERT INTO @Products (ExternalProductId, Name, Category, BillingPeriod, Price)
     VALUES
-        (N'SUBS-0001', N'Contoso Factura Fácil — Starter (Mensual)', N'Billing', N'Monthly', 9.99),
-        (N'SUBS-0002', N'Contoso Factura Fácil — Pro (Mensual)', N'Billing', N'Monthly', 19.99),
-        (N'SUBS-0003', N'Contoso Factura Fácil — Business (Mensual)', N'Billing', N'Monthly', 39.99),
-        (N'SUBS-0004', N'Contoso Factura Fácil — Starter (Anual)', N'Billing', N'Annual', 99.99),
-        (N'SUBS-0005', N'Contoso Factura Fácil — Pro (Anual)', N'Billing', N'Annual', 199.99),
-        (N'SUBS-0006', N'Contoso Recordatorios de Cobro — Mensual', N'Billing', N'Monthly', 5.99),
+        (N'SUBS-0001', N'Contoso Easy Invoice — Starter (Monthly)', N'Billing', N'Monthly', 9.99),
+        (N'SUBS-0002', N'Contoso Easy Invoice — Pro (Monthly)', N'Billing', N'Monthly', 19.99),
+        (N'SUBS-0003', N'Contoso Easy Invoice — Business (Monthly)', N'Billing', N'Monthly', 39.99),
+        (N'SUBS-0004', N'Contoso Easy Invoice — Starter (Annual)', N'Billing', N'Annual', 99.99),
+        (N'SUBS-0005', N'Contoso Easy Invoice — Pro (Annual)', N'Billing', N'Annual', 199.99),
+        (N'SUBS-0006', N'Contoso Payment Reminders — Monthly', N'Billing', N'Monthly', 5.99),
 
-        (N'SUBS-0007', N'Contoso Captura de Tickets — Mensual', N'Expenses', N'Monthly', 6.99),
-        (N'SUBS-0008', N'Contoso Captura de Tickets — Anual', N'Expenses', N'Annual', 69.99),
-        (N'SUBS-0009', N'Contoso Gastos por Categorías — Mensual', N'Expenses', N'Monthly', 7.99),
-        (N'SUBS-0010', N'Contoso Gastos por Categorías — Anual', N'Expenses', N'Annual', 79.99),
+        (N'SUBS-0007', N'Contoso Receipt Capture — Monthly', N'Expenses', N'Monthly', 6.99),
+        (N'SUBS-0008', N'Contoso Receipt Capture — Annual', N'Expenses', N'Annual', 69.99),
+        (N'SUBS-0009', N'Contoso Categorized Expenses — Monthly', N'Expenses', N'Monthly', 7.99),
+        (N'SUBS-0010', N'Contoso Categorized Expenses — Annual', N'Expenses', N'Annual', 79.99),
 
-        (N'SUBS-0011', N'Contoso Calendario Fiscal — Mensual', N'Tax', N'Monthly', 4.99),
-        (N'SUBS-0012', N'Contoso Calendario Fiscal — Anual', N'Tax', N'Annual', 49.99),
-        (N'SUBS-0013', N'Contoso IVA Trimestral Asistido — Mensual', N'Tax', N'Monthly', 14.99),
-        (N'SUBS-0014', N'Contoso IRPF Trimestral Asistido — Mensual', N'Tax', N'Monthly', 14.99),
+        (N'SUBS-0011', N'Contoso Tax Calendar — Monthly', N'Tax', N'Monthly', 4.99),
+        (N'SUBS-0012', N'Contoso Tax Calendar — Annual', N'Tax', N'Annual', 49.99),
+        (N'SUBS-0013', N'Contoso Quarterly VAT Assistant — Monthly', N'Tax', N'Monthly', 14.99),
+        (N'SUBS-0014', N'Contoso Quarterly Income Tax Assistant — Monthly', N'Tax', N'Monthly', 14.99),
 
-        (N'SUBS-0015', N'Contoso Panel de Ventas — Mensual', N'Reporting', N'Monthly', 11.99),
-        (N'SUBS-0016', N'Contoso Panel de Ventas — Anual', N'Reporting', N'Annual', 119.99),
-        (N'SUBS-0017', N'Contoso Panel de Tesorería — Mensual', N'Reporting', N'Monthly', 12.99),
-        (N'SUBS-0018', N'Contoso Panel de Tesorería — Anual', N'Reporting', N'Annual', 129.99),
+        (N'SUBS-0015', N'Contoso Sales Dashboard — Monthly', N'Reporting', N'Monthly', 11.99),
+        (N'SUBS-0016', N'Contoso Sales Dashboard — Annual', N'Reporting', N'Annual', 119.99),
+        (N'SUBS-0017', N'Contoso Cash Flow Dashboard — Monthly', N'Reporting', N'Monthly', 12.99),
+        (N'SUBS-0018', N'Contoso Cash Flow Dashboard — Annual', N'Reporting', N'Annual', 129.99),
 
-        (N'SUBS-0019', N'Contoso Multiusuario (hasta 3) — Mensual', N'Collaboration', N'Monthly', 9.99),
-        (N'SUBS-0020', N'Contoso Soporte Prioritario — Mensual', N'Collaboration', N'Monthly', 8.99);
+        (N'SUBS-0019', N'Contoso Multi-user (up to 3) — Monthly', N'Collaboration', N'Monthly', 9.99),
+        (N'SUBS-0020', N'Contoso Priority Support — Monthly', N'Collaboration', N'Monthly', 8.99);
 
     INSERT INTO dbo.Product (ExternalProductId, Name, Category, BillingPeriod, IsSubscription, Price, IsActive)
     SELECT p.ExternalProductId, p.Name, p.Category, p.BillingPeriod, 1, p.Price, 1
@@ -83,17 +83,17 @@ BEGIN TRY
 
             DECLARE @name NVARCHAR(200) = N'Contoso ' +
                 CASE (@i % 10)
-                    WHEN 0 THEN N'Conciliación Bancaria'
-                    WHEN 1 THEN N'Libro Mayor'
-                    WHEN 2 THEN N'Gestión de Activos'
-                    WHEN 3 THEN N'Anticipos y Provisiones'
-                    WHEN 4 THEN N'Alertas de Riesgo'
-                    WHEN 5 THEN N'Plantillas de Factura'
-                    WHEN 6 THEN N'Exportación CSV/Excel'
-                    WHEN 7 THEN N'Reglas de Categoría'
-                    WHEN 8 THEN N'Checklist Fiscal'
-                    ELSE N'Panel Operativo'
-                END + N' — ' + CASE WHEN @period = N'Monthly' THEN N'Mensual' ELSE N'Anual' END;
+                    WHEN 0 THEN N'Bank Reconciliation'
+                    WHEN 1 THEN N'General Ledger'
+                    WHEN 2 THEN N'Asset Management'
+                    WHEN 3 THEN N'Prepayments & Provisions'
+                    WHEN 4 THEN N'Risk Alerts'
+                    WHEN 5 THEN N'Invoice Templates'
+                    WHEN 6 THEN N'CSV/Excel Export'
+                    WHEN 7 THEN N'Categorization Rules'
+                    WHEN 8 THEN N'Tax Checklist'
+                    ELSE N'Operations Dashboard'
+                END + N' — ' + CASE WHEN @period = N'Monthly' THEN N'Monthly' ELSE N'Annual' END;
 
             DECLARE @price DECIMAL(10,2) = CAST((5 + (@i % 25)) + CASE WHEN @period = N'Annual' THEN 60 ELSE 0 END AS DECIMAL(10,2));
 
@@ -126,18 +126,18 @@ BEGIN TRY
     OUTPUT inserted.Id, inserted.ExternalCustomerId INTO @Customers (Id, ExternalCustomerId)
     SELECT v.ExternalCustomerId, v.FirstName, v.LastName, v.Email, v.Phone, v.NationalId, v.DateOfBirth,
            v.AddressLine1, v.City, v.PostalCode, v.CountryCode
-    FROM (VALUES
-        (N'CUST-0001', N'Ana',    N'García',   N'ana.garcia@contoso.demo',    N'+34-600-000-001', N'11111111A', CAST('1990-01-10' AS DATE), N'Calle Mayor 1',   N'Madrid',    N'28001', N'ES'),
-        (N'CUST-0002', N'Luis',   N'Pérez',    N'luis.perez@contoso.demo',   N'+34-600-000-002', N'22222222B', CAST('1987-04-22' AS DATE), N'Gran Vía 10',     N'Madrid',    N'28013', N'ES'),
-        (N'CUST-0003', N'Marta',  N'López',    N'marta.lopez@contoso.demo',  N'+34-600-000-003', N'33333333C', CAST('1992-11-05' AS DATE), N'Av. Diagonal 50', N'Barcelona', N'08019', N'ES'),
-        (N'CUST-0004', N'Jorge',  N'Ruiz',     N'jorge.ruiz@contoso.demo',   N'+34-600-000-004', N'44444444D', CAST('1985-06-15' AS DATE), N'C/ Serrano 20',   N'Madrid',    N'28006', N'ES'),
-        (N'CUST-0005', N'Sofía',  N'Romero',   N'sofia.romero@contoso.demo', N'+34-600-000-005', N'55555555E', CAST('1995-09-30' AS DATE), N'C/ Toledo 7',     N'Madrid',    N'28005', N'ES'),
-        (N'CUST-0006', N'Diego',  N'Martín',   N'diego.martin@contoso.demo', N'+34-600-000-006', N'66666666F', CAST('1989-02-12' AS DATE), N'Ronda 3',         N'Valencia',  N'46001', N'ES'),
-        (N'CUST-0007', N'Paula',  N'Sánchez',  N'paula.sanchez@contoso.demo',N'+34-600-000-007', N'77777777G', CAST('1991-07-08' AS DATE), N'C/ Marina 12',    N'Barcelona', N'08005', N'ES'),
-        (N'CUST-0008', N'Carlos', N'Navarro',  N'carlos.navarro@contoso.demo',N'+34-600-000-008',N'88888888H', CAST('1983-12-25' AS DATE), N'Plaza 4',         N'Sevilla',   N'41001', N'ES'),
-        (N'CUST-0009', N'Elena',  N'Torres',   N'elena.torres@contoso.demo', N'+34-600-000-009', N'99999999J', CAST('1993-03-19' AS DATE), N'C/ Sol 9',        N'Málaga',    N'29001', N'ES'),
-        (N'CUST-0010', N'Miguel', N'Ortega',   N'miguel.ortega@contoso.demo',N'+34-600-000-010', N'10101010K', CAST('1988-08-02' AS DATE), N'Av. Norte 6',     N'Bilbao',    N'48001', N'ES')
-    ) AS v(ExternalCustomerId, FirstName, LastName, Email, Phone, NationalId, DateOfBirth, AddressLine1, City, PostalCode, CountryCode)
+        FROM (VALUES
+            (N'CUST-0001', N'Alice',   N'Johnson',   N'alice.johnson@contoso.demo',   N'+1-206-555-0001', N'NID-0001', CAST('1990-01-10' AS DATE), N'100 Pike St', N'Seattle', N'98101', N'US'),
+            (N'CUST-0002', N'Bob',   N'Smith',   N'bob.smith@contoso.demo',   N'+1-415-555-0002', N'NID-0002', CAST('1987-04-22' AS DATE), N'200 Market St', N'San Francisco', N'94105', N'US'),
+            (N'CUST-0003', N'Carol',   N'Davis',   N'carol.davis@contoso.demo',   N'+1-212-555-0003', N'NID-0003', CAST('1992-11-05' AS DATE), N'350 Madison Ave', N'New York', N'10017', N'US'),
+            (N'CUST-0004', N'David',   N'Wilson',   N'david.wilson@contoso.demo',   N'+44-20-7946-0004', N'NID-0004', CAST('1985-06-15' AS DATE), N'10 Downing St', N'London', N'SW1A 2AA', N'GB'),
+            (N'CUST-0005', N'Emma',   N'Brown',   N'emma.brown@contoso.demo',   N'+44-161-555-0005', N'NID-0005', CAST('1995-09-30' AS DATE), N'1 Deansgate', N'Manchester', N'M3 1AZ', N'GB'),
+            (N'CUST-0006', N'Frank',   N'Miller',   N'frank.miller@contoso.demo',   N'+1-416-555-0006', N'NID-0006', CAST('1989-02-12' AS DATE), N'20 King St W', N'Toronto', N'M5H 1C4', N'CA'),
+            (N'CUST-0007', N'Grace',   N'Taylor',   N'grace.taylor@contoso.demo',   N'+61-2-5550-0007', N'NID-0007', CAST('1991-07-08' AS DATE), N'5 Martin Pl', N'Sydney', N'2000', N'AU'),
+            (N'CUST-0008', N'Henry',   N'Anderson',   N'henry.anderson@contoso.demo',   N'+49-30-5550-0008', N'NID-0008', CAST('1983-12-25' AS DATE), N'Unter den Linden 77', N'Berlin', N'10117', N'DE'),
+            (N'CUST-0009', N'Irene',   N'Thomas',   N'irene.thomas@contoso.demo',   N'+33-1-5550-0009', N'NID-0009', CAST('1993-03-19' AS DATE), N'12 Rue de Rivoli', N'Paris', N'75001', N'FR'),
+            (N'CUST-0010', N'Jack',   N'Moore',   N'jack.moore@contoso.demo',   N'+39-06-5550-0010', N'NID-0010', CAST('1988-08-02' AS DATE), N'Via del Corso 10', N'Rome', N'00186', N'IT')
+        ) AS v(ExternalCustomerId, FirstName, LastName, Email, Phone, NationalId, DateOfBirth, AddressLine1, City, PostalCode, CountryCode)
     WHERE NOT EXISTS (
         SELECT 1 FROM dbo.Customer c WHERE c.ExternalCustomerId = v.ExternalCustomerId
     );
