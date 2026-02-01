@@ -3,6 +3,7 @@ using OrderProcess.Application.Abstractions;
 using OrderProcess.Application.Abstractions.Persistence;
 using OrderProcess.Application.Commands;
 using OrderProcess.Application.Contracts.Events;
+using OrderProcess.Persistence.Abstractions.Entities;
 using OrderProcess.Shared.Workflow;
 
 namespace OrderProcess.Application.Handlers;
@@ -10,20 +11,20 @@ namespace OrderProcess.Application.Handlers;
 public sealed class ProcessOrderHandler : IProcessOrderHandler
 {
     private readonly IOrderWorkflowStateStore _workflowState;
-    private readonly IOrderOltpWriter _oltpWriter;
+    private readonly IContosoUnitOfWork _uow;
     private readonly IMessagePublisher _publisher;
     private readonly ICorrelationIdProvider _correlationIdProvider;
     private readonly ILogger<ProcessOrderHandler> _logger;
 
     public ProcessOrderHandler(
         IOrderWorkflowStateStore workflowState,
-        IOrderOltpWriter oltpWriter,
+        IContosoUnitOfWork uow,
         IMessagePublisher publisher,
         ICorrelationIdProvider correlationIdProvider,
         ILogger<ProcessOrderHandler> logger)
     {
         _workflowState = workflowState;
-        _oltpWriter = oltpWriter;
+        _uow = uow;
         _publisher = publisher;
         _correlationIdProvider = correlationIdProvider;
         _logger = logger;
@@ -44,18 +45,84 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
             await _workflowState.SetStatusAsync(command.Event.CorrelationId, OrderWorkflowStatus.Processing, cancellationToken);
             _logger.LogInformation("Updated workflow state in Redis: {Status}", OrderWorkflowStatus.Processing);
 
-            // 2) OLTP transaction (ToDo real EF+SQL in next iteration)
-            var persisted = await _oltpWriter.PersistAsync(command.Event, cancellationToken);
-            _logger.LogInformation("Order persisted. Generated OrderId={OrderId}", persisted.OrderId);
+            // 2) OLTP transaction (Azure SQL / SQL Server)
+            //    Defensive idempotency: if the same CorrelationId is processed twice, we reuse the already persisted OrderId.
+            var orderId = await PersistOrderAsync(command.Event, cancellationToken);
+            _logger.LogInformation("Order persisted (or already existed). OrderId={OrderId}", orderId);
 
             // 3) Redis: set transient workflow state -> COMPLETED + OrderId
-            await _workflowState.SetCompletedAsync(command.Event.CorrelationId, persisted.OrderId, cancellationToken);
-            _logger.LogInformation("Updated workflow state in Redis: COMPLETED (OrderId={OrderId})", persisted.OrderId);
+            await _workflowState.SetCompletedAsync(command.Event.CorrelationId, orderId, cancellationToken);
+            _logger.LogInformation("Updated workflow state in Redis: COMPLETED (OrderId={OrderId})", orderId);
 
             // 4) Publish integration event
-            var @event = new OrderProcessedEvent(command.Event.CorrelationId, persisted.OrderId);
+            var @event = new OrderProcessedEvent(command.Event.CorrelationId, orderId);
             await _publisher.PublishAsync(@event, routingKey: null, cancellationToken);
             _logger.LogInformation("Published OrderProcessed integration event");
         }
+    }
+
+    private async Task<long> PersistOrderAsync(OrderAcceptedEvent accepted, CancellationToken cancellationToken)
+    {
+        var correlationId = accepted.CorrelationId.ToString();
+
+        // Idempotency by CorrelationId (unique key)
+        var existing = await _uow.Orders.GetByCorrelationIdAsync(correlationId, cancellationToken);
+        if (existing is not null)
+            return existing.Id;
+
+        // Upsert Customer by external id
+        var customer = await _uow.Customers.GetByExternalIdAsync(accepted.Order.CustomerId, cancellationToken);
+        if (customer is null)
+        {
+            customer = new Customer
+            {
+                ExternalCustomerId = accepted.Order.CustomerId,
+                FirstName = "John",
+                LastName = "Doe",
+                Email = "john.doe@example.invalid",
+                PhoneNumber = "+00-000-000-000",
+                NationalId = "00000000X",
+                DateOfBirth = null,
+                AddressLine1 = "",
+                City = "",
+                PostalCode = "",
+                CountryCode = "",
+                CreatedUtc = DateTime.UtcNow
+            };
+            _uow.Customers.Add(customer);
+        }
+
+        var order = new Order
+        {
+            CorrelationId = correlationId,
+            Customer = customer,
+            CreatedUtc = DateTime.UtcNow
+        };
+        _uow.Orders.Add(order);
+
+        foreach (var i in accepted.Order.Items)
+        {
+            var product = await _uow.Products.GetByExternalIdAsync(i.ProductId, cancellationToken);
+            if (product is null)
+            {
+                product = new Product
+                {
+                    ExternalProductId = i.ProductId,
+                    Name = $"Product {i.ProductId}",
+                    CreatedUtc = DateTime.UtcNow
+                };
+                _uow.Products.Add(product);
+            }
+
+            _uow.OrderItems.Add(new OrderItem
+            {
+                Order = order,
+                Product = product,
+                Quantity = i.Quantity
+            });
+        }
+
+        await _uow.SaveChangesAsync(cancellationToken);
+        return order.Id;
     }
 }

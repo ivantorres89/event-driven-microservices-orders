@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\OrderProcess.Shared\OrderProcess.Shared.csproj" />
+    <ProjectReference Include="..\OrderProcess.Persistence.Abstractions\OrderProcess.Persistence.Abstractions.csproj" />
   </ItemGroup>
 
   <ItemGroup>

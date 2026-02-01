@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\OrderProcess.Application\OrderProcess.Application.csproj" />
     <ProjectReference Include="..\OrderProcess.Shared\OrderProcess.Shared.csproj" />
+    <ProjectReference Include="..\OrderProcess.Persistence\OrderProcess.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -8,17 +9,21 @@ using Serilog.Exceptions;
 
 namespace OrderProcess.Worker;
 
+/// <summary>
+/// Pure background worker host (no HTTP pipeline / no ASP.NET Core).
+///
+/// Kubernetes liveness/readiness are handled via K8s strategy (not via in-process HTTP health endpoints).
+/// </summary>
 public partial class Program
 {
     public static void Main(string[] args)
     {
-        // We host a minimal ASP.NET Core pipeline only for health endpoints (K8s readiness/liveness).
-        var builder = WebApplication.CreateBuilder(args);
+        var builder = Host.CreateApplicationBuilder(args);
 
         // --- Logging (Serilog) ---
-        builder.Host.UseSerilog((ctx, services, cfg) =>
+        builder.Services.AddSerilog((services, cfg) =>
         {
-            cfg.ReadFrom.Configuration(ctx.Configuration)
+            cfg.ReadFrom.Configuration(builder.Configuration)
                .Enrich.FromLogContext()
                .Enrich.WithExceptionDetails()
                .Enrich.WithEnvironmentName()
@@ -27,8 +32,6 @@ public partial class Program
         });
 
         // --- Services ---
-        builder.Services.AddHealthChecks();
-
         builder.Services
             .AddOrderProcessApplication()
             .AddOrderProcessInfrastructure(builder.Configuration, builder.Environment);
@@ -47,7 +50,6 @@ public partial class Program
                 .WithTracing(tracing =>
                 {
                     tracing
-                        .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddProcessor(new Observability.CorrelationIdActivityProcessor())
                         .AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));
@@ -55,21 +57,14 @@ public partial class Program
                 .WithMetrics(metrics =>
                 {
                     metrics
-                        .AddAspNetCoreInstrumentation()
                         .AddHttpClientInstrumentation()
                         .AddRuntimeInstrumentation()
+                        .AddProcessInstrumentation()
                         .AddOtlpExporter(o => o.Endpoint = new Uri(otlpEndpoint));
                 });
         }
 
-        var app = builder.Build();
-
-        app.UseSerilogRequestLogging();
-
-        // Health checks (simple for orchestration)
-        app.MapHealthChecks("/health/live");
-        app.MapHealthChecks("/health/ready");
-
-        app.Run();
+        var host = builder.Build();
+        host.Run();
     }
 }

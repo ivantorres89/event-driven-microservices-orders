@@ -3,11 +3,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OrderProcess.Application.Abstractions;
 using OrderProcess.Application.Abstractions.Messaging;
-using OrderProcess.Application.Abstractions.Persistence;
 using OrderProcess.Infrastructure.Correlation;
 using OrderProcess.Infrastructure.Messaging;
-using OrderProcess.Infrastructure.Services;
 using OrderProcess.Infrastructure.Workflow;
+using OrderProcess.Persistence;
 using StackExchange.Redis;
 
 namespace OrderProcess.Infrastructure;
@@ -33,8 +32,8 @@ public static class DependencyInjection
         // CorrelationIdProvider is scoped (per message scope)
         services.AddScoped<ICorrelationIdProvider, CorrelationIdProvider>();
 
-        // Temporary OLTP writer (next iteration: EF Core + SQL Server/Azure SQL)
-        services.AddScoped<IOrderOltpWriter, InMemoryOrderOltpWriter>();
+        // Contoso OLTP persistence (EF Core + SQL Server/Azure SQL)
+        services.AddOrderProcessPersistence(configuration);
 
         // --- Messaging transport (env-based) ---
         if (environment.IsDevelopment())

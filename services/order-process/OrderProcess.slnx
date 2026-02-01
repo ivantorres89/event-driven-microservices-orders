@@ -2,6 +2,8 @@
   <Folder Name="/src/">
     <Project Path="src/OrderProcess.Worker/OrderProcess.Worker.csproj" Id="9a39b62d-7413-4577-9e1b-c95e93e7d693" />
     <Project Path="src/OrderProcess.Application/OrderProcess.Application.csproj" Id="aa368d07-3172-45b8-923b-5ab89fcc13ff" />
+    <Project Path="src/OrderProcess.Persistence.Abstractions/OrderProcess.Persistence.Abstractions.csproj" Id="f55bb33f-830d-4f8b-8d3a-1ab9c0c64f1b" />
+    <Project Path="src/OrderProcess.Persistence/OrderProcess.Persistence.csproj" Id="21f2bfb2-1b86-4b2b-92a5-1d10662d2d7a" />
     <Project Path="src/OrderProcess.Infrastructure/OrderProcess.Infrastructure.csproj" Id="b4c0679e-51be-4177-a741-7156e4fb7547" />
     <Project Path="src/OrderProcess.Shared/OrderProcess.Shared.csproj" Id="48c0d94c-a2a4-4d0f-9a09-564c89d0e773" />
   </Folder>
