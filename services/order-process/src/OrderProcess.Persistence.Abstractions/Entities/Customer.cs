@@ -31,7 +31,15 @@ public sealed class Customer
     public string PostalCode { get; set; } = string.Empty;
     public string CountryCode { get; set; } = string.Empty;
 
-    public DateTime CreatedUtc { get; set; }
+    /// <summary>
+    /// Set by the database (DEFAULT SYSUTCDATETIME()).
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// Set by the database (DEFAULT SYSUTCDATETIME()) and maintained by a DB trigger on UPDATE.
+    /// </summary>
+    public DateTime UpdatedAt { get; set; }
 
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

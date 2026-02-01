@@ -86,8 +86,7 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
                 AddressLine1 = "",
                 City = "",
                 PostalCode = "",
-                CountryCode = "",
-                CreatedUtc = DateTime.UtcNow
+                CountryCode = ""
             };
             _uow.Customers.Add(customer);
         }
@@ -95,8 +94,7 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
         var order = new Order
         {
             CorrelationId = correlationId,
-            Customer = customer,
-            CreatedUtc = DateTime.UtcNow
+            Customer = customer
         };
         _uow.Orders.Add(order);
 
@@ -109,7 +107,11 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
                 {
                     ExternalProductId = i.ProductId,
                     Name = $"Product {i.ProductId}",
-                    CreatedUtc = DateTime.UtcNow
+                    Category = "Uncategorized",
+                    BillingPeriod = "Monthly",
+                    IsSubscription = true,
+                    Price = 0m,
+                    IsActive = true
                 };
                 _uow.Products.Add(product);
             }

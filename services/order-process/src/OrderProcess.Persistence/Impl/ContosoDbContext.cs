@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using OrderProcess.Persistence.Abstractions.Entities;
 
 namespace OrderProcess.Persistence.Impl;
@@ -35,7 +36,17 @@ public sealed class ContosoDbContext : DbContext
             b.Property(x => x.PostalCode).HasMaxLength(20);
             b.Property(x => x.CountryCode).HasMaxLength(2);
 
-            b.Property(x => x.CreatedUtc).IsRequired();
+            var created = b.Property(x => x.CreatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAdd();
+            created.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            created.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+            var updated = b.Property(x => x.UpdatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAddOrUpdate();
+            updated.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            updated.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
         });
 
         // --- Product (Item) ---
@@ -49,7 +60,24 @@ public sealed class ContosoDbContext : DbContext
             b.HasIndex(x => x.ExternalProductId).IsUnique();
 
             b.Property(x => x.Name).HasMaxLength(200).IsRequired();
-            b.Property(x => x.CreatedUtc).IsRequired();
+
+            b.Property(x => x.Category).HasMaxLength(100).IsRequired();
+            b.Property(x => x.BillingPeriod).HasMaxLength(16).IsRequired();
+            b.Property(x => x.IsSubscription).IsRequired();
+            b.Property(x => x.Price).HasColumnType("decimal(10,2)").IsRequired();
+            b.Property(x => x.IsActive).IsRequired();
+
+            var created = b.Property(x => x.CreatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAdd();
+            created.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            created.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+            var updated = b.Property(x => x.UpdatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAddOrUpdate();
+            updated.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            updated.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
         });
 
         // --- Order ---
@@ -62,7 +90,17 @@ public sealed class ContosoDbContext : DbContext
             b.Property(x => x.CorrelationId).HasMaxLength(64).IsRequired();
             b.HasIndex(x => x.CorrelationId).IsUnique();
 
-            b.Property(x => x.CreatedUtc).IsRequired();
+            var created = b.Property(x => x.CreatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAdd();
+            created.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            created.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+            var updated = b.Property(x => x.UpdatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAddOrUpdate();
+            updated.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            updated.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
 
             b.HasOne(x => x.Customer)
                 .WithMany(x => x.Orders)
@@ -78,6 +116,18 @@ public sealed class ContosoDbContext : DbContext
             b.Property(x => x.Id).ValueGeneratedOnAdd();
 
             b.Property(x => x.Quantity).IsRequired();
+
+            var created = b.Property(x => x.CreatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAdd();
+            created.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            created.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
+
+            var updated = b.Property(x => x.UpdatedAt)
+                .HasDefaultValueSql("SYSUTCDATETIME()")
+                .ValueGeneratedOnAddOrUpdate();
+            updated.Metadata.SetBeforeSaveBehavior(PropertySaveBehavior.Ignore);
+            updated.Metadata.SetAfterSaveBehavior(PropertySaveBehavior.Ignore);
 
             b.HasOne(x => x.Order)
                 .WithMany(x => x.Items)

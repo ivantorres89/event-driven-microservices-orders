@@ -11,4 +11,14 @@ public sealed class OrderItem
     public Product? Product { get; set; }
 
     public int Quantity { get; set; }
+
+    /// <summary>
+    /// Set by the database (DEFAULT SYSUTCDATETIME()).
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// Set by the database (DEFAULT SYSUTCDATETIME()) and maintained by a DB trigger on UPDATE.
+    /// </summary>
+    public DateTime UpdatedAt { get; set; }
 }

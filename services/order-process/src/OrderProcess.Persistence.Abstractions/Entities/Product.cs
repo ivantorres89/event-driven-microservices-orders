@@ -15,7 +15,32 @@ public sealed class Product
 
     public string Name { get; set; } = string.Empty;
 
-    public DateTime CreatedUtc { get; set; }
+    /// <summary>
+    /// Demo-friendly classification.
+    /// Examples: Billing, Expenses, Tax, Reporting, Collaboration.
+    /// </summary>
+    public string Category { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Monthly / Annual (kept as string for demo simplicity).
+    /// </summary>
+    public string BillingPeriod { get; set; } = "Monthly";
+
+    public bool IsSubscription { get; set; } = true;
+
+    public decimal Price { get; set; }
+
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Set by the database (DEFAULT SYSUTCDATETIME()).
+    /// </summary>
+    public DateTime CreatedAt { get; set; }
+
+    /// <summary>
+    /// Set by the database (DEFAULT SYSUTCDATETIME()) and maintained by a DB trigger on UPDATE.
+    /// </summary>
+    public DateTime UpdatedAt { get; set; }
 
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }
