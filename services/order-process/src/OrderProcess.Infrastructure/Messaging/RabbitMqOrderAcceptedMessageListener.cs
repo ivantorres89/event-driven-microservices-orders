@@ -78,7 +78,7 @@ public sealed class RabbitMqOrderAcceptedMessageListener : BackgroundService, IO
         await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
     }
 
-    private async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea, CancellationToken ct)
+    internal async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea, CancellationToken ct)
     {
         IDictionary<string, object> headers = ea.BasicProperties.Headers ?? new Dictionary<string, object>();
 

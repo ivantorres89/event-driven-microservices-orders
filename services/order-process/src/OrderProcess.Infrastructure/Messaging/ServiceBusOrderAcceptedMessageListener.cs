@@ -63,7 +63,23 @@ public sealed class ServiceBusOrderAcceptedMessageListener : BackgroundService, 
     {
         var sbMessage = args.Message;
 
-        var parent = Propagator.Extract(default, sbMessage.ApplicationProperties, ExtractHeaderValues);
+        var actions = new ProcessMessageActions(args, sbMessage);
+        await ProcessInboundAsync(
+            body: sbMessage.Body.ToString(),
+            applicationProperties: sbMessage.ApplicationProperties,
+            actions: actions,
+            cancellationToken: args.CancellationToken);
+    }
+
+    // Test-friendly seam so unit tests can validate the listener behaviour without having to
+    // instantiate ProcessMessageEventArgs (which has internal constructors).
+    internal async Task ProcessInboundAsync(
+        string body,
+        IReadOnlyDictionary<string, object> applicationProperties,
+        IServiceBusMessageActions actions,
+        CancellationToken cancellationToken)
+    {
+        var parent = Propagator.Extract(default, applicationProperties, ExtractHeaderValues);
 
         using var activity = Observability.ActivitySource.StartActivity(
             "servicebus.consume",
@@ -77,8 +93,7 @@ public sealed class ServiceBusOrderAcceptedMessageListener : BackgroundService, 
 
         try
         {
-            var json = sbMessage.Body.ToString();
-            var message = JsonSerializer.Deserialize<OrderAcceptedEvent>(json, _json);
+            var message = JsonSerializer.Deserialize<OrderAcceptedEvent>(body, _json);
             if (message is null)
                 throw new JsonException("Deserialized OrderAcceptedEvent is null.");
 
@@ -92,24 +107,24 @@ public sealed class ServiceBusOrderAcceptedMessageListener : BackgroundService, 
             using var scope = _scopeFactory.CreateScope();
             var handler = scope.ServiceProvider.GetRequiredService<IProcessOrderHandler>();
 
-            await handler.HandleAsync(new ProcessOrderCommand(message), args.CancellationToken);
+            await handler.HandleAsync(new ProcessOrderCommand(message), cancellationToken);
 
-            await args.CompleteMessageAsync(sbMessage, args.CancellationToken);
+            await actions.CompleteAsync(cancellationToken);
         }
         catch (JsonException ex)
         {
             _logger.LogError(ex, "Invalid message payload. Dead-lettering message.");
-            await args.DeadLetterMessageAsync(sbMessage, "invalid_payload", ex.Message, args.CancellationToken);
+            await actions.DeadLetterAsync("invalid_payload", ex.Message, cancellationToken);
         }
         catch (DependencyUnavailableException ex)
         {
             _logger.LogWarning(ex, "Critical dependency unavailable. Abandoning message for retry.");
-            await args.AbandonMessageAsync(sbMessage, cancellationToken: args.CancellationToken);
+            await actions.AbandonAsync(cancellationToken);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unhandled processing error. Abandoning message for retry.");
-            await args.AbandonMessageAsync(sbMessage, cancellationToken: args.CancellationToken);
+            await actions.AbandonAsync(cancellationToken);
         }
         finally
         {
@@ -139,4 +154,32 @@ public sealed class ServiceBusOrderAcceptedMessageListener : BackgroundService, 
         }
         await _client.DisposeAsync();
     }
+}
+
+internal interface IServiceBusMessageActions
+{
+    Task CompleteAsync(CancellationToken cancellationToken);
+    Task AbandonAsync(CancellationToken cancellationToken);
+    Task DeadLetterAsync(string reason, string description, CancellationToken cancellationToken);
+}
+
+internal sealed class ProcessMessageActions : IServiceBusMessageActions
+{
+    private readonly ProcessMessageEventArgs _args;
+    private readonly ServiceBusReceivedMessage _message;
+
+    public ProcessMessageActions(ProcessMessageEventArgs args, ServiceBusReceivedMessage message)
+    {
+        _args = args;
+        _message = message;
+    }
+
+    public Task CompleteAsync(CancellationToken cancellationToken) =>
+        _args.CompleteMessageAsync(_message, cancellationToken);
+
+    public Task AbandonAsync(CancellationToken cancellationToken) =>
+        _args.AbandonMessageAsync(_message, cancellationToken: cancellationToken);
+
+    public Task DeadLetterAsync(string reason, string description, CancellationToken cancellationToken) =>
+        _args.DeadLetterMessageAsync(_message, reason, description, cancellationToken);
 }
