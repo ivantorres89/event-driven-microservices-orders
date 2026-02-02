@@ -19,6 +19,8 @@ The implementation is inspired by **real-world cloud-native architectures**, foc
 
 ## Architecture Context
 
+![Architectural design](/design/k8s-websockets-apporders.jpg)
+
 This repository represents the **implementation layer** of a broader architectural case study.
 
 The **conceptual architecture, requirements, and design decisions** behind this system are documented in a separate repository:
@@ -185,7 +187,7 @@ For portfolio purposes, a monorepo allows showcasing **end-to-end architecture, 
 
 ## Testing Strategy
 
-![All tests passing](/docs/images/order-accept-tests.png)
+![All tests passing](/docs/images/order-process-tests.png)
 
 This repository applies a **layered testing approach**:
 
