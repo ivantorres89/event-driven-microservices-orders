@@ -325,6 +325,8 @@ Health checks should validate service availability (process + basic wiring), and
 
 ## Testing Strategy
 
+![All tests passing](../../docs/images/order-process-tests.png)
+
 ### Unit Tests
 Focus on:
 - Message handling behavior
