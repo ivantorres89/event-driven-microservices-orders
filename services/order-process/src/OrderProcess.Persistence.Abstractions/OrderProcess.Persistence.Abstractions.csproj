@@ -10,4 +10,9 @@
     <ProjectReference Include="..\OrderProcess.Shared\OrderProcess.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Repositories\Command\" />
+    <Folder Include="Repositories\Query\" />
+  </ItemGroup>
+
 </Project>

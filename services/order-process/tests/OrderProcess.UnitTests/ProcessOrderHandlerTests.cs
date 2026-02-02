@@ -40,15 +40,23 @@ public sealed class ProcessOrderHandlerTests
         var correlationIdProvider = new Mock<ICorrelationIdProvider>(MockBehavior.Strict);
         var logger = Mock.Of<ILogger<ProcessOrderHandler>>();
 
-        var customers = new Mock<ICustomerRepository>(MockBehavior.Strict);
-        var orders = new Mock<IOrderRepository>(MockBehavior.Strict);
-        var products = new Mock<IProductRepository>(MockBehavior.Strict);
-        var orderItems = new Mock<IOrderItemRepository>(MockBehavior.Strict);
+        var customerQueries = new Mock<ICustomerQueryRepository>(MockBehavior.Strict);
+        var customerCommands = new Mock<ICustomerCommandRepository>(MockBehavior.Strict);
+        var orderQueries = new Mock<IOrderQueryRepository>(MockBehavior.Strict);
+        var orderCommands = new Mock<IOrderCommandRepository>(MockBehavior.Strict);
+        var productQueries = new Mock<IProductQueryRepository>(MockBehavior.Strict);
+        var productCommands = new Mock<IProductCommandRepository>(MockBehavior.Strict);
+        var orderItemCommands = new Mock<IOrderItemCommandRepository>(MockBehavior.Strict);
+        var orderItemQueries = new Mock<IOrderItemQueryRepository>(MockBehavior.Strict);
 
-        uow.SetupGet(x => x.Customers).Returns(customers.Object);
-        uow.SetupGet(x => x.Orders).Returns(orders.Object);
-        uow.SetupGet(x => x.Products).Returns(products.Object);
-        uow.SetupGet(x => x.OrderItems).Returns(orderItems.Object);
+        uow.SetupGet(x => x.CustomerQueries).Returns(customerQueries.Object);
+        uow.SetupGet(x => x.CustomerCommands).Returns(customerCommands.Object);
+        uow.SetupGet(x => x.OrderQueries).Returns(orderQueries.Object);
+        uow.SetupGet(x => x.OrderCommands).Returns(orderCommands.Object);
+        uow.SetupGet(x => x.ProductQueries).Returns(productQueries.Object);
+        uow.SetupGet(x => x.ProductCommands).Returns(productCommands.Object);
+        uow.SetupGet(x => x.OrderItemQueries).Returns(orderItemQueries.Object);
+        uow.SetupGet(x => x.OrderItemCommands).Returns(orderItemCommands.Object);
 
         var correlationId = new CorrelationId(Guid.NewGuid());
         correlationIdProvider.Setup(c => c.GetCorrelationId()).Returns(correlationId);
@@ -63,11 +71,11 @@ public sealed class ProcessOrderHandlerTests
             .Setup(s => s.SetCompletedAsync(correlationId, It.IsAny<long>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        orders
+        orderQueries
             .Setup(r => r.GetByCorrelationIdAsync(correlationId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync((Order?)null);
 
-        customers
+        customerQueries
             .Setup(r => r.GetByExternalIdAsync(command.Event.Order.CustomerId, It.IsAny<CancellationToken>()))
             .ReturnsAsync((Customer?)null);
 
@@ -75,27 +83,27 @@ public sealed class ProcessOrderHandlerTests
         Order? capturedOrder = null;
         var capturedItems = new List<OrderItem>();
 
-        customers
+        customerCommands
             .Setup(r => r.Add(It.IsAny<Customer>()))
             .Callback<Customer>(c => capturedCustomer = c);
 
-        orders
+        orderCommands
             .Setup(r => r.Add(It.IsAny<Order>()))
             .Callback<Order>(o => capturedOrder = o);
 
-        products
+        productQueries
             .Setup(r => r.GetByExternalIdAsync("product-1", It.IsAny<CancellationToken>()))
             .ReturnsAsync((Product?)null);
 
-        products
+        productQueries
             .Setup(r => r.GetByExternalIdAsync("product-2", It.IsAny<CancellationToken>()))
             .ReturnsAsync((Product?)null);
 
-        products
+        productCommands
             .Setup(r => r.Add(It.IsAny<Product>()))
             .Callback<Product>(_ => { });
 
-        orderItems
+        orderItemCommands
             .Setup(r => r.Add(It.IsAny<OrderItem>()))
             .Callback<OrderItem>(i => capturedItems.Add(i));
 
@@ -143,15 +151,21 @@ public sealed class ProcessOrderHandlerTests
         var correlationIdProvider = new Mock<ICorrelationIdProvider>(MockBehavior.Strict);
         var logger = Mock.Of<ILogger<ProcessOrderHandler>>();
 
-        var customers = new Mock<ICustomerRepository>(MockBehavior.Strict);
-        var orders = new Mock<IOrderRepository>(MockBehavior.Strict);
-        var products = new Mock<IProductRepository>(MockBehavior.Strict);
-        var orderItems = new Mock<IOrderItemRepository>(MockBehavior.Strict);
+        var orderQueries = new Mock<IOrderQueryRepository>(MockBehavior.Strict);
+        var customerCommands = new Mock<ICustomerCommandRepository>(MockBehavior.Strict);
+        var productCommands = new Mock<IProductCommandRepository>(MockBehavior.Strict);
+        var orderItemCommands = new Mock<IOrderItemCommandRepository>(MockBehavior.Strict);
 
-        uow.SetupGet(x => x.Customers).Returns(customers.Object);
-        uow.SetupGet(x => x.Orders).Returns(orders.Object);
-        uow.SetupGet(x => x.Products).Returns(products.Object);
-        uow.SetupGet(x => x.OrderItems).Returns(orderItems.Object);
+        uow.SetupGet(x => x.OrderQueries).Returns(orderQueries.Object);
+        uow.SetupGet(x => x.CustomerCommands).Returns(customerCommands.Object);
+        uow.SetupGet(x => x.ProductCommands).Returns(productCommands.Object);
+        uow.SetupGet(x => x.OrderItemCommands).Returns(orderItemCommands.Object);
+
+        // Not used in this path, but must be present because handler accesses them when persisting.
+        uow.SetupGet(x => x.CustomerQueries).Returns(Mock.Of<ICustomerQueryRepository>());
+        uow.SetupGet(x => x.OrderCommands).Returns(Mock.Of<IOrderCommandRepository>());
+        uow.SetupGet(x => x.ProductQueries).Returns(Mock.Of<IProductQueryRepository>());
+        uow.SetupGet(x => x.OrderItemQueries).Returns(Mock.Of<IOrderItemQueryRepository>());
 
         var correlationId = new CorrelationId(Guid.NewGuid());
         correlationIdProvider.Setup(c => c.GetCorrelationId()).Returns(correlationId);
@@ -166,7 +180,7 @@ public sealed class ProcessOrderHandlerTests
             .Setup(s => s.SetCompletedAsync(correlationId, 123, It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        orders
+        orderQueries
             .Setup(r => r.GetByCorrelationIdAsync(correlationId.ToString(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new Order { Id = 123, CorrelationId = correlationId.ToString() });
 
@@ -181,9 +195,9 @@ public sealed class ProcessOrderHandlerTests
 
         // Assert
         uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Never);
-        customers.Verify(r => r.Add(It.IsAny<Customer>()), Times.Never);
-        products.Verify(r => r.Add(It.IsAny<Product>()), Times.Never);
-        orderItems.Verify(r => r.Add(It.IsAny<OrderItem>()), Times.Never);
+        customerCommands.Verify(r => r.Add(It.IsAny<Customer>()), Times.Never);
+        productCommands.Verify(r => r.Add(It.IsAny<Product>()), Times.Never);
+        orderItemCommands.Verify(r => r.Add(It.IsAny<OrderItem>()), Times.Never);
 
         publisher.Verify(p => p.PublishAsync(
             It.Is<OrderProcessedEvent>(e => e.CorrelationId == correlationId && e.OrderId == 123),

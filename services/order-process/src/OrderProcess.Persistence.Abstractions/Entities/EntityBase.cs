@@ -7,6 +7,9 @@ namespace OrderProcess.Persistence.Abstractions.Entities;
 /// </summary>
 public abstract class EntityBase
 {
+    /// <summary>
+    /// Unique identifier for the entity.
+    /// </summary>
     public long Id { get; set; }
 
     /// <summary>

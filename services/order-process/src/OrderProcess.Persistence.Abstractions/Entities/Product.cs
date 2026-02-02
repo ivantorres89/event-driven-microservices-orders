@@ -9,9 +9,44 @@ namespace OrderProcess.Persistence.Abstractions.Entities;
 /// </summary>
 public sealed class Product : EntityBase
 {
+    /// <summary>
+    /// External product identifier from upstream systems.
+    /// </summary>
     public string ExternalProductId { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Product display name.
+    /// </summary>
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Demo-friendly classification.
+    /// Examples: Billing, Expenses, Tax, Reporting, Collaboration.
+    /// </summary>
+    public string Category { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Monthly / Annual (kept as string for demo simplicity).
+    /// </summary>
+    public string BillingPeriod { get; set; } = "Monthly";
+
+    /// <summary>
+    /// Indicates whether the product is a subscription.
+    /// </summary>
+    public bool IsSubscription { get; set; } = true;
+
+    /// <summary>
+    /// Unit price of the product.
+    /// </summary>
+    public decimal Price { get; set; }
+
+    /// <summary>
+    /// Indicates whether the product is active and can be ordered.
+    /// </summary>
+    public bool IsActive { get; set; } = true;
+
+    /// <summary>
+    /// Order items that reference this product.
+    /// </summary>
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
 }

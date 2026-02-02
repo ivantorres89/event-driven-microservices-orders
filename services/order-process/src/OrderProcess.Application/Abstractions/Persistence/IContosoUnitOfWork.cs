@@ -10,10 +10,24 @@ namespace OrderProcess.Application.Abstractions.Persistence;
 /// </summary>
 public interface IContosoUnitOfWork
 {
-    ICustomerRepository Customers { get; }
-    IOrderRepository Orders { get; }
-    IProductRepository Products { get; }
-    IOrderItemRepository OrderItems { get; }
+    // CQRS: query + command repositories (Interface Segregation)
+    ICustomerQueryRepository CustomerQueries { get; }
+    ICustomerCommandRepository CustomerCommands { get; }
+
+    IProductQueryRepository ProductQueries { get; }
+    IProductCommandRepository ProductCommands { get; }
+
+    IOrderQueryRepository OrderQueries { get; }
+    IOrderCommandRepository OrderCommands { get; }
+
+    IOrderItemQueryRepository OrderItemQueries { get; }
+    IOrderItemCommandRepository OrderItemCommands { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Rolls back the current unit-of-work transaction, if any.
+    /// This is exposed for critical OLTP workflows where consistency is paramount.
+    /// </summary>
+    Task RollbackAsync(CancellationToken cancellationToken = default);
 }

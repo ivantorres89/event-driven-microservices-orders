@@ -66,12 +66,12 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
         var correlationId = accepted.CorrelationId.ToString();
 
         // Idempotency by CorrelationId (unique key)
-        var existing = await _uow.Orders.GetByCorrelationIdAsync(correlationId, cancellationToken);
+        var existing = await _uow.OrderQueries.GetByCorrelationIdAsync(correlationId, cancellationToken);
         if (existing is not null)
             return existing.Id;
 
         // Upsert Customer by external id
-        var customer = await _uow.Customers.GetByExternalIdAsync(accepted.Order.CustomerId, cancellationToken);
+        var customer = await _uow.CustomerQueries.GetByExternalIdAsync(accepted.Order.CustomerId, cancellationToken);
         if (customer is null)
         {
             customer = new Customer
@@ -88,7 +88,7 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
                 PostalCode = "",
                 CountryCode = ""
             };
-            _uow.Customers.Add(customer);
+            _uow.CustomerCommands.Add(customer);
         }
 
         var order = new Order
@@ -96,22 +96,27 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
             CorrelationId = correlationId,
             Customer = customer
         };
-        _uow.Orders.Add(order);
+        _uow.OrderCommands.Add(order);
 
         foreach (var i in accepted.Order.Items)
         {
-            var product = await _uow.Products.GetByExternalIdAsync(i.ProductId, cancellationToken);
+            var product = await _uow.ProductQueries.GetByExternalIdAsync(i.ProductId, cancellationToken);
             if (product is null)
             {
                 product = new Product
                 {
                     ExternalProductId = i.ProductId,
-                    Name = $"Product {i.ProductId}"
+                    Name = $"Product {i.ProductId}",
+                    Category = "Uncategorized",
+                    BillingPeriod = "Monthly",
+                    IsSubscription = true,
+                    Price = 0m,
+                    IsActive = true
                 };
-                _uow.Products.Add(product);
+                _uow.ProductCommands.Add(product);
             }
 
-            _uow.OrderItems.Add(new OrderItem
+            _uow.OrderItemCommands.Add(new OrderItem
             {
                 Order = order,
                 Product = product,
