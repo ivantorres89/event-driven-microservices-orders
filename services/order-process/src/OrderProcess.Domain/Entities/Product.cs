@@ -1,4 +1,6 @@
-namespace OrderProcess.Persistence.Abstractions.Entities;
+using OrderProcess.Domain.Entities.Base;
+
+namespace OrderProcess.Domain.Entities;
 
 /// <summary>
 /// Product/Item catalog entity.

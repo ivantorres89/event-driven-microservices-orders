@@ -3,7 +3,7 @@ using OrderProcess.Application.Abstractions;
 using OrderProcess.Application.Abstractions.Persistence;
 using OrderProcess.Application.Commands;
 using OrderProcess.Application.Contracts.Events;
-using OrderProcess.Persistence.Abstractions.Entities;
+using OrderProcess.Domain.Entities;
 using OrderProcess.Shared.Workflow;
 
 namespace OrderProcess.Application.Handlers;

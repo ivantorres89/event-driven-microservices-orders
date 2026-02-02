@@ -1,12 +1,13 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/OrderProcess.DatabaseMigrations/OrderProcess.DatabaseMigrations.csproj" Id="f9a7c6b2-2ef1-4f4d-8f94-76f9d324a7d5" />
-    <Project Path="src/OrderProcess.Worker/OrderProcess.Worker.csproj" Id="9a39b62d-7413-4577-9e1b-c95e93e7d693" />
     <Project Path="src/OrderProcess.Application/OrderProcess.Application.csproj" Id="aa368d07-3172-45b8-923b-5ab89fcc13ff" />
+    <Project Path="src/OrderProcess.DatabaseMigrations/OrderProcess.DatabaseMigrations.csproj" Id="f9a7c6b2-2ef1-4f4d-8f94-76f9d324a7d5" />
+    <Project Path="src/OrderProcess.Domain/OrderProcess.Domain.csproj" Id="c26fc4e7-4725-4e5d-9d83-47ae973feaea" />
+    <Project Path="src/OrderProcess.Infrastructure/OrderProcess.Infrastructure.csproj" Id="b4c0679e-51be-4177-a741-7156e4fb7547" />
     <Project Path="src/OrderProcess.Persistence.Abstractions/OrderProcess.Persistence.Abstractions.csproj" Id="f55bb33f-830d-4f8b-8d3a-1ab9c0c64f1b" />
     <Project Path="src/OrderProcess.Persistence/OrderProcess.Persistence.csproj" Id="21f2bfb2-1b86-4b2b-92a5-1d10662d2d7a" />
-    <Project Path="src/OrderProcess.Infrastructure/OrderProcess.Infrastructure.csproj" Id="b4c0679e-51be-4177-a741-7156e4fb7547" />
     <Project Path="src/OrderProcess.Shared/OrderProcess.Shared.csproj" Id="48c0d94c-a2a4-4d0f-9a09-564c89d0e773" />
+    <Project Path="src/OrderProcess.Worker/OrderProcess.Worker.csproj" Id="9a39b62d-7413-4577-9e1b-c95e93e7d693" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/OrderProcess.IntegrationTests/OrderProcess.IntegrationTests.csproj" Id="92e9bc05-d448-4c0e-a865-eb648e6dcbce" />

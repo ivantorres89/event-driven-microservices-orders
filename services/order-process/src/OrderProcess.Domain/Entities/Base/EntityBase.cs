@@ -1,4 +1,4 @@
-namespace OrderProcess.Persistence.Abstractions.Entities;
+namespace OrderProcess.Domain.Entities.Base;
 
 /// <summary>
 /// Base entity for Contoso OLTP tables.

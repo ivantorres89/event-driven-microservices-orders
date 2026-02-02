@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using OrderProcess.Persistence.Abstractions.Entities;
+using OrderProcess.Domain.Entities;
 
 namespace OrderProcess.Persistence.Impl.DbMaps;
 

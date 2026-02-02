@@ -7,6 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\OrderProcess.Domain\OrderProcess.Domain.csproj" />
     <ProjectReference Include="..\OrderProcess.Shared\OrderProcess.Shared.csproj" />
   </ItemGroup>
 

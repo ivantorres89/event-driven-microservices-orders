@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Logging;
-using OrderProcess.Persistence.Abstractions.Entities;
+using OrderProcess.Domain.Entities;
 using OrderProcess.Persistence.Abstractions.Repositories;
 using OrderProcess.Persistence.Impl.Repositories.Base;
 
