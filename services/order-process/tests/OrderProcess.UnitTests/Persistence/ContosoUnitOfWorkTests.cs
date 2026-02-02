@@ -15,7 +15,7 @@ namespace OrderProcess.UnitTests.Persistence;
 
 public sealed class ContosoUnitOfWorkTests
 {
-    private sealed class ThrowingSaveChangesInterceptor : SaveChangesInterceptor
+    public sealed class ThrowingSaveChangesInterceptor : SaveChangesInterceptor
     {
         public override ValueTask<InterceptionResult<int>> SavingChangesAsync(
             DbContextEventData eventData,
@@ -26,7 +26,7 @@ public sealed class ContosoUnitOfWorkTests
         }
     }
 
-    private static IContosoUnitOfWork CreateUow(
+    public static IContosoUnitOfWork CreateUow(
         ContosoDbContext db,
         IContosoTransactionFactory txFactory,
         ILogger<ContosoUnitOfWork>? logger = null)

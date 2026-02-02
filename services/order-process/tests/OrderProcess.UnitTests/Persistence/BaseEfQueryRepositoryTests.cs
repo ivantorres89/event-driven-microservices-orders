@@ -11,7 +11,7 @@ namespace OrderProcess.UnitTests.Persistence;
 
 public sealed class BaseEfQueryRepositoryTests
 {
-    private sealed class TestProductQueryRepository : BaseEfQueryRepository<Product>
+    public sealed class TestProductQueryRepository : BaseEfQueryRepository<Product>
     {
         public TestProductQueryRepository(ContosoDbContext db, ILogger<TestProductQueryRepository> logger)
             : base(db, logger)

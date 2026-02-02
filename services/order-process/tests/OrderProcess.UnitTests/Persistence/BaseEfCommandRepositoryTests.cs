@@ -11,7 +11,7 @@ namespace OrderProcess.UnitTests.Persistence;
 
 public sealed class BaseEfCommandRepositoryTests
 {
-    private sealed class TestProductCommandRepository : BaseEfCommandRepository<Product>
+    public sealed class TestProductCommandRepository : BaseEfCommandRepository<Product>
     {
         public TestProductCommandRepository(ContosoDbContext db, ILogger<TestProductCommandRepository> logger)
             : base(db, logger)
