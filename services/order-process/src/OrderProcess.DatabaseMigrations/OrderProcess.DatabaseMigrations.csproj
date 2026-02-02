@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -6,6 +6,15 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="Sql\0001_InitSchema.sql" />
+    <None Remove="Sql\0002_SeedDemoData.sql" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Sql\0001_InitSchema.sql" />
+    <EmbeddedResource Include="Sql\0002_SeedDemoData.sql" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FluentMigrator.Runner" Version="6.2.0" />
@@ -17,11 +26,29 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging" Version="9.0.0" />
     <PackageReference Include="Microsoft.Extensions.Logging.Console" Version="9.0.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.4" />
+  </ItemGroup>
+
+  <!--<ItemGroup>
+    --><!-- Use forward slashes for cross-platform builds (Docker/Linux) and force a stable manifest name --><!--
+    <EmbeddedResource Include="Sql/*.sql">
+      <LogicalName>OrderProcess.DatabaseMigrations.Sql.%(Filename)%(Extension)</LogicalName>
+    </EmbeddedResource>
+  </ItemGroup>-->
+
+  <ItemGroup>
+    <EmbeddedResource Update="Sql\0001_InitSchema.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
+    <EmbeddedResource Update="Sql\0002_SeedDemoData.sql">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Sql\*.sql" />
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
