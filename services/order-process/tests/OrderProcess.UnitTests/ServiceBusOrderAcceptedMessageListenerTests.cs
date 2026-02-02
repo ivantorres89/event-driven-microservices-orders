@@ -68,7 +68,10 @@ public sealed class ServiceBusOrderAcceptedMessageListenerTests
 
         // Assert
         handler.Verify(h => h.HandleAsync(
-            It.Is<ProcessOrderCommand>(c => c.Event == accepted),
+            It.Is<ProcessOrderCommand>(c =>
+                c.Event.CorrelationId == accepted.CorrelationId &&
+                c.Event.Order.CustomerId == accepted.Order.CustomerId &&
+                c.Event.Order.Items.SequenceEqual(accepted.Order.Items)),
             It.IsAny<CancellationToken>()), Times.Once);
 
         actions.Verify(a => a.CompleteAsync(It.IsAny<CancellationToken>()), Times.Once);

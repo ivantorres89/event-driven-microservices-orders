@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -83,7 +84,10 @@ public sealed class RabbitMqOrderAcceptedMessageListenerTests
 
             // Assert
             handler.Verify(h => h.HandleAsync(
-                    It.Is<ProcessOrderCommand>(c => c.Event == accepted),
+                    It.Is<ProcessOrderCommand>(c =>
+                        c.Event.CorrelationId == accepted.CorrelationId &&
+                        c.Event.Order.CustomerId == accepted.Order.CustomerId &&
+                        ItemsMatch(c.Event.Order.Items, accepted.Order.Items)),
                     It.IsAny<CancellationToken>()),
                 Times.Once);
 
@@ -302,5 +306,14 @@ public sealed class RabbitMqOrderAcceptedMessageListenerTests
 
         // Assert
         channel.Verify(c => c.BasicRejectAsync(1, false, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    private static bool ItemsMatch(
+        IReadOnlyCollection<CreateOrderItem> actual,
+        IReadOnlyCollection<CreateOrderItem> expected)
+    {
+        return actual.Count == expected.Count &&
+               actual.Zip(expected, (a, e) => a.ProductId == e.ProductId && a.Quantity == e.Quantity)
+                   .All(matched => matched);
     }
 }
