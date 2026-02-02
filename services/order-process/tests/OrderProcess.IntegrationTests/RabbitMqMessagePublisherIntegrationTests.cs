@@ -10,8 +10,8 @@ using RabbitMQ.Client;
 
 namespace OrderProcess.IntegrationTests;
 
+[Collection(IntegrationTestCollection.Name)]
 public sealed class RabbitMqMessagePublisherIntegrationTests
-    : IClassFixture<OrderProcessLocalInfraFixture>
 {
     private readonly OrderProcessLocalInfraFixture _fixture;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

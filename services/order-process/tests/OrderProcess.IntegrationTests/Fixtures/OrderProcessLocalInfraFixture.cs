@@ -1,8 +1,7 @@
 using System.Net.Sockets;
-using FluentMigrator.Runner;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using OrderProcess.DatabaseMigrations;
 
 namespace OrderProcess.IntegrationTests.Fixtures;
@@ -17,64 +16,77 @@ public sealed class OrderProcessLocalInfraFixture : IAsyncLifetime
     private static readonly SemaphoreSlim InitLock = new(1, 1);
     private static bool _initialized;
 
-    private bool _useLocalInfraResolved;
+    private readonly IConfiguration _configuration;
+    private bool _infraResolved;
 
-    public string RedisConnectionString => "localhost:6379";
-    public string RabbitConnectionString => "amqp://guest:guest@localhost:5672/";
+    public OrderProcessLocalInfraFixture()
+    {
+        _configuration = BuildConfiguration();
+    }
+
+    public IConfiguration Configuration => _configuration;
+
+    public string RedisConnectionString =>
+        _configuration.GetConnectionString("Redis")
+        ?? throw new InvalidOperationException("Missing ConnectionStrings:Redis. Provide it via tests/OrderProcess.IntegrationTests/appsettings.json or environment variables.");
+
+    public string RabbitConnectionString =>
+        _configuration.GetConnectionString("RabbitMq")
+        ?? throw new InvalidOperationException("Missing ConnectionStrings:RabbitMq. Provide it via tests/OrderProcess.IntegrationTests/appsettings.json or environment variables.");
 
     /// <summary>
-    /// Dedicated SQL database used ONLY for integration tests.
+    /// Dedicated SQL database connection string used ONLY for integration tests.
     /// </summary>
-    public string SqlDatabaseName => "contoso-integrationtests";
+    public string SqlConnectionString =>
+        _configuration.GetConnectionString("Contoso")
+        ?? throw new InvalidOperationException("Missing ConnectionStrings:Contoso. Provide it via tests/OrderProcess.IntegrationTests/appsettings.json or environment variables.");
 
-    /// <summary>
-    /// Base SQL Server connection string (without DB). Override via env var CONTOSO_IT_SQL_BASE.
-    /// Example: "Server=localhost,1433;User ID=sa;Password=...;TrustServerCertificate=True;Encrypt=False".
-    /// </summary>
-    private static string SqlBaseConnectionString =>
-        Environment.GetEnvironmentVariable("CONTOSO_IT_SQL_BASE")
-        ?? "Server=localhost,1433;User ID=sa;Password=Your_strong_Password123!;TrustServerCertificate=True;Encrypt=False";
-
-    public string SqlConnectionString
+    public string SqlDatabaseName
     {
         get
         {
-            var b = new SqlConnectionStringBuilder(SqlBaseConnectionString)
-            {
-                InitialCatalog = SqlDatabaseName
-            };
-            return b.ConnectionString;
+            var b = new SqlConnectionStringBuilder(SqlConnectionString);
+            if (string.IsNullOrWhiteSpace(b.InitialCatalog))
+                throw new InvalidOperationException("ConnectionStrings:Contoso must include a database name (Initial Catalog / Database).");
+            return b.InitialCatalog;
         }
     }
 
     // Use dedicated queues for integration tests to avoid clashing with dev runs.
-    public string RabbitInboundQueueName => "order.accepted.it";
-    public string RabbitOutboundQueueName => "order.processed.it";
+    public string RabbitInboundQueueName =>
+        _configuration["Messaging:InboundQueueName"] ?? "order.accepted.it";
+
+    public string RabbitOutboundQueueName =>
+        _configuration["Messaging:OutboundQueueName"] ?? "order.processed.it";
 
     public async Task InitializeAsync()
     {
-        _useLocalInfraResolved = IsLocalInfraAvailable();
+        _infraResolved = IsLocalInfraAvailable();
 
-        if (!_useLocalInfraResolved)
+        if (!_infraResolved)
         {
             throw new InvalidOperationException(
                 "Local infra not detected. Run 'docker compose up -d' (RabbitMQ + Redis + SQL Server) before running integration tests.");
         }
 
-        // Ensure every integration test run uses the dedicated DB (never the Development DB)
-        // so tests can run in parallel with local development without clobbering data.
+        // Make it easy for any component that uses the default configuration conventions
+        // (ConnectionStrings__Contoso, etc.) to resolve the IT settings.
         Environment.SetEnvironmentVariable("ConnectionStrings__Contoso", SqlConnectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__Redis", RedisConnectionString);
+        Environment.SetEnvironmentVariable("ConnectionStrings__RabbitMq", RabbitConnectionString);
 
-        // Avoid race conditions when xUnit instantiates the fixture per test class.
-        // We initialize the SQL database once per test process, and keep it stable for the full run.
+        // Avoid race conditions if the test runner instantiates fixtures more than once.
         await InitLock.WaitAsync();
         try
         {
             if (_initialized)
                 return;
 
-            await RecreateDatabaseAsync(SqlBaseConnectionString, SqlDatabaseName);
-            ApplyMigrations(SqlConnectionString);
+            EnsureSafeDatabaseName();
+
+            var sqlBase = BuildMasterConnectionString(SqlConnectionString);
+            await RecreateDatabaseAsync(sqlBase, SqlDatabaseName);
+            ContosoMigrator.MigrateUp(SqlConnectionString);
 
             _initialized = true;
         }
@@ -84,19 +96,44 @@ public sealed class OrderProcessLocalInfraFixture : IAsyncLifetime
         }
     }
 
-    public Task DisposeAsync() => Task.CompletedTask;
+    public async Task DisposeAsync()
+    {
+        if (!_infraResolved)
+            return;
+
+        var dropDb = _configuration.GetValue("IntegrationTests:Sql:DropDatabaseOnDispose", defaultValue: true);
+        if (!dropDb)
+            return;
+
+        await InitLock.WaitAsync();
+        try
+        {
+            if (!_initialized)
+                return;
+
+            EnsureSafeDatabaseName();
+
+            var sqlBase = BuildMasterConnectionString(SqlConnectionString);
+            await DropDatabaseIfExistsAsync(sqlBase, SqlDatabaseName);
+
+            _initialized = false;
+        }
+        finally
+        {
+            InitLock.Release();
+        }
+    }
 
     private bool IsLocalInfraAvailable()
-        => IsPortOpen("localhost", 6379)
-           && IsPortOpen("localhost", 5672)
-           && IsSqlServerReachable(SqlBaseConnectionString);
+        => IsRedisAvailable(RedisConnectionString)
+           && IsRabbitAvailable(RabbitConnectionString)
+           && IsSqlServerReachable(BuildMasterConnectionString(SqlConnectionString));
 
-    private static bool IsSqlServerReachable(string baseConn)
+    private static bool IsSqlServerReachable(string masterConn)
     {
         try
         {
-            var b = new SqlConnectionStringBuilder(baseConn) { InitialCatalog = "master" };
-            using var conn = new SqlConnection(b.ConnectionString);
+            using var conn = new SqlConnection(masterConn);
             conn.Open();
             return true;
         }
@@ -106,10 +143,9 @@ public sealed class OrderProcessLocalInfraFixture : IAsyncLifetime
         }
     }
 
-    private static async Task RecreateDatabaseAsync(string baseConn, string dbName)
+    private static async Task RecreateDatabaseAsync(string masterConn, string dbName)
     {
-        var master = new SqlConnectionStringBuilder(baseConn) { InitialCatalog = "master" };
-        await using var conn = new SqlConnection(master.ConnectionString);
+        await using var conn = new SqlConnection(masterConn);
         await conn.OpenAsync();
 
         var cmdText = $@"
@@ -124,30 +160,20 @@ CREATE DATABASE [{dbName}];";
         await cmd.ExecuteNonQueryAsync();
     }
 
-    private static void ApplyMigrations(string connectionString)
+    private static async Task DropDatabaseIfExistsAsync(string masterConn, string dbName)
     {
-        // Run migrations from OrderProcess.DatabaseMigrations. This avoids duplicated SQL scripts in tests
-        // and validates the migrations project itself.
-        var services = new ServiceCollection();
+        await using var conn = new SqlConnection(masterConn);
+        await conn.OpenAsync();
 
-        services.AddLogging(lb => lb
-            .AddConsole()
-            .SetMinimumLevel(LogLevel.Warning));
+        var cmdText = $@"
+IF DB_ID(N'{dbName}') IS NOT NULL
+BEGIN
+    ALTER DATABASE [{dbName}] SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE [{dbName}];
+END";
 
-        services
-            .AddFluentMigratorCore()
-            .ConfigureRunner(rb => rb
-                .AddSqlServer()
-                .WithGlobalConnectionString(connectionString)
-                .ScanIn(typeof(ContosoVersionTable).Assembly).For.Migrations()
-                .WithVersionTable(new ContosoVersionTable()))
-            .AddLogging(lb => lb.AddFluentMigratorConsole());
-
-        using var sp = services.BuildServiceProvider(validateScopes: false);
-        using var scope = sp.CreateScope();
-
-        var runner = scope.ServiceProvider.GetRequiredService<IMigrationRunner>();
-        runner.MigrateUp();
+        await using var cmd = new SqlCommand(cmdText, conn);
+        await cmd.ExecuteNonQueryAsync();
     }
 
     private static bool IsPortOpen(string host, int port)
@@ -161,6 +187,75 @@ CREATE DATABASE [{dbName}];";
         catch
         {
             return false;
+        }
+    }
+
+    private static IConfiguration BuildConfiguration()
+    {
+        var env =
+            Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT")
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")
+            ?? "Development";
+
+        return new ConfigurationBuilder()
+            .SetBasePath(AppContext.BaseDirectory)
+            .AddJsonFile("appsettings.json", optional: true)
+            .AddJsonFile($"appsettings.{env}.json", optional: true)
+            .AddEnvironmentVariables()
+            .Build();
+    }
+
+    private static string BuildMasterConnectionString(string contosoConnectionString)
+    {
+        var b = new SqlConnectionStringBuilder(contosoConnectionString)
+        {
+            InitialCatalog = "master"
+        };
+        return b.ConnectionString;
+    }
+
+    private void EnsureSafeDatabaseName()
+    {
+        var expectedFragment = _configuration["IntegrationTests:Sql:RequireDatabaseNameContains"];
+        if (string.IsNullOrWhiteSpace(expectedFragment))
+            expectedFragment = "integration";
+
+        if (SqlDatabaseName.IndexOf(expectedFragment, StringComparison.OrdinalIgnoreCase) < 0)
+        {
+            throw new InvalidOperationException(
+                $"Refusing to reset database '{SqlDatabaseName}'. " +
+                $"For safety, IntegrationTests:Sql:RequireDatabaseNameContains must match the DB name (currently '{expectedFragment}').");
+        }
+    }
+
+    private static bool IsRedisAvailable(string redisConn)
+    {
+        // For most redis connection strings, host:port is the first segment.
+        var hostPort = redisConn.Split(',')[0].Trim();
+        if (hostPort.Contains('='))
+        {
+            // Handle 'host=...,...' styles by falling back to localhost defaults.
+            return IsPortOpen("localhost", 6379);
+        }
+
+        var parts = hostPort.Split(':');
+        var host = parts[0];
+        var port = parts.Length > 1 && int.TryParse(parts[1], out var p) ? p : 6379;
+        return IsPortOpen(host, port);
+    }
+
+    private static bool IsRabbitAvailable(string rabbitConn)
+    {
+        try
+        {
+            var uri = new Uri(rabbitConn);
+            var port = uri.Port > 0 ? uri.Port : 5672;
+            return IsPortOpen(uri.Host, port);
+        }
+        catch
+        {
+            // If not a URI, best effort fallback.
+            return IsPortOpen("localhost", 5672);
         }
     }
 }

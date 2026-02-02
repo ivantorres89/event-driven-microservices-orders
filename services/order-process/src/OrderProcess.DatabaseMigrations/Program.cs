@@ -40,7 +40,7 @@ services
     .ConfigureRunner(rb => rb
         .AddSqlServer()
         .WithGlobalConnectionString(connection)
-        .ScanIn(Assembly.GetExecutingAssembly()).For.Migrations()
+        .ScanIn(Assembly.GetExecutingAssembly()).For.Migrations().For.EmbeddedResources()
         .WithVersionTable(new ContosoVersionTable()))
     .AddLogging(lb => lb.AddFluentMigratorConsole());
 

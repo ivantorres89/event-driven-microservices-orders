@@ -9,8 +9,8 @@ using StackExchange.Redis;
 
 namespace OrderProcess.IntegrationTests;
 
+[Collection(IntegrationTestCollection.Name)]
 public sealed class RedisOrderWorkflowStateStoreIntegrationTests
-    : IClassFixture<OrderProcessLocalInfraFixture>
 {
     private readonly OrderProcessLocalInfraFixture _fixture;
 

@@ -22,7 +22,8 @@ namespace OrderProcess.IntegrationTests;
 /// - real EF Core repositories + UnitOfWork transaction semantics
 /// - messaging + redis are stubbed out (not the focus of these tests)
 /// </summary>
-public sealed class ProcessOrderHandlerOltpIntegrationTests : IClassFixture<OrderProcessLocalInfraFixture>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class ProcessOrderHandlerOltpIntegrationTests
 {
     private readonly OrderProcessLocalInfraFixture _fixture;
 
@@ -35,7 +36,7 @@ public sealed class ProcessOrderHandlerOltpIntegrationTests : IClassFixture<Orde
     public async Task HandleAsync_WhenNewOrder_PersistsCustomerProductsOrderAndItems()
     {
         // Arrange
-        await using var sp = BuildServiceProvider(_fixture.SqlConnectionString);
+        await using var sp = BuildServiceProvider(_fixture.Configuration);
         await CleanupDatabaseAsync(sp);
 
         var correlationId = new CorrelationId(Guid.NewGuid());
@@ -82,7 +83,7 @@ public sealed class ProcessOrderHandlerOltpIntegrationTests : IClassFixture<Orde
     public async Task HandleAsync_WhenDuplicateCorrelationId_IsIdempotent_DoesNotInsertOrPublishTwice()
     {
         // Arrange
-        await using var sp = BuildServiceProvider(_fixture.SqlConnectionString);
+        await using var sp = BuildServiceProvider(_fixture.Configuration);
         await CleanupDatabaseAsync(sp);
 
         var correlationId = new CorrelationId(Guid.NewGuid());
@@ -115,7 +116,7 @@ public sealed class ProcessOrderHandlerOltpIntegrationTests : IClassFixture<Orde
     public async Task HandleAsync_WhenSaveFails_RollsBackTransaction_NoPartialDataIsCommitted()
     {
         // Arrange
-        await using var sp = BuildServiceProvider(_fixture.SqlConnectionString);
+        await using var sp = BuildServiceProvider(_fixture.Configuration);
         await CleanupDatabaseAsync(sp);
 
         var correlationId = new CorrelationId(Guid.NewGuid());
@@ -167,23 +168,14 @@ public sealed class ProcessOrderHandlerOltpIntegrationTests : IClassFixture<Orde
         await db.Database.ExecuteSqlRawAsync("DELETE FROM [Customer];");
     }
 
-    private static ServiceProvider BuildServiceProvider(string sqlConnectionString)
+    private static ServiceProvider BuildServiceProvider(IConfiguration configuration)
     {
         var services = new ServiceCollection();
 
-        var cfg = new ConfigurationBuilder()
-            .AddInMemoryCollection(new Dictionary<string, string?>
-            {
-                ["ConnectionStrings:Contoso"] = sqlConnectionString,
-                // not used in these tests, but present to avoid surprises in shared components:
-                ["ConnectionStrings:Redis"] = "localhost:6379",
-            })
-            .Build();
-
-        services.AddSingleton<IConfiguration>(cfg);
+        services.AddSingleton<IConfiguration>(configuration);
 
         // Persistence (real)
-        services.AddOrderProcessPersistence(cfg);
+        services.AddOrderProcessPersistence(configuration);
 
         // Application handler
         services.AddScoped<IProcessOrderHandler, ProcessOrderHandler>();
