@@ -2,8 +2,8 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using OrderProcess.Persistence.Abstractions.Entities;
-using OrderProcess.Persistence.Impl.Repositories;
+using OrderProcess.Domain.Entities;
+using OrderProcess.Persistence.Impl;
 using OrderProcess.Persistence.Impl.Repositories.Base;
 using OrderProcess.UnitTests.Helpers;
 
@@ -13,7 +13,7 @@ public sealed class BaseEfQueryRepositoryTests
 {
     private sealed class TestProductQueryRepository : BaseEfQueryRepository<Product>
     {
-        public TestProductQueryRepository(Persistence.Impl.ContosoDbContext db, ILogger<TestProductQueryRepository> logger)
+        public TestProductQueryRepository(ContosoDbContext db, ILogger<TestProductQueryRepository> logger)
             : base(db, logger)
         {
         }

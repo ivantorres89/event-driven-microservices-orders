@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using OrderProcess.Application.Abstractions.Persistence;
 using OrderProcess.Persistence.Impl;
 using OrderProcess.Persistence.Abstractions.Repositories;
+using OrderProcess.Persistence.Abstractions.Repositories.Command;
 using OrderProcess.Persistence.Impl.Transactions;
 using OrderProcess.Persistence.Abstractions.Repositories.Query;
 using OrderProcess.Persistence.Impl.Repositories.Command;

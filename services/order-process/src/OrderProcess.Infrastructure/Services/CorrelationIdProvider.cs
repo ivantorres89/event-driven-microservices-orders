@@ -1,6 +1,8 @@
 using OrderProcess.Application.Abstractions;
 using OrderProcess.Shared.Correlation;
 
+namespace OrderProcess.Infrastructure.Services;
+
 public class CorrelationIdProvider : ICorrelationIdProvider
 {
     public CorrelationId GetCorrelationId()

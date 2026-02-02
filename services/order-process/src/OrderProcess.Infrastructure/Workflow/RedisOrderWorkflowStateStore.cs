@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OrderProcess.Application.Abstractions;
 using OrderProcess.Shared.Correlation;
+using OrderProcess.Shared.Observability;
 using OrderProcess.Shared.Resilience;
 using OrderProcess.Shared.Workflow;
 using Polly;

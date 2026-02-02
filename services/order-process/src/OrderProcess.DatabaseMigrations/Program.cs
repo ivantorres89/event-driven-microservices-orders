@@ -3,6 +3,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
+using OrderProcess.DatabaseMigrations;
 
 // Usage examples:
 //  dotnet run --project src/OrderProcess.DatabaseMigrations -- --connection "<conn>" --to 2

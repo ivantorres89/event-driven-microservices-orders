@@ -1,6 +1,7 @@
 using FluentAssertions;
 using OrderProcess.Infrastructure.Correlation;
 using OrderProcess.Shared.Correlation;
+using CorrelationIdProvider = OrderProcess.Infrastructure.Services.CorrelationIdProvider;
 
 namespace OrderProcess.UnitTests;
 

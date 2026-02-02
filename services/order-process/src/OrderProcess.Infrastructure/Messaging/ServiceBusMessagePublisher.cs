@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using OrderProcess.Application.Abstractions;
+using OrderProcess.Shared.Correlation;
+using OrderProcess.Shared.Observability;
 using OrderProcess.Shared.Resilience;
 using Polly;
 using Polly.CircuitBreaker;

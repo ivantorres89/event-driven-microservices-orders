@@ -9,6 +9,7 @@ using OrderProcess.Application.Contracts.Requests;
 using OrderProcess.Application.Handlers;
 using OrderProcess.Persistence.Abstractions.Entities;
 using OrderProcess.Persistence.Abstractions.Repositories;
+using OrderProcess.Persistence.Abstractions.Repositories.Command;
 using OrderProcess.Shared.Correlation;
 using OrderProcess.Shared.Workflow;
 

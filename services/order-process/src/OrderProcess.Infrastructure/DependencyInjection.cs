@@ -8,6 +8,7 @@ using OrderProcess.Infrastructure.Messaging;
 using OrderProcess.Infrastructure.Workflow;
 using OrderProcess.Persistence;
 using StackExchange.Redis;
+using CorrelationIdProvider = OrderProcess.Infrastructure.Services.CorrelationIdProvider;
 
 namespace OrderProcess.Infrastructure;
 

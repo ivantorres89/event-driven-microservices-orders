@@ -12,6 +12,8 @@ using Polly.Timeout;
 using RabbitMQ.Client;
 using RabbitMQ.Client.Exceptions;
 using System.Net.Sockets;
+using OrderProcess.Shared.Correlation;
+using OrderProcess.Shared.Observability;
 
 namespace OrderProcess.Infrastructure.Messaging;
 

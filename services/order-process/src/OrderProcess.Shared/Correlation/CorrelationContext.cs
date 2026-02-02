@@ -1,4 +1,4 @@
-using OrderProcess.Shared.Correlation;
+namespace OrderProcess.Shared.Correlation;
 
 public static class CorrelationContext
 {

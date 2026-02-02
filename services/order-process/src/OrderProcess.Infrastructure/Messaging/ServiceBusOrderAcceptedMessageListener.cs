@@ -12,6 +12,7 @@ using OrderProcess.Application.Commands;
 using OrderProcess.Application.Contracts.Events;
 using OrderProcess.Application.Handlers;
 using OrderProcess.Shared.Correlation;
+using OrderProcess.Shared.Observability;
 using OrderProcess.Shared.Resilience;
 
 namespace OrderProcess.Infrastructure.Messaging;
