@@ -4,14 +4,10 @@ using OrderProcess.Persistence.Abstractions.Repositories;
 
 namespace OrderProcess.Persistence.Impl.Repositories;
 
-internal sealed class ProductRepository : IProductRepository
+internal sealed class ProductRepository : EfRepository<Product>, IProductRepository
 {
-    private readonly ContosoDbContext _db;
-
-    public ProductRepository(ContosoDbContext db) => _db = db;
+    public ProductRepository(ContosoDbContext db) : base(db) { }
 
     public Task<Product?> GetByExternalIdAsync(string externalProductId, CancellationToken cancellationToken = default)
-        => _db.Products.SingleOrDefaultAsync(x => x.ExternalProductId == externalProductId, cancellationToken);
-
-    public void Add(Product product) => _db.Products.Add(product);
+        => Db.Products.SingleOrDefaultAsync(x => x.ExternalProductId == externalProductId, cancellationToken);
 }

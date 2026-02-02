@@ -1,6 +1,5 @@
 <Solution>
   <Folder Name="/src/">
-    <Project Path="src/OrderProcess.DatabaseMigrations/OrderProcess.DatabaseMigrations.csproj" Id="f9a7c6b2-2ef1-4f4d-8f94-76f9d324a7d5" />
     <Project Path="src/OrderProcess.Worker/OrderProcess.Worker.csproj" Id="9a39b62d-7413-4577-9e1b-c95e93e7d693" />
     <Project Path="src/OrderProcess.Application/OrderProcess.Application.csproj" Id="aa368d07-3172-45b8-923b-5ab89fcc13ff" />
     <Project Path="src/OrderProcess.Persistence.Abstractions/OrderProcess.Persistence.Abstractions.csproj" Id="f55bb33f-830d-4f8b-8d3a-1ab9c0c64f1b" />

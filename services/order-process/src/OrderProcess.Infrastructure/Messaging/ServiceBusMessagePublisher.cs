@@ -18,24 +18,16 @@ public sealed class ServiceBusMessagePublisher : IMessagePublisher, IAsyncDispos
     private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
 
     private readonly ServiceBusOptions _options;
-    private readonly IServiceBusClientAdapter _client;
+    private readonly ServiceBusClient _client;
     private readonly ILogger<ServiceBusMessagePublisher> _logger;
     private readonly IAsyncPolicy _publishPolicy;
 
     public ServiceBusMessagePublisher(IOptions<ServiceBusOptions> options, ILogger<ServiceBusMessagePublisher> logger)
-        : this(options, logger, new ServiceBusClientAdapter(new ServiceBusClient(options.Value.ConnectionString)))
-    {
-    }
-
-    internal ServiceBusMessagePublisher(
-        IOptions<ServiceBusOptions> options,
-        ILogger<ServiceBusMessagePublisher> logger,
-        IServiceBusClientAdapter client)
     {
         _options = options.Value;
         _logger = logger;
 
-        _client = client;
+        _client = new ServiceBusClient(_options.ConnectionString);
 
         var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromSeconds(3), TimeoutStrategy.Optimistic);
 

@@ -4,14 +4,10 @@ using OrderProcess.Persistence.Abstractions.Repositories;
 
 namespace OrderProcess.Persistence.Impl.Repositories;
 
-internal sealed class OrderRepository : IOrderRepository
+internal sealed class OrderRepository : EfRepository<Order>, IOrderRepository
 {
-    private readonly ContosoDbContext _db;
-
-    public OrderRepository(ContosoDbContext db) => _db = db;
+    public OrderRepository(ContosoDbContext db) : base(db) { }
 
     public Task<Order?> GetByCorrelationIdAsync(string correlationId, CancellationToken cancellationToken = default)
-        => _db.Orders.SingleOrDefaultAsync(x => x.CorrelationId == correlationId, cancellationToken);
-
-    public void Add(Order order) => _db.Orders.Add(order);
+        => Db.Orders.SingleOrDefaultAsync(x => x.CorrelationId == correlationId, cancellationToken);
 }

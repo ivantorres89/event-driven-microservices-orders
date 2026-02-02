@@ -6,10 +6,8 @@ namespace OrderProcess.Persistence.Abstractions.Entities;
 /// Notes:
 /// - <see cref="NationalId"/> is intended to be treated as sensitive (e.g., Dynamic Data Masking).
 /// </summary>
-public sealed class Customer
+public sealed class Customer : EntityBase
 {
-    public long Id { get; set; }
-
     // External identity from upstream systems (kept to map incoming messages to internal keys).
     public string ExternalCustomerId { get; set; } = string.Empty;
 
@@ -30,16 +28,6 @@ public sealed class Customer
     public string City { get; set; } = string.Empty;
     public string PostalCode { get; set; } = string.Empty;
     public string CountryCode { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Set by the database (DEFAULT SYSUTCDATETIME()).
-    /// </summary>
-    public DateTime CreatedAt { get; set; }
-
-    /// <summary>
-    /// Set by the database (DEFAULT SYSUTCDATETIME()) and maintained by a DB trigger on UPDATE.
-    /// </summary>
-    public DateTime UpdatedAt { get; set; }
 
     public ICollection<Order> Orders { get; set; } = new List<Order>();
 }

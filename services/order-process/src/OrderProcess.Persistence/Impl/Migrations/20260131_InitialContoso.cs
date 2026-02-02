@@ -28,7 +28,9 @@ public partial class InitialContoso : Migration
                 City = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: false),
                 PostalCode = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: false),
                 CountryCode = table.Column<string>(type: "nvarchar(2)", maxLength: 2, nullable: false),
-                CreatedUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                IsSoftDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
             },
             constraints: table =>
             {
@@ -43,7 +45,9 @@ public partial class InitialContoso : Migration
                     .Annotation("SqlServer:Identity", "1, 1"),
                 ExternalProductId = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                 Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                CreatedUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                IsSoftDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
             },
             constraints: table =>
             {
@@ -58,7 +62,9 @@ public partial class InitialContoso : Migration
                     .Annotation("SqlServer:Identity", "1, 1"),
                 CorrelationId = table.Column<string>(type: "nvarchar(64)", maxLength: 64, nullable: false),
                 CustomerId = table.Column<long>(type: "bigint", nullable: false),
-                CreatedUtc = table.Column<DateTime>(type: "datetime2", nullable: false)
+                CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                IsSoftDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
             },
             constraints: table =>
             {
@@ -79,7 +85,10 @@ public partial class InitialContoso : Migration
                     .Annotation("SqlServer:Identity", "1, 1"),
                 OrderId = table.Column<long>(type: "bigint", nullable: false),
                 ProductId = table.Column<long>(type: "bigint", nullable: false),
-                Quantity = table.Column<int>(type: "int", nullable: false)
+                Quantity = table.Column<int>(type: "int", nullable: false),
+                CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                UpdatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "SYSUTCDATETIME()"),
+                IsSoftDeleted = table.Column<bool>(type: "bit", nullable: false, defaultValue: false)
             },
             constraints: table =>
             {

@@ -106,12 +106,7 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
                 product = new Product
                 {
                     ExternalProductId = i.ProductId,
-                    Name = $"Product {i.ProductId}",
-                    Category = "Uncategorized",
-                    BillingPeriod = "Monthly",
-                    IsSubscription = true,
-                    Price = 0m,
-                    IsActive = true
+                    Name = $"Product {i.ProductId}"
                 };
                 _uow.Products.Add(product);
             }

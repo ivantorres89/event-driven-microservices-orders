@@ -2,7 +2,6 @@ using OrderProcess.Persistence.Abstractions.Entities;
 
 namespace OrderProcess.Persistence.Abstractions.Repositories;
 
-public interface IOrderItemRepository
+public interface IOrderItemRepository : IRepository<OrderItem>
 {
-    void Add(OrderItem item);
 }

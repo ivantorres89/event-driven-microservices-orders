@@ -12,7 +12,7 @@ public sealed class ContosoDbContextFactory : IDesignTimeDbContextFactory<Contos
     {
         // Minimal default for tooling; override using --connection.
         var builder = new DbContextOptionsBuilder<ContosoDbContext>();
-        builder.UseSqlServer("Server=localhost,1433;Database=contoso;User ID=sa;Password=Your_strong_Password123!;TrustServerCertificate=True;Encrypt=False");
+        builder.UseSqlServer("Server=localhost;Database=contoso;Trusted_Connection=True;TrustServerCertificate=True");
         return new ContosoDbContext(builder.Options);
     }
 }

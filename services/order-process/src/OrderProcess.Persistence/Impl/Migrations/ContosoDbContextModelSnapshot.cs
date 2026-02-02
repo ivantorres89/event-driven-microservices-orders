@@ -22,6 +22,36 @@ partial class ContosoDbContextModelSnapshot : ModelSnapshot
                 .HasColumnType("bigint")
                 .HasAnnotation("SqlServer:Identity", "1, 1");
 
+            b.Property<DateTime>("CreatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.Property<bool>("IsSoftDeleted")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bit")
+                .HasDefaultValue(false);
+
+            b.Property<DateTime>("UpdatedAt")
+                .ValueGeneratedOnAddOrUpdate()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.Property<DateTime>("CreatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.Property<bool>("IsSoftDeleted")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bit")
+                .HasDefaultValue(false);
+
+            b.Property<DateTime>("UpdatedAt")
+                .ValueGeneratedOnAddOrUpdate()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
+
             b.Property<string>("AddressLine1")
                 .IsRequired()
                 .HasMaxLength(200)
@@ -37,8 +67,20 @@ partial class ContosoDbContextModelSnapshot : ModelSnapshot
                 .HasMaxLength(2)
                 .HasColumnType("nvarchar(2)");
 
-            b.Property<DateTime>("CreatedUtc")
-                .HasColumnType("datetime2");
+            b.Property<DateTime>("CreatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.Property<bool>("IsSoftDeleted")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bit")
+                .HasDefaultValue(false);
+
+            b.Property<DateTime>("UpdatedAt")
+                .ValueGeneratedOnAddOrUpdate()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             b.Property<DateOnly?>("DateOfBirth")
                 .HasColumnType("date");
@@ -93,8 +135,20 @@ partial class ContosoDbContextModelSnapshot : ModelSnapshot
                 .HasColumnType("bigint")
                 .HasAnnotation("SqlServer:Identity", "1, 1");
 
-            b.Property<DateTime>("CreatedUtc")
-                .HasColumnType("datetime2");
+            b.Property<DateTime>("CreatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.Property<bool>("IsSoftDeleted")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bit")
+                .HasDefaultValue(false);
+
+            b.Property<DateTime>("UpdatedAt")
+                .ValueGeneratedOnAddOrUpdate()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             b.Property<string>("ExternalProductId")
                 .IsRequired()
@@ -126,8 +180,20 @@ partial class ContosoDbContextModelSnapshot : ModelSnapshot
                 .HasMaxLength(64)
                 .HasColumnType("nvarchar(64)");
 
-            b.Property<DateTime>("CreatedUtc")
-                .HasColumnType("datetime2");
+            b.Property<DateTime>("CreatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.Property<bool>("IsSoftDeleted")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bit")
+                .HasDefaultValue(false);
+
+            b.Property<DateTime>("UpdatedAt")
+                .ValueGeneratedOnAddOrUpdate()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             b.Property<long>("CustomerId")
                 .HasColumnType("bigint");
@@ -148,6 +214,21 @@ partial class ContosoDbContextModelSnapshot : ModelSnapshot
                 .ValueGeneratedOnAdd()
                 .HasColumnType("bigint")
                 .HasAnnotation("SqlServer:Identity", "1, 1");
+
+            b.Property<DateTime>("CreatedAt")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
+
+            b.Property<bool>("IsSoftDeleted")
+                .ValueGeneratedOnAdd()
+                .HasColumnType("bit")
+                .HasDefaultValue(false);
+
+            b.Property<DateTime>("UpdatedAt")
+                .ValueGeneratedOnAddOrUpdate()
+                .HasColumnType("datetime2")
+                .HasDefaultValueSql("SYSUTCDATETIME()");
 
             b.Property<long>("OrderId")
                 .HasColumnType("bigint");
