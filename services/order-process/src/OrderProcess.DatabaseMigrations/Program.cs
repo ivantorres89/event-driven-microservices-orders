@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using System.Reflection;
 using OrderProcess.DatabaseMigrations;
+using Microsoft.Data.SqlClient;
 
 // Usage examples:
 //  dotnet run --project src/OrderProcess.DatabaseMigrations -- --connection "<conn>" --to 2
@@ -26,6 +27,30 @@ if (string.IsNullOrWhiteSpace(connection))
     return 2;
 }
 
+// --- Ensure database exists (local SQL container doesn't auto-create DB) ---
+try
+{
+    var csb = new SqlConnectionStringBuilder(connection);
+
+    var dbName = csb.InitialCatalog;
+    if (string.IsNullOrWhiteSpace(dbName))
+        throw new InvalidOperationException("Connection string must include a database name (Initial Catalog/Database).");
+
+    // Connect to master to create the target DB if missing
+    var masterCsb = new SqlConnectionStringBuilder(connection)
+    {
+        InitialCatalog = "master"
+    };
+
+    await EnsureDatabaseExistsAsync(masterCsb.ConnectionString, dbName);
+}
+catch (Exception ex)
+{
+    Console.Error.WriteLine("Failed while ensuring database exists:");
+    Console.Error.WriteLine(ex);
+    return 1;
+}
+
 long? targetVersion = null;
 if (long.TryParse(configuration["to"], out var v))
     targetVersion = v;
@@ -40,7 +65,7 @@ services
     .ConfigureRunner(rb => rb
         .AddSqlServer()
         .WithGlobalConnectionString(connection)
-        .ScanIn(Assembly.GetExecutingAssembly()).For.Migrations().For.EmbeddedResources()
+        .ScanIn(Assembly.GetExecutingAssembly()).For.Migrations()
         .WithVersionTable(new ContosoVersionTable()))
     .AddLogging(lb => lb.AddFluentMigratorConsole());
 
@@ -70,4 +95,41 @@ catch (Exception ex)
 {
     Console.Error.WriteLine(ex.ToString());
     return 1;
+}
+
+static async Task EnsureDatabaseExistsAsync(string masterConnectionString, string databaseName)
+{
+    // Retry loop because SQL Server container takes a bit to accept connections.
+    const int maxAttempts = 60;
+    var delay = TimeSpan.FromSeconds(2);
+
+    for (var attempt = 1; attempt <= maxAttempts; attempt++)
+    {
+        try
+        {
+            await using var conn = new SqlConnection(masterConnectionString);
+            await conn.OpenAsync();
+
+            // CREATE DATABASE if missing (idempotent)
+            var safeDbNameForLiteral = databaseName.Replace("'", "''");
+            var safeDbNameForBracket = databaseName.Replace("]", "]]");
+
+            await using var cmd = conn.CreateCommand();
+            cmd.CommandText = $@"IF DB_ID(N'{safeDbNameForLiteral}') IS NULL
+BEGIN
+    CREATE DATABASE [{safeDbNameForBracket}];
+END";
+            await cmd.ExecuteNonQueryAsync();
+
+            return;
+        }
+        catch when (attempt < maxAttempts)
+        {
+            await Task.Delay(delay);
+        }
+    }
+
+    // One final attempt to get a useful exception
+    await using var finalConn = new SqlConnection(masterConnectionString);
+    await finalConn.OpenAsync();
 }

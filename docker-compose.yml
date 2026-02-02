@@ -71,7 +71,27 @@ services:
       jaeger:
         condition: service_started
     networks: [contoso-net]
-  
+
+  # ------------------------------------------------------------
+  # order-process database migrator (one-shot)
+  # Must complete successfully before starting the app services.
+  # ------------------------------------------------------------
+  order-process-migrations:
+    build:
+      context: ./services/order-process
+      dockerfile: Dockerfile
+      target: migrations
+    image: contoso/order-process-migrations:local
+    hostname: order-process-migrations
+    environment:
+      DOTNET_ENVIRONMENT: Development
+      ConnectionStrings__Contoso: "Server=sql,1433;Database=contoso;User ID=sa;Password=${SA_PASSWORD:-Your_strong_Password123!};TrustServerCertificate=True;Encrypt=False"
+    depends_on:
+      sql:
+        condition: service_started
+    restart: "no"
+    networks: [contoso-net]
+
   order-accept:
     build:
       context: ./services/order-accept
@@ -87,7 +107,7 @@ services:
       WorkflowState__Ttl: "00:30:00"
 
       # RabbitMQ (local dev broker)
-      RabbitMQ__ConnectionString: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672
+      RabbitMQ__ConnectionString: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
       RabbitMQ__QueueName: order.accepted
 
       # OpenTelemetry (send to collector facade)
@@ -108,6 +128,87 @@ services:
         condition: service_healthy
       otel-collector:
         condition: service_started
+      order-process-migrations:
+        condition: service_completed_successfully
+    networks: [contoso-net]
+
+  order-process:
+    build:
+      context: ./services/order-process
+      dockerfile: Dockerfile
+      target: worker
+    image: contoso/order-process:local
+    hostname: order-process
+    environment:
+      DOTNET_ENVIRONMENT: Development
+
+      # Redis (workflow status)
+      ConnectionStrings__Redis: redis:6379
+      WorkflowState__Ttl: "00:30:00"
+
+      # SQL (OLTP)
+      ConnectionStrings__Contoso: "Server=sql,1433;Database=contoso;User ID=sa;Password=${SA_PASSWORD:-Your_strong_Password123!};TrustServerCertificate=True;Encrypt=False"
+
+      # RabbitMQ (local dev broker)
+      RabbitMQ__ConnectionString: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
+      RabbitMQ__InboundQueueName: order.accepted
+      RabbitMQ__OutboundQueueName: order.processed
+      RabbitMQ__MaxProcessingAttempts: "5"
+
+      # OpenTelemetry (send to collector facade)
+      OpenTelemetry__Enabled: "true"
+      OpenTelemetry__OtlpEndpoint: http://otel-collector:4317
+      OpenTelemetry__ServiceName: order-process
+      OpenTelemetry__ServiceVersion: "0.1.0"
+
+      OTEL_SERVICE_NAME: order-process
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+      order-process-migrations:
+        condition: service_completed_successfully
+    networks: [contoso-net]
+
+  order-notification:
+    build:
+      context: ./services/order-notification
+      dockerfile: Dockerfile
+    image: contoso/order-notification:local
+    hostname: order-notification
+    environment:
+      DOTNET_ENVIRONMENT: Development
+
+      ConnectionStrings__Redis: redis:6379
+      WorkflowState__Ttl: "00:30:00"
+
+      # RabbitMQ queue where "order.processed" messages land
+      RabbitMQ__ConnectionString: amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672/
+      RabbitMQ__QueueName: order.processed
+
+      # OpenTelemetry (send to collector facade)
+      OpenTelemetry__Enabled: "true"
+      OpenTelemetry__OtlpEndpoint: http://otel-collector:4317
+      OpenTelemetry__ServiceName: order-notification
+      OpenTelemetry__ServiceVersion: "0.1.0"
+
+      OTEL_SERVICE_NAME: order-notification
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+    ports:
+      - "8083:8080"
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      otel-collector:
+        condition: service_started
+      order-process-migrations:
+        condition: service_completed_successfully
     networks: [contoso-net]
 
 networks:
