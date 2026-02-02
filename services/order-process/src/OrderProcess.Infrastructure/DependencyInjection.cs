@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using OrderProcess.Application.Abstractions;
 using OrderProcess.Application.Abstractions.Messaging;
-using OrderProcess.Infrastructure.Correlation;
 using OrderProcess.Infrastructure.Messaging;
 using OrderProcess.Infrastructure.Workflow;
 using OrderProcess.Persistence;
@@ -49,7 +48,7 @@ public static class DependencyInjection
 
             // Listener hosted service via abstraction
             services.AddSingleton<IOrderAcceptedMessageListener, RabbitMqOrderAcceptedMessageListener>();
-            services.AddSingleton<IHostedService>(sp => (IHostedService)sp.GetRequiredService<IOrderAcceptedMessageListener>());
+            services.AddHostedService(sp => (RabbitMqOrderAcceptedMessageListener)sp.GetRequiredService<IOrderAcceptedMessageListener>());
         }
         else
         {
@@ -62,7 +61,7 @@ public static class DependencyInjection
             services.AddSingleton<IMessagePublisher, ServiceBusMessagePublisher>();
 
             services.AddSingleton<IOrderAcceptedMessageListener, ServiceBusOrderAcceptedMessageListener>();
-            services.AddSingleton<IHostedService>(sp => (IHostedService)sp.GetRequiredService<IOrderAcceptedMessageListener>());
+            services.AddHostedService(sp => (ServiceBusOrderAcceptedMessageListener)sp.GetRequiredService<IOrderAcceptedMessageListener>());
         }
 
         return services;

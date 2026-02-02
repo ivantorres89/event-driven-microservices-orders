@@ -2,8 +2,9 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
-using OrderProcess.Persistence.Abstractions.Entities;
-using OrderProcess.Persistence.Impl.Repositories;
+using OrderProcess.Domain.Entities;
+using OrderProcess.Persistence.Impl.Repositories.Command;
+using OrderProcess.Persistence.Impl.Repositories.Query;
 using OrderProcess.UnitTests.Helpers;
 
 namespace OrderProcess.UnitTests.Persistence;

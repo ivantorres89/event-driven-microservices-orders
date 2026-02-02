@@ -7,9 +7,9 @@ using OrderProcess.Application.Commands;
 using OrderProcess.Application.Contracts.Events;
 using OrderProcess.Application.Contracts.Requests;
 using OrderProcess.Application.Handlers;
-using OrderProcess.Persistence.Abstractions.Entities;
-using OrderProcess.Persistence.Abstractions.Repositories;
+using OrderProcess.Domain.Entities;
 using OrderProcess.Persistence.Abstractions.Repositories.Command;
+using OrderProcess.Persistence.Abstractions.Repositories.Query;
 using OrderProcess.Shared.Correlation;
 using OrderProcess.Shared.Workflow;
 

@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Logging;
 using OrderProcess.Application.Abstractions.Persistence;
-using OrderProcess.Persistence.Abstractions.Repositories;
 using OrderProcess.Persistence.Abstractions.Repositories.Command;
 using OrderProcess.Persistence.Abstractions.Repositories.Query;
 using OrderProcess.Persistence.Impl.Transactions;

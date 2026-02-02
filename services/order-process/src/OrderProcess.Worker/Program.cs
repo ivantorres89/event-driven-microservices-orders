@@ -6,6 +6,8 @@ using OrderProcess.Application;
 using OrderProcess.Infrastructure;
 using Serilog;
 using Serilog.Exceptions;
+using Microsoft.Extensions.Hosting;
+
 
 namespace OrderProcess.Worker;
 

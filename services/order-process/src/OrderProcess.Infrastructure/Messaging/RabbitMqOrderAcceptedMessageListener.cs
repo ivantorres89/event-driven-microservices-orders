@@ -39,8 +39,7 @@ public sealed class RabbitMqOrderAcceptedMessageListener : BackgroundService, IO
 
         _connectionFactory = new ConnectionFactory
         {
-            Uri = new Uri(_options.ConnectionString),
-            DispatchConsumersAsync = true
+            Uri = new Uri(_options.ConnectionString)
         };
 
         _json = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };

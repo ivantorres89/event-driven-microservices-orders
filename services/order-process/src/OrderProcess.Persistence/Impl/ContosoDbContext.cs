@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
-using OrderProcess.Persistence.Abstractions.Entities;
-using OrderProcess.Persistence.Abstractions.Entities.Base;
+using OrderProcess.Domain.Entities;
+using OrderProcess.Domain.Entities.Base;
 
 namespace OrderProcess.Persistence.Impl;
 

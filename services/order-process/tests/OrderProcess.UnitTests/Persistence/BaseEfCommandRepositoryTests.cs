@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Moq;
 using OrderProcess.Domain.Entities;
+using OrderProcess.Persistence.Impl;
 using OrderProcess.Persistence.Impl.Repositories.Base;
 using OrderProcess.UnitTests.Helpers;
 
@@ -12,7 +13,7 @@ public sealed class BaseEfCommandRepositoryTests
 {
     private sealed class TestProductCommandRepository : BaseEfCommandRepository<Product>
     {
-        public TestProductCommandRepository(Persistence.Impl.ContosoDbContext db, ILogger<TestProductCommandRepository> logger)
+        public TestProductCommandRepository(ContosoDbContext db, ILogger<TestProductCommandRepository> logger)
             : base(db, logger)
         {
         }

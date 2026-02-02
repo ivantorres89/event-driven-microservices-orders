@@ -61,16 +61,20 @@ public sealed class RabbitMqOrderAcceptedMessageListenerTests
         channel.Setup(c => c.BasicAckAsync(It.IsAny<ulong>(), false, It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
 
-        var ea = new BasicDeliverEventArgs
-        {
-            DeliveryTag = 1,
-            Body = body,
-            BasicProperties = new BasicProperties
+        var ea = new BasicDeliverEventArgs(
+            consumerTag: "",
+            deliveryTag: 1,
+            redelivered: false,
+            exchange: "",
+            routingKey: "",
+            new BasicProperties
             {
                 ContentType = "application/json",
                 Headers = new Dictionary<string, object>()
-            }
-        };
+            },
+            body: body,
+            cancellationToken: CancellationToken.None
+        );
 
         try
         {
@@ -123,16 +127,20 @@ public sealed class RabbitMqOrderAcceptedMessageListenerTests
         channel.Setup(c => c.BasicRejectAsync(1, false, It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
 
-        var ea = new BasicDeliverEventArgs
-        {
-            DeliveryTag = 1,
-            Body = Encoding.UTF8.GetBytes("{ not-json"),
-            BasicProperties = new BasicProperties
+        var ea = new BasicDeliverEventArgs(
+            consumerTag: "",
+            deliveryTag: 1,
+            redelivered: false,
+            exchange: "",
+            routingKey: "",
+            new BasicProperties
             {
                 ContentType = "application/json",
                 Headers = new Dictionary<string, object>()
-            }
-        };
+            },
+            body: Encoding.UTF8.GetBytes("{ not-json"),
+            cancellationToken: CancellationToken.None
+        );
 
         // Act
         await listener.HandleMessageAsync(channel.Object, ea, CancellationToken.None);
@@ -199,16 +207,20 @@ public sealed class RabbitMqOrderAcceptedMessageListenerTests
 
         var headers = new Dictionary<string, object>();
 
-        var ea = new BasicDeliverEventArgs
-        {
-            DeliveryTag = 1,
-            Body = body,
-            BasicProperties = new BasicProperties
+        var ea = new BasicDeliverEventArgs(
+            consumerTag: "",
+            deliveryTag: 1,
+            redelivered: false,
+            exchange: "",
+            routingKey: "",
+            new BasicProperties
             {
                 ContentType = "application/json",
                 Headers = headers
-            }
-        };
+            },
+            body: body,
+            cancellationToken: CancellationToken.None
+        );
 
         // Act
         await listener.HandleMessageAsync(channel.Object, ea, CancellationToken.None);
@@ -270,16 +282,20 @@ public sealed class RabbitMqOrderAcceptedMessageListenerTests
         channel.Setup(c => c.BasicRejectAsync(1, false, It.IsAny<CancellationToken>()))
             .Returns(ValueTask.CompletedTask);
 
-        var ea = new BasicDeliverEventArgs
-        {
-            DeliveryTag = 1,
-            Body = body,
-            BasicProperties = new BasicProperties
+        var ea = new BasicDeliverEventArgs(
+            consumerTag: "",
+            deliveryTag: 1,
+            redelivered: false,
+            exchange: "",
+            routingKey: "",
+            new BasicProperties
             {
                 ContentType = "application/json",
                 Headers = new Dictionary<string, object> { ["x-retry-count"] = 2 }
-            }
-        };
+            },
+            body: body,
+            cancellationToken: CancellationToken.None
+        );
 
         // Act
         await listener.HandleMessageAsync(channel.Object, ea, CancellationToken.None);
