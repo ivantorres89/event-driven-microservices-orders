@@ -1,4 +1,5 @@
 using OrderProcess.Persistence.Abstractions.Repositories;
+using OrderProcess.Persistence.Abstractions.Repositories.Query;
 
 namespace OrderProcess.Application.Abstractions.Persistence;
 

@@ -1,9 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OrderProcess.Persistence.Abstractions.Entities;
-using OrderProcess.Persistence.Abstractions.Repositories;
+using OrderProcess.Persistence.Abstractions.Repositories.Query;
+using OrderProcess.Persistence.Impl.Repositories.Base;
 
-namespace OrderProcess.Persistence.Impl.Repositories;
+namespace OrderProcess.Persistence.Impl.Repositories.Query;
 
 public sealed class OrderItemQueryRepository : BaseEfQueryRepository<OrderItem>, IOrderItemQueryRepository
 {
