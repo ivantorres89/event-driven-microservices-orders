@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Text;
 using System.Text.Json;
+using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -104,6 +105,21 @@ public sealed class RabbitMqOrderAcceptedMessageListener : BackgroundService, IO
 
             if (message is null)
                 throw new JsonException("Deserialized OrderAcceptedEvent is null.");
+
+            if (message.CorrelationId.Value == Guid.Empty)
+                throw new JsonException("CorrelationId is missing.");
+
+            if (message.Order is null)
+                throw new JsonException("Order is missing.");
+
+            if (string.IsNullOrWhiteSpace(message.Order.CustomerId))
+                throw new JsonException("Order.CustomerId is missing.");
+
+            if (message.Order.Items is null || message.Order.Items.Count == 0)
+                throw new JsonException("Order.Items is missing.");
+
+            if (message.Order.Items.Any(item => string.IsNullOrWhiteSpace(item.ProductId) || item.Quantity <= 0))
+                throw new JsonException("Order.Items contains invalid entries.");
 
             // CorrelationId MUST come from payload
             CorrelationContext.Current = message.CorrelationId;

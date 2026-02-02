@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using OrderProcess.Application.Abstractions.Persistence;
 using OrderProcess.Persistence.Impl;
 using OrderProcess.Persistence.Abstractions.Repositories;
@@ -19,6 +20,8 @@ public static class DependencyInjection
         var sqlConn = configuration.GetConnectionString("Contoso");
         if (string.IsNullOrWhiteSpace(sqlConn))
             throw new InvalidOperationException("ConnectionStrings:Contoso is required (database name should be 'contoso')");
+
+        services.AddLogging();
 
         services.AddDbContext<ContosoDbContext>(o =>
         {

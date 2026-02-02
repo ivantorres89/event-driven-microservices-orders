@@ -30,10 +30,17 @@ BEGIN
         PostalCode NVARCHAR(20) NOT NULL,
         CountryCode NVARCHAR(2) NOT NULL,
         CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Customer_CreatedAt DEFAULT SYSUTCDATETIME(),
-        UpdatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Customer_UpdatedAt DEFAULT SYSUTCDATETIME()
+        UpdatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Customer_UpdatedAt DEFAULT SYSUTCDATETIME(),
+        IsSoftDeleted BIT NOT NULL CONSTRAINT DF_Customer_IsSoftDeleted DEFAULT (0)
     );
 
     CREATE UNIQUE INDEX UX_Customer_ExternalCustomerId ON dbo.Customer (ExternalCustomerId);
+END
+
+IF COL_LENGTH(N'dbo.Customer', N'IsSoftDeleted') IS NULL
+BEGIN
+    ALTER TABLE dbo.Customer
+        ADD IsSoftDeleted BIT NOT NULL CONSTRAINT DF_Customer_IsSoftDeleted DEFAULT (0);
 END
 
 -- --- Product ---
@@ -51,11 +58,18 @@ BEGIN
         IsActive BIT NOT NULL CONSTRAINT DF_Product_IsActive DEFAULT (1),
         CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Product_CreatedAt DEFAULT SYSUTCDATETIME(),
         UpdatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Product_UpdatedAt DEFAULT SYSUTCDATETIME(),
+        IsSoftDeleted BIT NOT NULL CONSTRAINT DF_Product_IsSoftDeleted DEFAULT (0),
         CONSTRAINT CK_Product_BillingPeriod CHECK (BillingPeriod IN (N'Monthly', N'Annual')),
         CONSTRAINT CK_Product_PriceNonNegative CHECK (Price >= (0))
     );
 
     CREATE UNIQUE INDEX UX_Product_ExternalProductId ON dbo.Product (ExternalProductId);
+END
+
+IF COL_LENGTH(N'dbo.Product', N'IsSoftDeleted') IS NULL
+BEGIN
+    ALTER TABLE dbo.Product
+        ADD IsSoftDeleted BIT NOT NULL CONSTRAINT DF_Product_IsSoftDeleted DEFAULT (0);
 END
 
 -- --- Order ---
@@ -68,11 +82,18 @@ BEGIN
         CustomerId BIGINT NOT NULL,
         CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Order_CreatedAt DEFAULT SYSUTCDATETIME(),
         UpdatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Order_UpdatedAt DEFAULT SYSUTCDATETIME(),
+        IsSoftDeleted BIT NOT NULL CONSTRAINT DF_Order_IsSoftDeleted DEFAULT (0),
         CONSTRAINT FK_Order_Customer FOREIGN KEY (CustomerId) REFERENCES dbo.Customer (Id) ON DELETE NO ACTION
     );
 
     CREATE UNIQUE INDEX UX_Order_CorrelationId ON dbo.[Order] (CorrelationId);
     CREATE INDEX IX_Order_CustomerId ON dbo.[Order] (CustomerId);
+END
+
+IF COL_LENGTH(N'dbo.[Order]', N'IsSoftDeleted') IS NULL
+BEGIN
+    ALTER TABLE dbo.[Order]
+        ADD IsSoftDeleted BIT NOT NULL CONSTRAINT DF_Order_IsSoftDeleted DEFAULT (0);
 END
 
 -- --- OrderItem ---
@@ -86,6 +107,7 @@ BEGIN
         Quantity INT NOT NULL,
         CreatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_OrderItem_CreatedAt DEFAULT SYSUTCDATETIME(),
         UpdatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_OrderItem_UpdatedAt DEFAULT SYSUTCDATETIME(),
+        IsSoftDeleted BIT NOT NULL CONSTRAINT DF_OrderItem_IsSoftDeleted DEFAULT (0),
         CONSTRAINT CK_OrderItem_QuantityPositive CHECK (Quantity > 0),
         CONSTRAINT FK_OrderItem_Order FOREIGN KEY (OrderId) REFERENCES dbo.[Order] (Id) ON DELETE CASCADE,
         CONSTRAINT FK_OrderItem_Product FOREIGN KEY (ProductId) REFERENCES dbo.Product (Id) ON DELETE NO ACTION
@@ -93,6 +115,12 @@ BEGIN
 
     CREATE INDEX IX_OrderItem_OrderId ON dbo.OrderItem (OrderId);
     CREATE INDEX IX_OrderItem_ProductId ON dbo.OrderItem (ProductId);
+END
+
+IF COL_LENGTH(N'dbo.OrderItem', N'IsSoftDeleted') IS NULL
+BEGIN
+    ALTER TABLE dbo.OrderItem
+        ADD IsSoftDeleted BIT NOT NULL CONSTRAINT DF_OrderItem_IsSoftDeleted DEFAULT (0);
 END
 
 -- --- UpdatedAt triggers ---

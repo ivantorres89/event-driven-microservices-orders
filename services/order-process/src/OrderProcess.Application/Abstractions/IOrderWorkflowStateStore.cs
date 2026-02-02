@@ -9,16 +9,21 @@ namespace OrderProcess.Application.Abstractions;
 /// </summary>
 public interface IOrderWorkflowStateStore
 {
-    Task SetStatusAsync(
+    /// <summary>
+    /// Updates workflow status only if the Redis key already exists.
+    /// This is useful for downstream processors: we don't want to "resurrect" a workflow that has already expired by TTL.
+    /// Returns true if the key existed and was updated.
+    /// </summary>
+    Task<bool> TrySetStatusIfExistsAsync(
         CorrelationId correlationId,
         OrderWorkflowStatus status,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Sets workflow state to COMPLETED and also stores the generated OrderId.
-    /// Value format is: 'COMPLETED|{OrderId}' for backwards-compatible prefix matching.
+    /// Updates workflow state to COMPLETED only if the Redis key already exists.
+    /// Returns true if the key existed and was updated.
     /// </summary>
-    Task SetCompletedAsync(
+    Task<bool> TrySetCompletedIfExistsAsync(
         CorrelationId correlationId,
         long orderId,
         CancellationToken cancellationToken = default);

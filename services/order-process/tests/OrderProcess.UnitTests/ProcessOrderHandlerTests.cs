@@ -65,12 +65,12 @@ public sealed class ProcessOrderHandlerTests
         var command = CreateCommand(correlationId);
 
         workflow
-            .Setup(s => s.SetStatusAsync(correlationId, OrderWorkflowStatus.Processing, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Setup(s => s.TrySetStatusIfExistsAsync(correlationId, OrderWorkflowStatus.Processing, It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(true));
 
         workflow
-            .Setup(s => s.SetCompletedAsync(correlationId, It.IsAny<long>(), It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Setup(s => s.TrySetCompletedIfExistsAsync(correlationId, It.IsAny<long>(), It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(true));
 
         orderQueries
             .Setup(r => r.GetByCorrelationIdAsync(correlationId.ToString(), It.IsAny<CancellationToken>()))
@@ -128,9 +128,9 @@ public sealed class ProcessOrderHandlerTests
         await handler.HandleAsync(command);
 
         // Assert
-        workflow.Verify(s => s.SetStatusAsync(correlationId, OrderWorkflowStatus.Processing, It.IsAny<CancellationToken>()), Times.Once);
+        workflow.Verify(s => s.TrySetStatusIfExistsAsync(correlationId, OrderWorkflowStatus.Processing, It.IsAny<CancellationToken>()), Times.Once);
         uow.Verify(x => x.SaveChangesAsync(It.IsAny<CancellationToken>()), Times.Once);
-        workflow.Verify(s => s.SetCompletedAsync(correlationId, 42, It.IsAny<CancellationToken>()), Times.Once);
+        workflow.Verify(s => s.TrySetCompletedIfExistsAsync(correlationId, 42, It.IsAny<CancellationToken>()), Times.Once);
 
         publisher.Verify(p => p.PublishAsync(
             It.Is<OrderProcessedEvent>(e => e.CorrelationId == correlationId && e.OrderId == 42),
@@ -143,7 +143,7 @@ public sealed class ProcessOrderHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenOrderAlreadyExists_DoesNotInsertButStillPublishes()
+    public async Task HandleAsync_WhenOrderAlreadyExists_DoesNotInsertAndDoesNotPublish()
     {
         // Arrange
         var workflow = new Mock<IOrderWorkflowStateStore>(MockBehavior.Strict);
@@ -172,14 +172,15 @@ public sealed class ProcessOrderHandlerTests
         correlationIdProvider.Setup(c => c.GetCorrelationId()).Returns(correlationId);
 
         var command = CreateCommand(correlationId);
+        
+        //Workflow does not exists
+        workflow
+            .Setup(s => s.TrySetStatusIfExistsAsync(correlationId, OrderWorkflowStatus.Processing, It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(false));
 
         workflow
-            .Setup(s => s.SetStatusAsync(correlationId, OrderWorkflowStatus.Processing, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
-
-        workflow
-            .Setup(s => s.SetCompletedAsync(correlationId, 123, It.IsAny<CancellationToken>()))
-            .Returns(Task.CompletedTask);
+            .Setup(s => s.TrySetCompletedIfExistsAsync(correlationId, 123, It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(false));
 
         orderQueries
             .Setup(r => r.GetByCorrelationIdAsync(correlationId.ToString(), It.IsAny<CancellationToken>()))
@@ -203,7 +204,7 @@ public sealed class ProcessOrderHandlerTests
         publisher.Verify(p => p.PublishAsync(
             It.Is<OrderProcessedEvent>(e => e.CorrelationId == correlationId && e.OrderId == 123),
             null,
-            It.IsAny<CancellationToken>()), Times.Once);
+            It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -222,7 +223,7 @@ public sealed class ProcessOrderHandlerTests
         var command = CreateCommand(correlationId);
 
         workflow
-            .Setup(s => s.SetStatusAsync(correlationId, OrderWorkflowStatus.Processing, It.IsAny<CancellationToken>()))
+            .Setup(s => s.TrySetStatusIfExistsAsync(correlationId, OrderWorkflowStatus.Processing, It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Redis down"));
 
         var handler = new ProcessOrderHandler(workflow.Object, uow.Object, publisher.Object, correlationIdProvider.Object, logger);

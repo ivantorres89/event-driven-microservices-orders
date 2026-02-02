@@ -42,33 +42,49 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
             _logger.LogInformation("Processing OrderAccepted message for CustomerId={CustomerId}", command.Event.Order.CustomerId);
 
             // 1) Redis: set transient workflow state -> PROCESSING
-            await _workflowState.SetStatusAsync(command.Event.CorrelationId, OrderWorkflowStatus.Processing, cancellationToken);
+            var workflowUpdated = await _workflowState.TrySetStatusIfExistsAsync(command.Event.CorrelationId, OrderWorkflowStatus.Processing, cancellationToken);
+            if (!workflowUpdated)
+                _logger.LogWarning("Workflow state missing in Redis for CorrelationId={CorrelationId}. Proceeding without updating transient status.", command.Event.CorrelationId);
             _logger.LogInformation("Updated workflow state in Redis: {Status}", OrderWorkflowStatus.Processing);
 
             // 2) OLTP transaction (Azure SQL / SQL Server)
             //    Defensive idempotency: if the same CorrelationId is processed twice, we reuse the already persisted OrderId.
-            var orderId = await PersistOrderAsync(command.Event, cancellationToken);
-            _logger.LogInformation("Order persisted (or already existed). OrderId={OrderId}", orderId);
+            var persisted = await PersistOrderAsync(command.Event, cancellationToken);
+            _logger.LogInformation("Order persisted (or already existed). OrderId={OrderId} IsNew={IsNew}", persisted.OrderId, persisted.IsNew);
+
+            var orderId = persisted.OrderId;
 
             // 3) Redis: set transient workflow state -> COMPLETED + OrderId
-            await _workflowState.SetCompletedAsync(command.Event.CorrelationId, orderId, cancellationToken);
+            var completedUpdated = await _workflowState.TrySetCompletedIfExistsAsync(command.Event.CorrelationId, orderId, cancellationToken);
+            if (!completedUpdated)
+                _logger.LogWarning("Workflow state missing in Redis for CorrelationId={CorrelationId}. Proceeding without updating transient completion.", command.Event.CorrelationId);
             _logger.LogInformation("Updated workflow state in Redis: COMPLETED (OrderId={OrderId})", orderId);
 
-            // 4) Publish integration event
-            var @event = new OrderProcessedEvent(command.Event.CorrelationId, orderId);
-            await _publisher.PublishAsync(@event, routingKey: null, cancellationToken);
-            _logger.LogInformation("Published OrderProcessed integration event");
+            // 4) Publish integration event (idempotent)
+            //    If the order already existed for this CorrelationId, we avoid publishing again to prevent duplicate downstream notifications.
+            if (persisted.IsNew)
+            {
+                var @event = new OrderProcessedEvent(command.Event.CorrelationId, orderId);
+                await _publisher.PublishAsync(@event, routingKey: null, cancellationToken);
+                _logger.LogInformation("Published OrderProcessed integration event");
+            }
+            else
+            {
+                _logger.LogInformation("Order already existed for CorrelationId={CorrelationId}. Skipping OrderProcessed publish.", command.Event.CorrelationId);
+            }
         }
     }
 
-    private async Task<long> PersistOrderAsync(OrderAcceptedEvent accepted, CancellationToken cancellationToken)
+    internal async Task<PersistOrderResult> PersistOrderAsync(OrderAcceptedEvent accepted, CancellationToken cancellationToken)
     {
         var correlationId = accepted.CorrelationId.ToString();
 
         // Idempotency by CorrelationId (unique key)
         var existing = await _uow.OrderQueries.GetByCorrelationIdAsync(correlationId, cancellationToken);
         if (existing is not null)
-            return existing.Id;
+        {
+            return new PersistOrderResult(existing.Id, IsNew: false);
+        }
 
         // Upsert Customer by external id
         var customer = await _uow.CustomerQueries.GetByExternalIdAsync(accepted.Order.CustomerId, cancellationToken);
@@ -125,6 +141,9 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
         }
 
         await _uow.SaveChangesAsync(cancellationToken);
-        return order.Id;
+        return new PersistOrderResult(order.Id, IsNew: true);
     }
+
+
+    internal sealed record PersistOrderResult(long OrderId, bool IsNew);
 }
