@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using OrderProcess.Persistence.Abstractions.Repositories.Base;
 
-namespace OrderProcess.Persistence.Impl.Repositories;
+namespace OrderProcess.Persistence.Impl.Repositories.Base;
 
 /// <summary>
 /// Base EF Core implementation for CQRS command repositories.
