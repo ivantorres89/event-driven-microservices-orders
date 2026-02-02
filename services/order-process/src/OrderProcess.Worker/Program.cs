@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Hosting;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -6,7 +5,6 @@ using OrderProcess.Application;
 using OrderProcess.Infrastructure;
 using Serilog;
 using Serilog.Exceptions;
-using Microsoft.Extensions.Hosting;
 
 
 namespace OrderProcess.Worker;
@@ -26,11 +24,11 @@ public partial class Program
         builder.Services.AddSerilog((services, cfg) =>
         {
             cfg.ReadFrom.Configuration(builder.Configuration)
-               .Enrich.FromLogContext()
-               .Enrich.WithExceptionDetails()
-               .Enrich.WithEnvironmentName()
-               .Enrich.WithProcessId()
-               .Enrich.WithThreadId();
+                .Enrich.FromLogContext()
+                .Enrich.WithExceptionDetails()
+                .Enrich.WithEnvironmentName()
+                .Enrich.WithProcessId()
+                .Enrich.WithThreadId();
         });
 
         // --- Services ---
