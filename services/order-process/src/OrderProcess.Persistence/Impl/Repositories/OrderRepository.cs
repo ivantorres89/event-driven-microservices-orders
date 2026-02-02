@@ -4,7 +4,7 @@ using OrderProcess.Persistence.Abstractions.Repositories;
 
 namespace OrderProcess.Persistence.Impl.Repositories;
 
-internal sealed class OrderRepository : EfRepository<Order>, IOrderRepository
+internal sealed class OrderRepository : BaseEfRepository<Order>, IOrderRepository
 {
     public OrderRepository(ContosoDbContext db) : base(db) { }
 

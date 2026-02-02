@@ -8,7 +8,7 @@ namespace OrderProcess.Persistence.Abstractions.Repositories;
 ///
 /// Designed for EF Core (LINQ to Entities) usage.
 /// </summary>
-public interface IRepository<TEntity> where TEntity : EntityBase
+public interface IBaseRepository<TEntity> where TEntity : EntityBase
 {
     /// <summary>
     /// Find by primary key (EF FindAsync).

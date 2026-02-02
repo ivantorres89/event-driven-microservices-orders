@@ -5,9 +5,9 @@ using OrderProcess.Persistence.Abstractions.Repositories;
 
 namespace OrderProcess.Persistence.Impl.Repositories;
 
-internal abstract class EfRepository<TEntity> : IRepository<TEntity> where TEntity : EntityBase
+internal abstract class BaseEfRepository<TEntity> : IBaseRepository<TEntity> where TEntity : EntityBase
 {
-    protected EfRepository(ContosoDbContext db) => Db = db;
+    protected BaseEfRepository(ContosoDbContext db) => Db = db;
 
     protected ContosoDbContext Db { get; }
 
