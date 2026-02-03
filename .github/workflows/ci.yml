@@ -130,7 +130,7 @@ jobs:
         with:
           reports: 'TestResults/**/coverage.cobertura.xml'
           targetdir: 'coveragereport'
-          reporttypes: 'MarkdownSummaryGithub;Cobertura'
+          reporttypes: 'MarkdownSummaryGithub;Cobertura;Badges'
           tag: '${{ steps.gitversion.outputs.semVer }}'
 
       - name: Publish coverage in build summary
@@ -160,3 +160,46 @@ jobs:
           path: |
             **/*.trx
             **/TestResults/**/*.trx
+
+      - name: Publish coverage badge to badges branch
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          # Prefer the "shields.io" style badge if ReportGenerator produced it.
+          shopt -s nullglob
+          candidates=(
+            coveragereport/badge_shieldsio_linecoverage*.svg
+            coveragereport/badge_linecoverage*.svg
+          )
+          if [ ${#candidates[@]} -eq 0 ]; then
+            echo "Coverage badge SVG not found in coveragereport/ (skipping badge publish)." >&2
+            ls -la coveragereport || true
+            exit 0
+          fi
+
+          mkdir -p /tmp/badges
+          cp -f "${candidates[0]}" /tmp/badges/coverage.svg
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          # Use a separate worktree so we don't disturb the main workspace.
+          rm -rf badges-worktree || true
+          git fetch origin badges || true
+          if git show-ref --verify --quiet refs/remotes/origin/badges; then
+            git worktree add -B badges badges-worktree origin/badges
+          else
+            git worktree add -b badges badges-worktree
+          fi
+
+          cp -f /tmp/badges/coverage.svg badges-worktree/coverage.svg
+
+          pushd badges-worktree
+          git add coverage.svg
+          git commit -m "Update coverage badge [skip ci]" || echo "No changes to commit"
+          git push origin badges
+          popd
+
