@@ -2,7 +2,7 @@
 [![Coverage](https://raw.githubusercontent.com/ivantorres89/event-driven-microservices-orders/badges/coverage.svg?sanitize=true)](https://github.com/ivantorres89/event-driven-microservices-orders/tree/badges)
 # Contoso Shop— Event-Driven Order Processing Microservices (Azure)
 
-## The shop
+## The shop 
 This demo now seeds **145 certification-prep subscriptions**.
 
 ## Overview
