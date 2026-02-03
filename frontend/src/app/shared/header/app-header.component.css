@@ -1,0 +1,38 @@
+.hdr{
+  height: 64px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding: 0 18px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+}
+.brand{ display:flex; align-items:center; gap:12px; }
+.logo{
+  width: 36px; height: 36px;
+  border-radius: 10px;
+  background: var(--primary);
+  color:#fff;
+  display:flex; align-items:center; justify-content:center;
+  font-weight: 700;
+}
+.title{ font-weight: 700; line-height: 1.1; }
+.sub{ font-size: 12px; margin-top: 2px; }
+.right{ display:flex; align-items:center; gap:10px; }
+.active{ border-color: rgba(0,120,212,.25); }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+
+.link{
+  text-decoration:none;
+  color: var(--primary);
+  border-color: rgba(0,120,212,.25);
+}
+.link:hover{ background: rgba(0,120,212,.08); }
+
+.btnlink{
+  cursor:pointer;
+  font: inherit;
+  color: var(--danger);
+  border-color: rgba(164,38,44,.25);
+}
+.btnlink:hover{ background: rgba(164,38,44,.06); }

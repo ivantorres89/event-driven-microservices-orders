@@ -1,0 +1,57 @@
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 class="h1">Products</h1>
+      <div class="muted">Select items and add them to your cart. This is a demo (no cart persistence).</div>
+    </div>
+
+    <div class="actions">
+      <button class="ms-btn" (click)="openCart()">
+        Cart ({{cartLines.length}})
+      </button>
+      <a class="ms-btn primary" routerLink="/checkout" [class.disabled]="!cartLines.length">Checkout</a>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="muted">Loading products…</div>
+
+  <table class="table" *ngIf="!loading">
+    <thead>
+      <tr>
+        <th style="width: 42%">Product</th>
+        <th>Category</th>
+        <th style="width: 10%">Stock</th>
+        <th style="width: 14%">Price</th>
+        <th style="width: 16%">Qty</th>
+        <th style="width: 18%"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let p of products">
+        <td>
+          <div class="pname">{{p.name}}</div>
+          <div class="muted small">SKU: {{p.id}}</div>
+        </td>
+        <td>{{p.category}}</td>
+        <td>{{p.stock}}</td>
+        <td>€{{p.price | number:'1.2-2'}}</td>
+        <td>
+          <input class="input" type="number" min="1" [max]="p.stock"
+                 [(ngModel)]="qty[p.id]" />
+        </td>
+        <td style="text-align:right">
+          <button class="ms-btn primary" (click)="add(p)">Add</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <app-cart-overlay
+    [open]="cartOpen"
+    [lines]="cartLines"
+    [total]="cartTotal"
+    (close)="closeCart()"
+    (updateQty)="updateQty($event.productId, $event.quantity)"
+    (removeLine)="removeLine($event)">
+  </app-cart-overlay>
+</div>

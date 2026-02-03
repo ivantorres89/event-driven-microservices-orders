@@ -1,0 +1,96 @@
+.wrap{
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+  padding:32px;
+}
+
+.card{
+  width:520px;
+  background: #fff;
+  border:1px solid #e6e6e6;
+  border-radius:14px;
+  box-shadow:0 12px 28px rgba(0,0,0,0.06);
+  padding:22px;
+}
+
+.title{
+  font-size:18px;
+  font-weight:600;
+  margin-bottom:6px;
+}
+
+.sub{
+  font-size:13px;
+  line-height:1.4;
+  margin-bottom:18px;
+}
+
+.lbl{
+  display:block;
+  font-size:13px;
+  font-weight:600;
+  margin:10px 0 6px;
+}
+
+.inp{
+  width:100%;
+  border:1px solid #d0d0d0;
+  border-radius:10px;
+  padding:10px 12px;
+  font-size:14px;
+  outline:none;
+}
+
+.inp:focus{
+  border-color:#0078d4;
+  box-shadow:0 0 0 3px rgba(0,120,212,0.15);
+}
+
+.row{
+  display:flex;
+  gap:10px;
+  margin-top:14px;
+  flex-wrap:wrap;
+}
+
+.btn{
+  border:1px solid #cfcfcf;
+  background:#f7f7f7;
+  border-radius:10px;
+  padding:9px 12px;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.btn:hover{ background:#f2f2f2; }
+
+.primary{
+  background:#0078d4;
+  border-color:#0078d4;
+  color:#fff;
+}
+
+.primary:hover{ background:#006cbe; }
+
+.danger{
+  background:#fff;
+  border-color:#e0b4b4;
+  color:#a4262c;
+}
+
+.danger:hover{ background:#fff6f6; }
+
+.err{
+  margin-top:8px;
+  color:#a4262c;
+  font-size:13px;
+}
+
+.hint{
+  margin-top:14px;
+  font-size:13px;
+}
+
+.muted{ color:#666; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }

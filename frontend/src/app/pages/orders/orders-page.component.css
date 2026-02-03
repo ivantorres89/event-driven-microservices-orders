@@ -1,0 +1,42 @@
+.wrap{
+  padding: 18px;
+  display:flex;
+  flex-direction:column;
+  gap: 14px;
+}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap: 16px;
+}
+.h1{ margin:0; font-size: 22px; }
+.order{ padding: 14px; border-radius: 16px; }
+.head{
+  display:flex;
+  justify-content:space-between;
+  gap: 14px;
+  align-items:flex-start;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+  margin-bottom: 10px;
+}
+.id{ font-weight: 900; font-size: 16px; }
+.right{ display:flex; align-items:center; gap: 12px; }
+.price{ font-weight: 900; font-size: 16px; }
+.lines{ display:flex; flex-direction:column; gap: 8px; }
+.line{
+  display:grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 12px;
+  align-items:center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fff;
+}
+.name{ font-weight: 700; }
+.sum{ font-weight: 900; }
+.small{ font-size: 12px; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+.empty{ padding: 18px; border-radius: 16px; }

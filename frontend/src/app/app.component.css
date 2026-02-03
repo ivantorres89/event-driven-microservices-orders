@@ -1,0 +1,8 @@
+.shell{
+  display:flex;
+  min-height: calc(100vh - 64px);
+}
+.main{
+  flex: 1;
+  min-width: 0;
+}

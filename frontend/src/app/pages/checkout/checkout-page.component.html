@@ -1,0 +1,73 @@
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 class="h1">Checkout</h1>
+      <div class="muted">Review your order lines and submit.</div>
+    </div>
+
+    <div class="actions">
+      <a class="ms-btn" routerLink="/products">Back to products</a>
+      <button class="ms-btn primary" [disabled]="!canSubmit" (click)="submit()">Submit order</button>
+    </div>
+  </div>
+
+  <div class="card info" *ngIf="active">
+    <div class="row">
+      <div>
+        <div class="k muted">CorrelationId</div>
+        <div class="v mono">{{active.correlationId}}</div>
+      </div>
+      <div>
+        <div class="k muted">Status</div>
+        <div class="v">
+          <span class="badge" [class.ok]="active.status==='Completed'">{{active.status}}</span>
+          <span class="muted" *ngIf="active.orderId"> · Order #{{active.orderId}}</span>
+        </div>
+      </div>
+      <div class="right">
+        <button class="ms-btn primary" *ngIf="active.status==='Completed'" (click)="done()">Go to Orders</button>
+      </div>
+    </div>
+
+    <div class="muted small">
+      If you close the tab and come back, the app restores the active order from localStorage and re-registers it to SignalR.
+    </div>
+  </div>
+
+  <table class="table" *ngIf="lines.length; else empty">
+    <thead>
+      <tr>
+        <th>Item</th>
+        <th style="width: 12%">Qty</th>
+        <th style="width: 16%">Unit</th>
+        <th style="width: 16%">Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let l of lines">
+        <td>{{l.name}}</td>
+        <td>{{l.qty}}</td>
+        <td>€{{l.unitPrice | number:'1.2-2'}}</td>
+        <td>€{{l.total | number:'1.2-2'}}</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="sum card">
+    <div class="muted">Grand total</div>
+    <div class="total">€{{total | number:'1.2-2'}}</div>
+  </div>
+
+  <ng-template #empty>
+    <div class="card empty">
+      <div class="muted">No items in checkout.</div>
+      <a class="ms-btn primary" routerLink="/products">Go to products</a>
+    </div>
+  </ng-template>
+
+  <app-spinner-overlay
+    [visible]="spinnerVisible"
+    [title]="spinnerTitle"
+    [subtitle]="spinnerSubtitle">
+  </app-spinner-overlay>
+</div>

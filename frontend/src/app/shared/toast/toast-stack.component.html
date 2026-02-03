@@ -1,0 +1,6 @@
+<div class="stack" *ngIf="(toasts.toasts$ | async) as list">
+  <div class="toast" *ngFor="let t of list" [class]="t.kind">
+    <div class="t-title">{{t.title}}</div>
+    <div class="t-msg muted" *ngIf="t.message">{{t.message}}</div>
+  </div>
+</div>

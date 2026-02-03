@@ -1,0 +1,43 @@
+.wrap{
+  padding: 18px;
+  display:flex;
+  flex-direction:column;
+  gap: 14px;
+}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap: 16px;
+}
+.h1{ margin:0; font-size: 22px; }
+.actions{ display:flex; gap:10px; }
+.info{ padding: 12px 14px; }
+.row{ display:grid; grid-template-columns: 1.5fr 1fr auto; gap: 18px; align-items:center; }
+.k{ font-size: 12px; }
+.v{ font-weight: 700; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-weight: 600; font-size: 12px;}
+.right{ display:flex; justify-content:flex-end; }
+.small{ font-size: 12px; margin-top: 8px; }
+.badge{
+  display:inline-flex; align-items:center;
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid rgba(0,120,212,.25);
+  background: rgba(0,120,212,.08);
+  font-size: 12px;
+  font-weight: 800;
+}
+.badge.ok{
+  border-color: rgba(16,124,16,.25);
+  background: rgba(16,124,16,.10);
+}
+.sum{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding: 14px 16px;
+  border-radius: 16px;
+}
+.total{ font-size: 22px; font-weight: 900; }
+.empty{ padding: 18px; display:flex; flex-direction:column; gap: 10px; align-items:flex-start; }

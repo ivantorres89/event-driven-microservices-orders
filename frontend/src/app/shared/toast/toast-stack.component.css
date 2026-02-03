@@ -1,0 +1,24 @@
+.stack{
+  position: fixed;
+  right: 18px;
+  top: 78px;
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+  z-index: 30;
+  width: 320px;
+  pointer-events:none;
+}
+.toast{
+  pointer-events:none;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--primary);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: var(--shadow);
+}
+.toast.success{ border-left-color: var(--success); }
+.toast.danger{ border-left-color: var(--danger); }
+.t-title{ font-weight: 700; font-size: 13px; }
+.t-msg{ font-size: 12px; margin-top: 4px; }

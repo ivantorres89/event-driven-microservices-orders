@@ -1,0 +1,37 @@
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 class="h1">Orders</h1>
+      <div class="muted">Basic list of user orders (demo storage).</div>
+    </div>
+  </div>
+
+  <div class="grid" *ngIf="(orders.orders$ | async) as list">
+    <div class="card order" *ngFor="let o of list">
+      <div class="head">
+        <div>
+          <div class="id">Order #{{o.id}}</div>
+          <div class="muted small">Created: {{format(o.createdAtUtc)}}</div>
+          <div class="muted small">CorrelationId: <span class="mono">{{o.correlationId}}</span></div>
+        </div>
+
+        <div class="right">
+          <div class="price">€{{total(o) | number:'1.2-2'}}</div>
+          <button class="ms-btn danger" (click)="delete(o.id)">Delete</button>
+        </div>
+      </div>
+
+      <div class="lines">
+        <div class="line" *ngFor="let l of o.lines">
+          <div class="name">{{l.productName}}</div>
+          <div class="muted">€{{l.unitPrice | number:'1.2-2'}} × {{l.quantity}}</div>
+          <div class="sum">€{{(l.unitPrice*l.quantity) | number:'1.2-2'}}</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card empty" *ngIf="!list.length">
+      <div class="muted">No orders yet.</div>
+    </div>
+  </div>
+</div>

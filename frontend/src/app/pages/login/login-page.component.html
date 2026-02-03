@@ -1,0 +1,23 @@
+<div class="wrap">
+  <div class="card">
+    <div class="title">Sign in (demo)</div>
+    <div class="sub muted">
+      This UI uses a dev authentication handler: the <strong>Bearer token equals the user id</strong>.
+      SignalR will route notifications via <span class="mono">Clients.User(userId)</span>.
+    </div>
+
+    <label class="lbl">User id</label>
+    <input class="inp" [(ngModel)]="userId" placeholder="e.g. user-123" />
+    <div *ngIf="error" class="err">{{error}}</div>
+
+    <div class="row">
+      <button class="btn primary" (click)="signIn()">Sign in</button>
+      <button class="btn" (click)="generate()">Generate</button>
+      <button class="btn danger" (click)="signOut()">Sign out</button>
+    </div>
+
+    <div class="hint muted">
+      Tip: open a second tab with a different user id to see that notifications are isolated per user.
+    </div>
+  </div>
+</div>

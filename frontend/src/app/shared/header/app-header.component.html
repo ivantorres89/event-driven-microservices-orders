@@ -1,0 +1,36 @@
+<header class="hdr">
+  <div class="left">
+    <div class="brand">
+      <div class="logo">C</div>
+      <div>
+        <div class="title">Contoso Shop</div>
+        <div class="sub muted">SignalR demo · Order workflow notifications</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="right">
+    <span class="pill">
+      <span [class]="dotClass"></span>
+      <span *ngIf="state==='connected'">Connected</span>
+      <span *ngIf="state==='connecting'">Connecting…</span>
+      <span *ngIf="state==='disconnected'">Disconnected</span>
+    </span>
+
+    <span class="pill">
+      <span class="muted">User</span>
+      <strong>{{userId}}</strong>
+    </span>
+
+    <a class="pill link" routerLink="/login" title="Change user">Change user</a>
+    <button class="pill btnlink" (click)="signOut()" title="Sign out">Sign out</button>
+
+    <span *ngIf="active" class="pill active">
+      <span class="muted">Active</span>
+      <strong>{{active.status}}</strong>
+      <span class="muted">·</span>
+      <span class="mono">{{active.correlationId.slice(0,8)}}…</span>
+      <span *ngIf="active.orderId" class="muted">· #{{active.orderId}}</span>
+    </span>
+  </div>
+</header>

@@ -1,0 +1,40 @@
+<div class="backdrop" *ngIf="open" (click)="close.emit()"></div>
+
+<section class="panel card" *ngIf="open" (click)="$event.stopPropagation()">
+  <div class="head">
+    <div class="h">Cart</div>
+    <button class="ms-btn" (click)="close.emit()">Close</button>
+  </div>
+
+  <div class="body" *ngIf="lines.length; else empty">
+    <div class="line" *ngFor="let l of lines">
+      <div class="meta">
+        <div class="name">{{l.product.name}}</div>
+        <div class="muted small">{{l.product.category}} · €{{l.product.price}}</div>
+      </div>
+
+      <div class="qty">
+        <input class="input" type="number" min="1" [value]="l.quantity"
+               (change)="updateQty.emit({productId: l.product.id, quantity: +($any($event.target).value)})">
+      </div>
+
+      <button class="ms-btn danger" (click)="removeLine.emit(l.product.id)">Remove</button>
+    </div>
+
+    <div class="tot">
+      <div class="muted">Total</div>
+      <div class="sum">€{{total | number:'1.2-2'}}</div>
+    </div>
+
+    <div class="actions">
+      <button class="ms-btn" (click)="close.emit()">Continue</button>
+      <button class="ms-btn primary" (click)="goCheckout()">Checkout</button>
+    </div>
+  </div>
+
+  <ng-template #empty>
+    <div class="empty muted">
+      Your cart is empty.
+    </div>
+  </ng-template>
+</section>
