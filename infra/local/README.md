@@ -157,3 +157,24 @@ This demonstrates:
 - correlation across services
 - real-time notification flow
 
+
+
+## Commands
+
+### Start the stack
+
+```powershell
+.\infra\local\up.ps1 -Build
+```
+
+### Stop the stack
+
+```powershell
+.\infra\local\down.ps1
+```
+
+To also delete named volumes:
+
+```powershell
+.\infra\local\down.ps1 -Volumes
+```

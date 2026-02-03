@@ -43,8 +43,6 @@ services:
       ACCEPT_EULA: "Y"
       MSSQL_PID: "Developer"
       SA_PASSWORD: ${SA_PASSWORD:-Your_strong_Password123!}
-    volumes:
-      - mssql_data:/var/opt/mssql
     networks: [contoso-net]
 
   jaeger:
@@ -218,4 +216,3 @@ networks:
 volumes:
   rabbitmq_data:
   redis_data:
-  mssql_data:

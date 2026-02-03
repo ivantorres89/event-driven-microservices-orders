@@ -2,7 +2,9 @@ param(
   [switch]$Build
 )
 
-$composeFile = Join-Path $PSScriptRoot "docker-compose.yml"
+# Compose file lives at the repository root (two levels up from /infra/local)
+$composeFile = Join-Path $PSScriptRoot "..\..\docker-compose.yml"
+
 $cmd = "docker compose -f `"$composeFile`" up -d"
 if ($Build) { $cmd += " --build" }
 
