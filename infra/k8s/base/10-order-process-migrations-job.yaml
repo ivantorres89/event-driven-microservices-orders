@@ -1,0 +1,25 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: order-process-migrations
+  namespace: contoso-orders
+spec:
+  backoffLimit: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: order-process-migrations
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: migrations
+          image: ${IMAGE_ORDER_PROCESS_MIGRATIONS}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DOTNET_ENVIRONMENT
+              value: "Production"
+            - name: ConnectionStrings__Contoso
+              valueFrom:
+                secretKeyRef:
+                  name: contoso-orders-secrets
+                  key: ConnectionStrings__Contoso

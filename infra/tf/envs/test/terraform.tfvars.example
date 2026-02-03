@@ -1,0 +1,29 @@
+# Example tfvars for test
+location = "westeurope"
+
+tags = {
+  owner   = "ivan"
+  project = "contoso-orders"
+}
+
+sql_admin_login    = "sqladminuser"
+sql_admin_password = "CHANGE_ME"
+
+# Optional:
+# aks_node_vm_size   = "Standard_B2s"
+# aks_node_min_count = 1
+# aks_node_max_count = 3
+
+# Business Critical (expensive!) – choose smaller for demo if needed:
+sql_database_sku_name = "BC_Gen5_2"
+sql_zone_redundant    = false
+
+redis_sku_name = "Standard"
+redis_family   = "C"
+redis_capacity = 1
+
+# APIM: Developer is cheapest. Standard is expensive.
+enable_apim   = true
+apim_sku_name = "Developer_1"
+apim_publisher_name  = "Contoso"
+apim_publisher_email = "contoso@example.com"

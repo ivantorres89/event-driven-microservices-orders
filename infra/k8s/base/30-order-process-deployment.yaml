@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-process
+  namespace: contoso-orders
+  labels:
+    app.kubernetes.io/name: order-process
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: order-process
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: order-process
+    spec:
+      containers:
+        - name: order-process
+          image: ${IMAGE_ORDER_PROCESS}
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: DOTNET_ENVIRONMENT
+              value: "Production"
+            - name: ConnectionStrings__Contoso
+              valueFrom:
+                secretKeyRef:
+                  name: contoso-orders-secrets
+                  key: ConnectionStrings__Contoso
+            - name: ConnectionStrings__Redis
+              valueFrom:
+                secretKeyRef:
+                  name: contoso-orders-secrets
+                  key: ConnectionStrings__Redis
+            - name: AzureServiceBus__ConnectionString
+              valueFrom:
+                secretKeyRef:
+                  name: contoso-orders-secrets
+                  key: AzureServiceBus__ConnectionString
+            - name: AzureServiceBus__InboundQueueName
+              value: "order.accepted"
+            - name: AzureServiceBus__OutboundQueueName
+              value: "order.processed"
