@@ -28,6 +28,7 @@ dist/
 build/
 coverage/
 .angular/cache/
+.angular/
 .vite/
 .parcel-cache/
 .cache/
