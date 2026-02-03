@@ -34,14 +34,14 @@ jobs:
         with:
           configFilePath: GitVersion.yml
 
-      - name: Build (Release) - all services
+      - name: Build backend (.NET) - all services
         run: |
           dotnet --info
           dotnet build services/order-accept/OrderAccept.slnx -c Release
           dotnet build services/order-process/OrderProcess.slnx -c Release
           dotnet build services/order-notification/OrderNotification.slnx -c Release
 
-      - name: Unit tests (with coverage)
+      - name: Backend unit tests (.NET) - with coverage
         shell: bash
         run: |
           set -euo pipefail
@@ -62,7 +62,7 @@ jobs:
               dotnet test "$csproj" -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=${trx}"
             done
           fi
-      - name: Start local infra for integration tests (RabbitMQ, Redis, SQL Server)
+      - name: Backend integration tests - start local infra (RabbitMQ, Redis, SQL Server)
         env:
           SA_PASSWORD: Your_strong_Password123!
         run: |
@@ -97,7 +97,7 @@ jobs:
 
           docker compose ps
 
-      - name: Integration tests (with coverage)
+      - name: Backend integration tests (.NET) - with coverage
         shell: bash
         env:
           CONTOSO_IT_SQL_BASE: Server=localhost,1433;User ID=sa;Password=Your_strong_Password123!;TrustServerCertificate=True;Encrypt=False
@@ -120,10 +120,39 @@ jobs:
               dotnet test "$csproj" -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=${trx}"
             done
           fi
-      - name: Stop local infra
+      - name: Backend integration tests - stop local infra
         if: always()
         run: |
           docker compose down -v
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Frontend build (Angular)
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Frontend unit tests (Angular)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "Discovering frontend spec files..."
+          mapfile -t spec_files < <(find frontend/src -type f -name "*.spec.ts" | sort)
+
+          if [ "${#spec_files[@]}" -eq 0 ]; then
+            echo "No frontend unit tests found."
+          else
+            echo "Found ${#spec_files[@]} spec files. Running tests..."
+            pushd frontend >/dev/null
+            npm run test:ci
+            popd >/dev/null
+          fi
 
       - name: Generate coverage report (ReportGenerator)
         if: always()
@@ -134,7 +163,7 @@ jobs:
           reporttypes: 'MarkdownSummaryGithub;Cobertura;Badges'
           tag: '${{ steps.gitversion.outputs.semVer }}'
 
-      - name: Publish coverage in build summary
+      - name: Publish backend coverage in build summary
         if: always()
         shell: bash
         run: |
@@ -146,12 +175,35 @@ jobs:
             echo "_Coverage summary not found (ReportGenerator output missing)_" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Upload coverage report artifact
+      - name: Publish frontend coverage in build summary
+        if: always()
+        shell: bash
+        run: |
+          if [ -f frontend/coverage/coverage.txt ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## Frontend coverage (Angular)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            cat frontend/coverage/coverage.txt >> $GITHUB_STEP_SUMMARY
+          else
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "## Frontend coverage (Angular)" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "_Coverage summary not found (frontend/coverage/coverage.txt)_" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload backend coverage report artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-${{ steps.gitversion.outputs.semVer }}
+          name: backend-coverage-${{ steps.gitversion.outputs.semVer }}
           path: coveragereport
+
+      - name: Upload frontend coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-${{ steps.gitversion.outputs.semVer }}
+          path: frontend/coverage
 
       - name: Upload test result artifacts (trx)
         if: always()
