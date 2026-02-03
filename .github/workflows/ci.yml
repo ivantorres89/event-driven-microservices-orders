@@ -42,9 +42,9 @@ jobs:
 
       - name: Unit tests (with coverage)
         run: |
-          dotnet test services/order-accept/tests/OrderAccept.UnitTests/OrderAccept.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-accept-unit.trx"
-          dotnet test services/order-process/tests/OrderProcess.UnitTests/OrderProcess.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-process-unit.trx"
-          dotnet test services/order-notification/tests/OrderNotification.UnitTests/OrderNotification.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-notification-unit.trx"
+          dotnet test services/order-accept/tests/OrderAccept.UnitTests/OrderAccept.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-accept-unit.trx"
+          dotnet test services/order-process/tests/OrderProcess.UnitTests/OrderProcess.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-process-unit.trx"
+          dotnet test services/order-notification/tests/OrderNotification.UnitTests/OrderNotification.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-notification-unit.trx"
 
       - name: Start local infra for integration tests (RabbitMQ, Redis, SQL Server)
         env:
@@ -85,9 +85,9 @@ jobs:
         env:
           CONTOSO_IT_SQL_BASE: Server=localhost,1433;User ID=sa;Password=Your_strong_Password123!;TrustServerCertificate=True;Encrypt=False
         run: |
-          dotnet test services/order-accept/tests/OrderAccept.IntegrationTests/OrderAccept.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-accept-it.trx"
-          dotnet test services/order-process/tests/OrderProcess.IntegrationTests/OrderProcess.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-process-it.trx"
-          dotnet test services/order-notification/tests/OrderNotification.IntegrationTests/OrderNotification.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-notification-it.trx"
+          dotnet test services/order-accept/tests/OrderAccept.IntegrationTests/OrderAccept.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-accept-it.trx"
+          dotnet test services/order-process/tests/OrderProcess.IntegrationTests/OrderProcess.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-process-it.trx"
+          dotnet test services/order-notification/tests/OrderNotification.IntegrationTests/OrderNotification.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-notification-it.trx"
 
       - name: Stop local infra
         if: always()
@@ -98,7 +98,7 @@ jobs:
         if: always()
         uses: danielpalme/ReportGenerator-GitHub-Action@5.5.1
         with:
-          reports: '**/coverage.cobertura.xml'
+          reports: 'TestResults/**/coverage.cobertura.xml'
           targetdir: 'coveragereport'
           reporttypes: 'MarkdownSummaryGithub;Cobertura'
           tag: '${{ steps.gitversion.outputs.semVer }}'
