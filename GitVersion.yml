@@ -1,4 +1,4 @@
-mode: Mainline
+mode: ContinuousDelivery
 
 # Only treat tags like v1.2.3 (or V1.2.3) as version tags.
 # Environment promotion tags (test-*, staging-*, prod-*) are intentionally ignored.
