@@ -28,6 +28,21 @@ public sealed class Product : EntityBase
     public string Category { get; set; } = string.Empty;
 
     /// <summary>
+    /// Certification vendor (e.g., Microsoft, Cisco, AWS).
+    /// </summary>
+    public string Vendor { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Public URL to a small product image (e.g., https://.../AZ-305.png).
+    /// </summary>
+    public string ImageUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Seasonal discount percentage (0-100).
+    /// </summary>
+    public int Discount { get; set; }
+
+    /// <summary>
     /// Monthly / Annual (kept as string for demo simplicity).
     /// </summary>
     public string BillingPeriod { get; set; } = "Monthly";

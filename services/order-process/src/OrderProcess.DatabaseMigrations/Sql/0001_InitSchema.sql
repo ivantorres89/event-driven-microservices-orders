@@ -52,6 +52,9 @@ BEGIN
         ExternalProductId NVARCHAR(64) NOT NULL,
         Name NVARCHAR(200) NOT NULL,
         Category NVARCHAR(100) NOT NULL,
+        Vendor NVARCHAR(64) NOT NULL CONSTRAINT DF_Product_Vendor DEFAULT (N''),
+        ImageUrl NVARCHAR(2048) NOT NULL CONSTRAINT DF_Product_ImageUrl DEFAULT (N''),
+        Discount INT NOT NULL CONSTRAINT DF_Product_Discount DEFAULT (0),
         BillingPeriod NVARCHAR(16) NOT NULL,
         IsSubscription BIT NOT NULL CONSTRAINT DF_Product_IsSubscription DEFAULT (1),
         Price DECIMAL(10,2) NOT NULL CONSTRAINT DF_Product_Price DEFAULT (0),
@@ -60,7 +63,8 @@ BEGIN
         UpdatedAt DATETIME2(7) NOT NULL CONSTRAINT DF_Product_UpdatedAt DEFAULT SYSUTCDATETIME(),
         IsSoftDeleted BIT NOT NULL CONSTRAINT DF_Product_IsSoftDeleted DEFAULT (0),
         CONSTRAINT CK_Product_BillingPeriod CHECK (BillingPeriod IN (N'Monthly', N'Annual')),
-        CONSTRAINT CK_Product_PriceNonNegative CHECK (Price >= (0))
+        CONSTRAINT CK_Product_PriceNonNegative CHECK (Price >= (0)),
+        CONSTRAINT CK_Product_Discount CHECK (Discount >= (0) AND Discount <= (100))
     );
 
     CREATE UNIQUE INDEX UX_Product_ExternalProductId ON dbo.Product (ExternalProductId);
@@ -70,6 +74,35 @@ IF COL_LENGTH(N'dbo.Product', N'IsSoftDeleted') IS NULL
 BEGIN
     ALTER TABLE dbo.Product
         ADD IsSoftDeleted BIT NOT NULL CONSTRAINT DF_Product_IsSoftDeleted DEFAULT (0);
+END
+
+IF COL_LENGTH(N'dbo.Product', N'Vendor') IS NULL
+BEGIN
+    ALTER TABLE dbo.Product
+        ADD Vendor NVARCHAR(64) NOT NULL CONSTRAINT DF_Product_Vendor DEFAULT (N'');
+END
+
+IF COL_LENGTH(N'dbo.Product', N'ImageUrl') IS NULL
+BEGIN
+    ALTER TABLE dbo.Product
+        ADD ImageUrl NVARCHAR(2048) NOT NULL CONSTRAINT DF_Product_ImageUrl DEFAULT (N'');
+END
+
+IF COL_LENGTH(N'dbo.Product', N'Discount') IS NULL
+BEGIN
+    ALTER TABLE dbo.Product
+        ADD Discount INT NOT NULL CONSTRAINT DF_Product_Discount DEFAULT (0);
+END
+
+IF NOT EXISTS (
+    SELECT 1
+    FROM sys.check_constraints
+    WHERE name = N'CK_Product_Discount'
+      AND parent_object_id = OBJECT_ID(N'dbo.Product')
+)
+BEGIN
+    ALTER TABLE dbo.Product WITH CHECK
+        ADD CONSTRAINT CK_Product_Discount CHECK (Discount >= (0) AND Discount <= (100));
 END
 
 -- --- Order ---

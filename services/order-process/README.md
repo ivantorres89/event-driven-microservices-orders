@@ -358,3 +358,35 @@ This service prioritizes:
 - Operational safety and traceability
 
 It is designed to remain simple, predictable, and horizontally scalable.
+
+
+---
+
+## Product catalog (certifications)
+
+This demo now seeds **145 certification-prep subscriptions** into `dbo.Product` (vendor + exam code + seasonal discount).
+
+### New columns
+
+- `Vendor` (nvarchar(64))
+- `ImageUrl` (nvarchar(2048)) – public URL to a 500x500 image
+- `Discount` (int) – percentage (0..100)
+
+### Product images
+
+All product images are generated in:
+
+- `assets/products/<ExternalProductId>.png` (500x500)
+
+The seed script uses a jsDelivr URL template:
+
+- `https://cdn.jsdelivr.net/gh/REPLACE_WITH_YOUR_GH_USER/contoso-assets@main/products/<ExternalProductId>.png`
+
+**Recommended hosting (simple + free for portfolio):**
+1. Create a public repo named `contoso-assets` in your GitHub account
+2. Copy `assets/products` into that repo under `products/`
+3. Commit to `main`
+4. Replace `REPLACE_WITH_YOUR_GH_USER` in:
+   - `src/OrderProcess.DatabaseMigrations/Sql/0002_SeedDemoData.sql`
+
+jsDelivr will then serve the images via CDN and your frontend can show them in the product detail view.

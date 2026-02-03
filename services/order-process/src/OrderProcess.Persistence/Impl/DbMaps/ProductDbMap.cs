@@ -15,5 +15,12 @@ internal sealed class ProductDbMap : IEntityTypeConfiguration<Product>
         b.HasIndex(x => x.ExternalProductId).IsUnique();
 
         b.Property(x => x.Name).HasMaxLength(200).IsRequired();
+
+        b.Property(x => x.Category).HasMaxLength(100).IsRequired();
+        b.Property(x => x.BillingPeriod).HasMaxLength(16).IsRequired();
+
+        b.Property(x => x.Vendor).HasMaxLength(64).IsRequired();
+        b.Property(x => x.ImageUrl).HasMaxLength(2048).IsRequired();
+        b.Property(x => x.Discount).IsRequired();
     }
 }

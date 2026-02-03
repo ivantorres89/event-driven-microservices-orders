@@ -2,7 +2,7 @@ using FluentMigrator;
 
 namespace OrderProcess.DatabaseMigrations.Migrations;
 
-[Migration(2, "Seed demo data (100 products, 10 customers, 20 orders + items)")]
+[Migration(2, "Seed demo data (145 products, 10 customers, 20 orders + items)")]
 public sealed class Migration0002_SeedDemoData : Migration
 {
     private const string ScriptName = "OrderProcess.DatabaseMigrations.Sql.0002_SeedDemoData.sql";
@@ -29,7 +29,7 @@ public sealed class Migration0002_SeedDemoData : Migration
             WHERE c.ExternalCustomerId LIKE N'CUST-%';
 
             DELETE FROM dbo.Customer WHERE ExternalCustomerId LIKE N'CUST-%';
-            DELETE FROM dbo.Product WHERE ExternalProductId LIKE N'SUBS-%' OR ExternalProductId LIKE N'CONTOSO-%';
+            DELETE FROM dbo.Product WHERE Vendor IN (N'Microsoft', N'AWS', N'Cisco', N'CompTIA', N'Google', N'ISC2', N'ITIL', N'Pearson', N'Terraform', N'Databricks');
         ");
     }
 }
