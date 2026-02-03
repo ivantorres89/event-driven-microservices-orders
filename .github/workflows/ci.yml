@@ -1,0 +1,132 @@
+name: ci
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build-test-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (full history for GitVersion)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          dotnet-quality: 'ga'
+
+      - name: Setup GitVersion
+        uses: gittools/actions/gitversion/setup@v4.2.0
+        with:
+          versionSpec: '6.x'
+
+      - name: GitVersion (calculate SemVer)
+        id: gitversion
+        uses: gittools/actions/gitversion/execute@v4.2.0
+        with:
+          useConfigFile: true
+
+      - name: Build (Release) - all services
+        run: |
+          dotnet --info
+          dotnet build services/order-accept/OrderAccept.slnx -c Release
+          dotnet build services/order-process/OrderProcess.slnx -c Release
+          dotnet build services/order-notification/OrderNotification.slnx -c Release
+
+      - name: Unit tests (with coverage)
+        run: |
+          dotnet test services/order-accept/tests/OrderAccept.UnitTests/OrderAccept.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-accept-unit.trx"
+          dotnet test services/order-process/tests/OrderProcess.UnitTests/OrderProcess.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-process-unit.trx"
+          dotnet test services/order-notification/tests/OrderNotification.UnitTests/OrderNotification.UnitTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-notification-unit.trx"
+
+      - name: Start local infra for integration tests (RabbitMQ, Redis, SQL Server)
+        env:
+          SA_PASSWORD: Your_strong_Password123!
+        run: |
+          docker compose up -d rabbitmq redis sql
+
+          echo "Waiting for RabbitMQ to be healthy..."
+          for i in $(seq 1 60); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' contoso-orders-local-rabbitmq-1 2>/dev/null || true)
+            if [ "$status" = "healthy" ]; then echo "RabbitMQ healthy"; break; fi
+            sleep 2
+          done
+
+          echo "Waiting for Redis to be healthy..."
+          for i in $(seq 1 60); do
+            status=$(docker inspect -f '{{.State.Health.Status}}' contoso-orders-local-redis-1 2>/dev/null || true)
+            if [ "$status" = "healthy" ]; then echo "Redis healthy"; break; fi
+            sleep 2
+          done
+
+          echo "Waiting for SQL Server to accept connections..."
+          for i in $(seq 1 60); do
+            if docker exec contoso-orders-local-sql-1 /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" >/dev/null 2>&1; then
+              echo "SQL Server ready (tools18)"
+              break
+            fi
+            if docker exec contoso-orders-local-sql-1 /opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P "$SA_PASSWORD" -Q "SELECT 1" >/dev/null 2>&1; then
+              echo "SQL Server ready (tools)"
+              break
+            fi
+            sleep 2
+          done
+
+          docker compose ps
+
+      - name: Integration tests (with coverage)
+        env:
+          CONTOSO_IT_SQL_BASE: Server=localhost,1433;User ID=sa;Password=Your_strong_Password123!;TrustServerCertificate=True;Encrypt=False
+        run: |
+          dotnet test services/order-accept/tests/OrderAccept.IntegrationTests/OrderAccept.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-accept-it.trx"
+          dotnet test services/order-process/tests/OrderProcess.IntegrationTests/OrderProcess.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-process-it.trx"
+          dotnet test services/order-notification/tests/OrderNotification.IntegrationTests/OrderNotification.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --logger "trx;LogFileName=order-notification-it.trx"
+
+      - name: Stop local infra
+        if: always()
+        run: |
+          docker compose down -v
+
+      - name: Generate coverage report (ReportGenerator)
+        if: always()
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.5.1
+        with:
+          reports: '**/coverage.cobertura.xml'
+          targetdir: 'coveragereport'
+          reporttypes: 'MarkdownSummaryGithub;Cobertura'
+          tag: '${{ steps.gitversion.outputs.semVer }}'
+
+      - name: Publish coverage in build summary
+        if: always()
+        shell: bash
+        run: |
+          echo "## Build version (GitVersion): ${{ steps.gitversion.outputs.semVer }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coveragereport/SummaryGithub.md ]; then
+            cat coveragereport/SummaryGithub.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "_Coverage summary not found (ReportGenerator output missing)_" >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Upload coverage report artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ steps.gitversion.outputs.semVer }}
+          path: coveragereport
+
+      - name: Upload test result artifacts (trx)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ steps.gitversion.outputs.semVer }}
+          path: |
+            **/*.trx
+            **/TestResults/**/*.trx

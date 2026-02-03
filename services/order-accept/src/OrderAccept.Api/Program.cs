@@ -37,7 +37,7 @@ public partial class Program
 
         builder.Services
             .AddOrderAcceptApplication()
-            .AddOrderAcceptInfrastructure(builder.Configuration);
+            .AddOrderAcceptInfrastructure(builder.Configuration, builder.Environment);
 
         // --- OpenTelemetry (Tracing + Metrics) ---
         var otelEnabled = builder.Configuration.GetValue<bool?>("OpenTelemetry:Enabled") ?? true;

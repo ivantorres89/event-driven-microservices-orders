@@ -1,0 +1,23 @@
+mode: Mainline
+
+# Only treat tags like v1.2.3 (or V1.2.3) as version tags.
+# Environment promotion tags (test-*, staging-*, prod-*) are intentionally ignored.
+tag-prefix: '[vV]'
+
+# Base version to start from if no vX.Y.Z tags exist yet.
+next-version: 0.1.0
+
+branches:
+  main:
+    regex: ^main$
+    increment: Patch
+    is-mainline: true
+    tag: ''
+  pull-request:
+    regex: ^(pull|pr)[/-]
+    tag: PR
+    increment: Inherit
+
+ignore:
+  sha: []
+merge-message-formats: {}

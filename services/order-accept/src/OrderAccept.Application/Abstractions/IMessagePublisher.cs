@@ -1,5 +1,3 @@
-using OrderAccept.Shared.Correlation;
-
 namespace OrderAccept.Application.Abstractions;
 
 /// <summary>

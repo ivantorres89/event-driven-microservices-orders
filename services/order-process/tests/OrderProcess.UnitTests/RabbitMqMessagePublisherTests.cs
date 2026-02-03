@@ -1,17 +1,15 @@
-using Castle.Core.Logging;
+using System.Text;
+using System.Text.Json;
 using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Moq;
 using OpenTelemetry;
-using OrderAccept.Infrastructure.Messaging;
-using OrderAccept.Infrastructure.Workflow;
-using OrderAccept.Shared.Correlation;
+using OrderProcess.Infrastructure.Messaging;
+using OrderProcess.Shared.Correlation;
 using RabbitMQ.Client;
-using System.Text;
-using System.Text.Json;
 
-namespace OrderAccept.UnitTests;
+namespace OrderProcess.UnitTests;
 
 public sealed class RabbitMqMessagePublisherTests
 {

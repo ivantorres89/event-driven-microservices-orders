@@ -5,6 +5,9 @@ WORKDIR /src
 
 # Copy csproj first for better layer caching
 COPY ./src/OrderNotification.Worker/OrderNotification.Worker.csproj ./src/OrderNotification.Worker/
+COPY ./src/OrderNotification.Application/OrderNotification.Application.csproj ./src/OrderNotification.Application/
+COPY ./src/OrderNotification.Infrastructure/OrderNotification.Infrastructure.csproj ./src/OrderNotification.Infrastructure/
+COPY ./src/OrderNotification.Shared/OrderNotification.Shared.csproj ./src/OrderNotification.Shared/
 
 RUN dotnet restore ./src/OrderNotification.Worker/OrderNotification.Worker.csproj
 
