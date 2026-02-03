@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject } from 'rxjs';
+import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
@@ -17,6 +17,10 @@ export class AuthService {
 
   private readonly _session$ = new BehaviorSubject<AuthSession | null>(null);
   readonly session$ = this._session$.asObservable();
+  readonly userId$ = this.session$.pipe(
+    map(session => session?.userId ?? ''),
+    distinctUntilChanged()
+  );
 
   constructor(
     private storage: StorageService,
