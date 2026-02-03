@@ -1,57 +1,167 @@
-<div class="wrap">
-  <div class="top">
-    <div>
-      <h1 class="h1">Products</h1>
-      <div class="muted">Select items and add them to your cart. This is a demo (no cart persistence).</div>
-    </div>
+<div class="page">
+  <div class="catalog">
+    <!-- LEFT FILTERS (MeasureUp-like) -->
+    <aside class="filters">
+      <div class="filter-header">
+        <div class="filter-title">CATEGORY</div>
+      </div>
 
-    <div class="actions">
-      <button class="ms-btn" (click)="openCart()">
-        Cart ({{cartLines.length}})
-      </button>
-      <a class="ms-btn primary" routerLink="/checkout" [class.disabled]="!cartLines.length">Checkout</a>
-    </div>
+      <div class="filter-section">
+        <button class="filter-toggle" type="button">
+          <span>Vendor</span>
+          <span class="toggle-icon">–</span>
+        </button>
+
+        <div class="filter-body">
+          <button class="filter-item" type="button" (click)="setVendor(null)" [class.active]="!selectedVendor">
+            <span>All</span>
+            <span class="count">{{allProducts.length}}</span>
+          </button>
+
+          <button
+            class="filter-item"
+            type="button"
+            *ngFor="let v of vendors"
+            (click)="setVendor(v.vendor)"
+            [class.active]="selectedVendor === v.vendor">
+            <span>{{v.vendor}}</span>
+            <span class="count">{{v.count}}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="filter-section collapsed">
+        <button class="filter-toggle" type="button">
+          <span>PRICE</span>
+          <span class="toggle-icon">+</span>
+        </button>
+      </div>
+
+      <div class="filter-section collapsed">
+        <button class="filter-toggle" type="button">
+          <span>PRODUCT TYPE</span>
+          <span class="toggle-icon">+</span>
+        </button>
+      </div>
+
+      <div class="filter-section collapsed">
+        <button class="filter-toggle" type="button">
+          <span>TECHNOLOGY</span>
+          <span class="toggle-icon">+</span>
+        </button>
+      </div>
+
+      <div class="filter-section collapsed">
+        <button class="filter-toggle" type="button">
+          <span>COMPLEXITY</span>
+          <span class="toggle-icon">+</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <section class="content">
+      <div class="topbar">
+        <div class="search">
+          <input
+            class="search-input"
+            type="text"
+            placeholder="Search for items, brands and inspiration"
+            [(ngModel)]="query"
+            (ngModelChange)="onQueryChange()" />
+          <span class="search-icon">🔎</span>
+        </div>
+
+        <div class="top-actions">
+          <button class="ms-btn" (click)="openCart()">
+            My Cart ({{cartLines.length}})
+          </button>
+          <a class="ms-btn primary" routerLink="/checkout" [class.disabled]="!cartLines.length">Checkout</a>
+        </div>
+      </div>
+
+      <div class="toolbar">
+        <div class="left">
+          <span class="muted">Items {{pageLabel}}</span>
+        </div>
+
+        <div class="right">
+          <label class="toolbar-item">
+            <span class="muted">Sort</span>
+            <select class="select" [(ngModel)]="sort" (change)="onSortChange()">
+              <option value="position">Position</option>
+              <option value="nameAsc">Name (A → Z)</option>
+              <option value="discountDesc">Discount (high → low)</option>
+              <option value="priceAsc">Price (low → high)</option>
+              <option value="priceDesc">Price (high → low)</option>
+            </select>
+          </label>
+
+          <label class="toolbar-item">
+            <span class="muted">Page size</span>
+            <select class="select" [(ngModel)]="pageSize" (change)="setPageSize(pageSize)">
+              <option [ngValue]="12">12</option>
+              <option [ngValue]="24">24</option>
+              <option [ngValue]="48">48</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div *ngIf="loading" class="muted" style="padding: 18px 0;">Loading products…</div>
+
+      <div *ngIf="!loading" class="grid">
+        <div class="card" *ngFor="let p of products">
+          <div class="media">
+            <img class="img" [src]="p.imageUrl" [alt]="p.name" loading="lazy" />
+            <div class="badge" *ngIf="badgeText(p) as b">{{b}}</div>
+          </div>
+
+          <div class="card-body">
+            <div class="meta">
+              <span class="vendor">{{p.vendor}}</span>
+              <span class="dot">•</span>
+              <span class="category">{{p.category}}</span>
+            </div>
+
+            <div class="name" [title]="p.name">{{p.name}}</div>
+
+            <div class="price-row">
+              <span class="price">€{{p.price | number:'1.2-2'}}</span>
+              <span class="original" *ngIf="originalPrice(p) as op">€{{op | number:'1.2-2'}}</span>
+              <span class="period" *ngIf="p.isSubscription">{{p.billingPeriod}}</span>
+            </div>
+          </div>
+
+          <div class="card-footer">
+            <div class="qty">
+              <input
+                class="qty-input"
+                type="number"
+                min="1"
+                [max]="p.stock"
+                [(ngModel)]="qty[p.id]" />
+            </div>
+
+            <button class="ms-btn primary" (click)="add(p)">Add</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="pager" *ngIf="!loading && total > pageSize">
+        <button class="ms-btn" (click)="prevPage()" [disabled]="pageIndex === 0">Prev</button>
+        <span class="muted">Page {{pageIndex + 1}} / {{(total / pageSize) | number:'1.0-0'}}</span>
+        <button class="ms-btn" (click)="nextPage()" [disabled]="(pageIndex + 1) * pageSize >= total">Next</button>
+      </div>
+
+      <app-cart-overlay
+        [open]="cartOpen"
+        [lines]="cartLines"
+        [total]="cartTotal"
+        (close)="closeCart()"
+        (updateQty)="updateQty($event.productId, $event.quantity)"
+        (removeLine)="removeLine($event)">
+      </app-cart-overlay>
+    </section>
   </div>
-
-  <div *ngIf="loading" class="muted">Loading products…</div>
-
-  <table class="table" *ngIf="!loading">
-    <thead>
-      <tr>
-        <th style="width: 42%">Product</th>
-        <th>Category</th>
-        <th style="width: 10%">Stock</th>
-        <th style="width: 14%">Price</th>
-        <th style="width: 16%">Qty</th>
-        <th style="width: 18%"></th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr *ngFor="let p of products">
-        <td>
-          <div class="pname">{{p.name}}</div>
-          <div class="muted small">SKU: {{p.id}}</div>
-        </td>
-        <td>{{p.category}}</td>
-        <td>{{p.stock}}</td>
-        <td>€{{p.price | number:'1.2-2'}}</td>
-        <td>
-          <input class="input" type="number" min="1" [max]="p.stock"
-                 [(ngModel)]="qty[p.id]" />
-        </td>
-        <td style="text-align:right">
-          <button class="ms-btn primary" (click)="add(p)">Add</button>
-        </td>
-      </tr>
-    </tbody>
-  </table>
-
-  <app-cart-overlay
-    [open]="cartOpen"
-    [lines]="cartLines"
-    [total]="cartTotal"
-    (close)="closeCart()"
-    (updateQty)="updateQty($event.productId, $event.quantity)"
-    (removeLine)="removeLine($event)">
-  </app-cart-overlay>
 </div>
