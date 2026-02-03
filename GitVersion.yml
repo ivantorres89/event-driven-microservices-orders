@@ -11,10 +11,9 @@ branches:
   main:
     regex: ^main$
     increment: Patch
-    tag: ''
   pull-request:
     regex: ^(pull|pr)[/-]
-    tag: PR
+    label: PR
     increment: Inherit
 
 ignore:
