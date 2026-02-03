@@ -175,35 +175,12 @@ jobs:
             echo "_Coverage summary not found (ReportGenerator output missing)_" >> $GITHUB_STEP_SUMMARY
           fi
 
-      - name: Publish frontend coverage in build summary
-        if: always()
-        shell: bash
-        run: |
-          if [ -f frontend/coverage/coverage.txt ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "## Frontend coverage (Angular)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            cat frontend/coverage/coverage.txt >> $GITHUB_STEP_SUMMARY
-          else
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "## Frontend coverage (Angular)" >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "_Coverage summary not found (frontend/coverage/coverage.txt)_" >> $GITHUB_STEP_SUMMARY
-          fi
-
       - name: Upload backend coverage report artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: backend-coverage-${{ steps.gitversion.outputs.semVer }}
           path: coveragereport
-
-      - name: Upload frontend coverage artifact
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-coverage-${{ steps.gitversion.outputs.semVer }}
-          path: frontend/coverage
 
       - name: Upload test result artifacts (trx)
         if: always()
