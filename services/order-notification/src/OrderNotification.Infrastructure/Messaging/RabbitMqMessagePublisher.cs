@@ -6,6 +6,8 @@ using Microsoft.Extensions.Options;
 using OpenTelemetry;
 using OpenTelemetry.Context.Propagation;
 using OrderNotification.Application.Abstractions;
+using OrderNotification.Shared.Correlation;
+using OrderNotification.Shared.Observability;
 using OrderNotification.Shared.Resilience;
 using Polly;
 using Polly.Timeout;
@@ -120,7 +122,7 @@ public sealed class RabbitMqMessagePublisher : IMessagePublisher
                 var body = Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message));
 
                 // Propagate trace context + baggage through message headers
-                var headers = new Dictionary<string, object>();
+                var headers = new Dictionary<string, object?>();
                 var propagationContext = new PropagationContext(
                     activity?.Context ?? Activity.Current?.Context ?? default,
                     Baggage.Current);

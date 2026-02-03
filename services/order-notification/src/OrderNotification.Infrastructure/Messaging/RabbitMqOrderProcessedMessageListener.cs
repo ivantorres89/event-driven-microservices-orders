@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
@@ -80,7 +81,9 @@ public sealed class RabbitMqOrderProcessedMessageListener : BackgroundService, I
 
     internal async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea, CancellationToken ct)
     {
-        IDictionary<string, object> headers = ea.BasicProperties.Headers ?? new Dictionary<string, object>();
+        IDictionary<string, object?> headers = ea.BasicProperties.Headers is null
+            ? new Dictionary<string, object?>()
+            : ea.BasicProperties.Headers.ToDictionary(kvp => kvp.Key, kvp => (object?)kvp.Value);
 
         // Extract trace context if present
         var parentContext = Propagator.Extract(default, headers, ExtractHeaderValues);
@@ -171,7 +174,7 @@ public sealed class RabbitMqOrderProcessedMessageListener : BackgroundService, I
         }
     }
 
-    private static IEnumerable<string> ExtractHeaderValues(IDictionary<string, object> headers, string key)
+    private static IEnumerable<string> ExtractHeaderValues(IDictionary<string, object?> headers, string key)
     {
         if (!headers.TryGetValue(key, out var raw) || raw is null)
             return Array.Empty<string>();
@@ -184,7 +187,7 @@ public sealed class RabbitMqOrderProcessedMessageListener : BackgroundService, I
         };
     }
 
-    private static int GetRetryCount(IDictionary<string, object> headers)
+    private static int GetRetryCount(IDictionary<string, object?> headers)
     {
         if (!headers.TryGetValue("x-retry-count", out var raw) || raw is null)
             return 0;
