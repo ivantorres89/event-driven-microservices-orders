@@ -1,6 +1,12 @@
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.IdentityModel.Tokens;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -25,6 +31,82 @@ public partial class Program
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
+
+        // Background worker (kept as-is)
+        builder.Services.AddHostedService<Worker>();
+
+        // CORS for local SPA
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("spa-dev", policy =>
+            {
+                policy
+                    .WithOrigins("http://localhost:4200", "https://localhost:4200")
+                    .AllowAnyHeader()
+                    .AllowAnyMethod();
+            });
+        });
+
+                    // CORS for local SPA
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("spa-dev", policy =>
+                {
+                    policy
+                        .WithOrigins("http://localhost:4200", "https://localhost:4200")
+                        .AllowAnyHeader()
+                        .AllowAnyMethod();
+                });
+            });
+
+            // JWT Auth (DEV symmetric key)
+            var signingKey = builder.Configuration["DevJwt:SigningKey"] ?? string.Empty;
+            if (builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(signingKey))
+            {
+                throw new InvalidOperationException("DevJwt:SigningKey is required in Development.");
+            }
+
+            var issuer = builder.Configuration["DevJwt:Issuer"];
+            var audience = builder.Configuration["DevJwt:Audience"];
+
+            builder.Services
+                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+                .AddJwtBearer(options =>
+                {
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+
+                        // In DEV you can keep these relaxed by leaving Issuer/Audience empty in config.
+                        ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
+                        ValidIssuer = issuer,
+                        ValidateAudience = !string.IsNullOrWhiteSpace(audience),
+                        ValidAudience = audience,
+
+                        ValidateLifetime = true,
+                        ClockSkew = TimeSpan.FromSeconds(30)
+                    };
+
+                    // IMPORTANT for SignalR in browser:
+                    // WebSockets cannot set Authorization header; SignalR sends JWT as query param: ?access_token=...
+                    options.Events = new JwtBearerEvents
+                    {
+                        OnMessageReceived = context =>
+                        {
+                            var accessToken = context.Request.Query["access_token"];
+                            var path = context.HttpContext.Request.Path;
+
+                            if (!string.IsNullOrEmpty(accessToken)
+                                && path.StartsWithSegments("/hubs/order-status"))
+                            {
+                                context.Token = accessToken;
+                            }
+
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
 
         // --- Logging (Serilog) ---
         builder.Services.AddSerilog((services, cfg) =>
@@ -105,12 +187,88 @@ public partial class Program
 
         var app = builder.Build();
 
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseCors("spa-dev");
+        }
+
         app.UseAuthentication();
         app.UseAuthorization();
 
+        
+        app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }))
+            .AllowAnonymous();
+        
+        // DEV: Issue a JWT for a given userId (used by SPA for REST + SignalR).
+        // POST /dev/token  { "userId": "contoso-user-001" }
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapPost("/dev/token", (DevTokenRequest request, IConfiguration config) =>
+            {
+                var userId = (request?.UserId ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(userId))
+                {
+                    return Results.BadRequest(new { error = "userId is required" });
+                }
+
+                var key = config["DevJwt:SigningKey"] ?? string.Empty;
+                var iss = config["DevJwt:Issuer"];
+                var aud = config["DevJwt:Audience"];
+
+                var minutes = 120;
+                if (int.TryParse(config["DevJwt:ExpiresMinutes"], out var m) && m > 0)
+                {
+                    minutes = m;
+                }
+
+                var now = DateTimeOffset.UtcNow;
+                var expires = now.AddMinutes(minutes);
+
+                // IMPORTANT:
+                // - NameIdentifier ensures SignalR UserIdentifier is set by default.
+                // - sub is commonly used too.
+                var claims = new List<Claim>
+                {
+                    new(JwtRegisteredClaimNames.Sub, userId),
+                    new(ClaimTypes.NameIdentifier, userId),
+                    new(ClaimTypes.Name, userId),
+                };
+
+                var signingKeyBytes = Encoding.UTF8.GetBytes(key);
+                var securityKey = new SymmetricSecurityKey(signingKeyBytes);
+                var creds = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256);
+
+                var token = new JwtSecurityToken(
+                    issuer: string.IsNullOrWhiteSpace(iss) ? null : iss,
+                    audience: string.IsNullOrWhiteSpace(aud) ? null : aud,
+                    claims: claims,
+                    notBefore: now.UtcDateTime,
+                    expires: expires.UtcDateTime,
+                    signingCredentials: creds);
+
+                var jwt = new JwtSecurityTokenHandler().WriteToken(token);
+
+                return Results.Ok(new DevTokenResponse
+                {
+                    UserId = userId,
+                    Token = jwt,
+                    ExpiresAtUtc = expires.UtcDateTime
+                });
+            }).AllowAnonymous();
+        }
+
         // SignalR hub endpoint (standard naming conventions)
-        app.MapHub<OrderStatusHub>("/hubs/order-status");
+        app.MapHub<OrderStatusHub>("/hubs/order-status").RequireAuthorization();
 
         app.Run();
+    }
+
+    public sealed record DevTokenRequest(string UserId);
+
+    public sealed record DevTokenResponse
+    {
+        public required string UserId { get; init; }
+        public required string Token { get; init; }
+        public required DateTime ExpiresAtUtc { get; init; }
     }
 }
