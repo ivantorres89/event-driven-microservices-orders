@@ -1,52 +1,101 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { StorageService } from './storage.service';
 
+type AuthSession = {
+  userId: string;
+  token: string;
+  expiresAtUtc: string; // ISO string
+};
+
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  // In dev: token value == userId (backend DevAuthenticationHandler)
-  // Persisted so user can close the tab and the session can recover.
-  private readonly key = 'contoso.userId';
+  private readonly key = 'contoso.auth.v1';
 
-  private readonly _userId$ = new BehaviorSubject<string>('');
-  readonly userId$ = this._userId$.asObservable();
+  private readonly _session$ = new BehaviorSubject<AuthSession | null>(null);
+  readonly session$ = this._session$.asObservable();
 
-  constructor(private storage: StorageService) {
-    this._userId$.next(this.loadInitialUserId());
+  constructor(
+    private storage: StorageService,
+    private http: HttpClient
+  ) {
+    this._session$.next(this.loadInitialSession());
   }
 
-  /** Returns current user id (may fall back to environment.demoUserId if nothing set). */
   getUserId(): string {
-    return this._userId$.value;
+    return this._session$.value?.userId ?? '';
   }
 
-  /** SignalR uses this as the access token; in dev it's equal to the userId. */
+  /** Used by SignalR accessTokenFactory and REST Authorization header. */
   getAccessToken(): string {
-    return this._userId$.value;
+    return this._session$.value?.token ?? '';
   }
 
   isLoggedIn(): boolean {
-    return (this._userId$.value ?? '').trim().length > 0;
+    const s = this._session$.value;
+    if (!s) return false;
+    if (!s.token || !s.userId) return false;
+    const exp = Date.parse(s.expiresAtUtc);
+    if (!Number.isFinite(exp)) return false;
+    return Date.now() < exp;
   }
 
-  /** “Login” for the demo: userId becomes the bearer token and the SignalR user identifier. */
-  login(userId: string): void {
+  /**
+   * Development login:
+   * Calls order-notification /dev/token to obtain a signed JWT for the given userId.
+   * The backend is responsible for issuing the token (NOT the SPA).
+   */
+  async loginDev(userId: string): Promise<void> {
     const cleaned = (userId ?? '').trim();
-    this.storage.setJson(this.key, { userId: cleaned, loggedOut: false });
-    this._userId$.next(cleaned);
+    if (!cleaned) throw new Error('userId is required');
+
+    const base = environment.signalRBaseUrl.replace(/\/$/, '');
+    const url = `${base}/dev/token`;
+
+    const res = await firstValueFrom(
+      this.http.post<{ userId: string; token: string; expiresAtUtc: string }>(url, { userId: cleaned })
+    );
+
+    const session: AuthSession = {
+      userId: res.userId,
+      token: res.token,
+      expiresAtUtc: res.expiresAtUtc
+    };
+
+    this.storage.setJson(this.key, session);
+    this._session$.next(session);
   }
 
   logout(): void {
-    // Persist the explicit logout so we don't auto-fallback to environment.demoUserId after a refresh.
-    this.storage.setJson(this.key, { userId: '', loggedOut: true });
-    this._userId$.next('');
+    this.storage.remove(this.key);
+    this._session$.next(null);
   }
 
-  private loadInitialUserId(): string {
-    const stored = this.storage.getJson<{ userId: string; loggedOut?: boolean }>(this.key);
-    if (stored?.loggedOut) return '';
+  /** Convenience for Login UI: last userId if present, otherwise environment.defaultUserId (optional). */
+  getSuggestedUserId(): string {
+    const stored = this.storage.getJson<AuthSession>(this.key);
     const v = (stored?.userId ?? '').trim();
-    return v.length > 0 ? v : (environment.demoUserId ?? '');
+    if (v) return v;
+    return (environment.defaultUserId ?? '').trim();
+  }
+
+  private loadInitialSession(): AuthSession | null {
+    const stored = this.storage.getJson<AuthSession>(this.key);
+    if (!stored) return null;
+
+    const userId = (stored.userId ?? '').trim();
+    const token = (stored.token ?? '').trim();
+    const expiresAtUtc = (stored.expiresAtUtc ?? '').trim();
+
+    if (!userId || !token || !expiresAtUtc) return null;
+
+    const exp = Date.parse(expiresAtUtc);
+    if (!Number.isFinite(exp)) return null;
+    if (Date.now() >= exp) return null;
+
+    return { userId, token, expiresAtUtc };
   }
 }

@@ -9,9 +9,9 @@ export const environment = {
   // Example: "https://localhost:5005"
   orderAcceptApiBaseUrl: "https://localhost:5005",
 
-  // Demo user id (in Development backend: DevAuthenticationHandler treats Bearer token as userId)
+  // Optional: default user id prefilled in the Login screen (Development)
   // IMPORTANT: backend must accept access_token in query for WebSockets (recommended patch).
-  demoUserId: "contoso-user-001",
+  defaultUserId: "contoso-user-001",
 
   // For demo without backend, you can enable mocks:
   useMocks: true

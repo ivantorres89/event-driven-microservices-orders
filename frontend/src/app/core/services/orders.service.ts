@@ -3,6 +3,7 @@ import { BehaviorSubject, delay, Observable, of } from 'rxjs';
 import { ActiveOrder, CartLine, Order } from '../models';
 import { StorageService } from './storage.service';
 import { environment } from '../../../environments/environment';
+import { AuthService } from './auth.service';
 
 const ORDERS_KEY = 'contoso.orders.v1';
 
@@ -20,7 +21,10 @@ export class OrdersService {
   private readonly _orders$ = new BehaviorSubject<Order[]>([]);
   readonly orders$ = this._orders$.asObservable();
 
-  constructor(private storage: StorageService) {
+  constructor(
+    private storage: StorageService,
+    private auth: AuthService
+  ) {
     const existing = this.storage.getJson<Order[]>(ORDERS_KEY) ?? [];
     this._orders$.next(existing);
   }
@@ -51,13 +55,16 @@ export class OrdersService {
     return of({ correlationId }).pipe(delay(250));
   }
 
-  // Optional: real API (you can wire it later)
-  // submitOrderReal(lines: CartLine[]): Observable<{ correlationId: string }> { ... }
-
   async deleteOrder(orderId: number): Promise<void> {
     // Requirement: call order-accept DELETE /api/orders/{id}
     const url = `${environment.orderAcceptApiBaseUrl.replace(/\/$/, '')}/api/orders/${orderId}`;
-    const res = await fetch(url, { method: 'DELETE' });
+
+    const token = this.auth.getAccessToken();
+    const headers: Record<string, string> = token
+      ? { 'Authorization': `Bearer ${token}` }
+      : {};
+
+    const res = await fetch(url, { method: 'DELETE', headers });
 
     // Even if backend is down in demo, we remove locally if 404/500 is acceptable.
     // If you prefer strictness, check res.ok only.
