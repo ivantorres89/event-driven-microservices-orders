@@ -15,3 +15,8 @@ Write-Host ""
 Write-Host "OrderAccept Swagger: http://localhost:8081/swagger"
 Write-Host "RabbitMQ UI:        http://localhost:15672 (guest/guest by default)"
 Write-Host "Jaeger UI:          http://localhost:16686"
+Write-Host "Frontend SPA:       http://localhost:4200"
+
+# Best-effort open browser for SPA
+Start-Sleep -Seconds 2
+Start-Process "http://localhost:4200"

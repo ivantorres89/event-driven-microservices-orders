@@ -70,6 +70,24 @@ services:
         condition: service_started
     networks: [contoso-net]
 
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    image: contoso/frontend:local
+    hostname: frontend
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+      NG_CLI_ANALYTICS: "false"
+    ports:
+      - "4200:4200"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: ["npm", "start", "--", "--host", "0.0.0.0", "--poll", "1000"]
+    networks: [contoso-net]
+
   # ------------------------------------------------------------
   # order-process database migrator (one-shot)
   # Must complete successfully before starting the app services.

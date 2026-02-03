@@ -1,3 +1,13 @@
+node_modules
+dist
+.angular
+.vite
+.cache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+pnpm-error.log*
 # Build artifacts
 bin/
 obj/
