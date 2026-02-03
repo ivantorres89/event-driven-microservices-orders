@@ -73,7 +73,7 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
                 {
                     ["ConnectionStrings:Redis"] = _fixture.RedisConnectionString,
                     ["RabbitMQ:ConnectionString"] = _fixture.RabbitConnectionString,
-                    ["RabbitMQ:OutboundQueueName"] = _fixture.RabbitQueueName,
+                    ["RabbitMQ:QueueName"] = _fixture.RabbitQueueName,
                     ["OpenTelemetry:Enabled"] = "false"
                 };
 
