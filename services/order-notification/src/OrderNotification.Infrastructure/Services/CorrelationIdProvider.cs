@@ -1,17 +1,18 @@
 using OrderNotification.Application.Abstractions;
 using OrderNotification.Shared.Correlation;
 
-public class CorrelationIdProvider : ICorrelationIdProvider
+namespace OrderNotification.Infrastructure.Services;
+
+public sealed class CorrelationIdProvider : ICorrelationIdProvider
 {
     public CorrelationId GetCorrelationId()
     {
-        if (CorrelationContext.Current != null)
+        if (CorrelationContext.Current is null)
         {
-            return CorrelationContext.Current.Value;
+            throw new InvalidOperationException(
+                "CorrelationContext.Current is not set. The inbound listener must set it from the message payload before invoking handlers.");
         }
 
-        var newId = CorrelationId.New();
-        CorrelationContext.Current = newId;
-        return newId;
+        return CorrelationContext.Current.Value;
     }
 }

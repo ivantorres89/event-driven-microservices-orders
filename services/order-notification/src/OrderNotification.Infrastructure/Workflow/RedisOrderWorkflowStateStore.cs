@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OrderNotification.Application.Abstractions;
 using OrderNotification.Shared.Correlation;
+using OrderNotification.Shared.Observability;
 using OrderNotification.Shared.Resilience;
 using OrderNotification.Shared.Workflow;
 using Polly;
@@ -28,11 +29,6 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
         _options = options.Value;
         _logger = logger;
 
-        // --- Resilience policy (Redis) ---
-        // - 2 retries with backoff for transient issues
-        // - Circuit breaker to avoid saturating Redis when unhealthy
-        // Redis is critical for workflow traceability; on exhaustion -> throw DependencyUnavailableException.
-
         var timeoutPolicy = Policy.TimeoutAsync(TimeSpan.FromSeconds(1), TimeoutStrategy.Pessimistic);
 
         var delays = new[]
@@ -56,13 +52,6 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
                         sleep);
                 });
 
-        // We configure a breaker to behave like
-        // "open after 5 failed operations" within a rolling window.
-        // - failureThreshold: 1.0 => opens only if 100% of calls in the sample fail
-        // - minimumThroughput: 5 => requires at least 5 calls before it can open
-        // - samplingDuration: 30s => sample window
-        // This yields a practical "5 failures then open" behaviour under sustained failure.
-
         var breakerPolicy = Policy
             .Handle<RedisException>()
             .Or<TimeoutRejectedException>()
@@ -82,30 +71,31 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
         _redisPolicy = Policy.WrapAsync(breakerPolicy, retryPolicy, timeoutPolicy);
     }
 
-    public async Task SetStatusAsync(CorrelationId correlationId, OrderWorkflowStatus status, CancellationToken cancellationToken = default)
+    public async Task<bool> TrySetStatusIfExistsAsync(CorrelationId correlationId, OrderWorkflowStatus status, CancellationToken cancellationToken = default)
     {
         var db = _redis.GetDatabase();
         var key = WorkflowRedisKeys.OrderStatus(correlationId);
 
-        // Create an explicit client span for Redis so it always shows up in traces,
-        // even if automatic StackExchange.Redis instrumentation is not active.
-        using var activity = Observability.ActivitySource.StartActivity("Redis SET", ActivityKind.Client);
+        using var activity = Observability.ActivitySource.StartActivity("Redis SET (EXISTS)", ActivityKind.Client);
         activity?.SetTag("db.system", "redis");
         activity?.SetTag("db.operation", "SET");
-        activity?.SetTag("db.statement", $"SET {key}");
+        activity?.SetTag("db.statement", $"SET {key} (XX)");
         activity?.SetTag("db.redis.key", key);
         activity?.SetTag("workflow.status", status.ToString());
 
         try
         {
-            // Note: StackExchange.Redis does not accept CancellationToken, but we keep it in the contract.
-            // Polly timeout is pessimistic; it will interrupt the awaited operation if it exceeds the limit.
-            await _redisPolicy.ExecuteAsync(async ct =>
-            {
-                await db.StringSetAsync(key, status.ToString().ToUpperInvariant(), _options.Ttl);
-            }, cancellationToken);
+            var updated = await _redisPolicy.ExecuteAsync(
+                async ct => await db.StringSetAsync(
+                    key, status.ToString().ToUpperInvariant(),
+                    _options.Ttl, when: When.Exists), cancellationToken);
 
-            _logger.LogInformation("Set workflow status in Redis: {Key}={Status} (TTL={Ttl})", key, status, _options.Ttl);
+            if (!updated)
+                _logger.LogWarning("Workflow key does not exist in Redis (likely expired TTL). Not updating status. Key={Key} Status={Status}", key, status);
+            else
+                _logger.LogInformation("Updated workflow status in Redis (existing key): {Key}={Status} (TTL={Ttl})", key, status, _options.Ttl);
+
+            return updated;
         }
         catch (BrokenCircuitException ex)
         {
@@ -114,6 +104,39 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
         catch (Exception ex) when (ex is RedisException or TimeoutRejectedException or TimeoutException)
         {
             throw new DependencyUnavailableException("Redis is unavailable. Workflow state cannot be stored.", ex);
+        }
+    }
+
+    public async Task<bool> TrySetCompletedIfExistsAsync(CorrelationId correlationId, long orderId, CancellationToken cancellationToken = default)
+    {
+        var db = _redis.GetDatabase();
+        var key = WorkflowRedisKeys.OrderStatus(correlationId);
+        var value = $"COMPLETED|{orderId}";
+
+        using var activity = Observability.ActivitySource.StartActivity("Redis SET (EXISTS)", ActivityKind.Client);
+        activity?.SetTag("db.system", "redis");
+        activity?.SetTag("db.operation", "SET");
+        activity?.SetTag("db.statement", $"SET {key} (XX)");
+        activity?.SetTag("db.redis.key", key);
+        activity?.SetTag("workflow.status", "COMPLETED");
+        activity?.SetTag("order.id", orderId);
+
+        try
+        {
+            var updated = await _redisPolicy.ExecuteAsync(
+                async ct => await db.StringSetAsync(
+                    key, value, _options.Ttl, when: When.Exists), cancellationToken);
+
+            if (!updated)
+                _logger.LogWarning("Workflow key does not exist in Redis (likely expired TTL). Not updating completed status. Key={Key} OrderId={OrderId}", key, orderId);
+            else
+                _logger.LogInformation("Updated workflow status in Redis (existing key): {Key}={Value} (ttl={Ttl})", key, value, _options.Ttl);
+
+            return updated;
+        }
+        catch (Exception ex) when (ex is RedisException or TimeoutRejectedException or BrokenCircuitException)
+        {
+            throw new DependencyUnavailableException("Redis is unavailable. Failed to set workflow state.", ex);
         }
     }
 
@@ -139,12 +162,10 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
         }
         catch (BrokenCircuitException ex)
         {
-            // Best-effort cleanup. We don't rethrow to avoid masking the original failure in callers.
             _logger.LogWarning(ex, "Redis circuit open; could not remove workflow status key: {Key}", key);
         }
         catch (Exception ex) when (ex is RedisException or TimeoutRejectedException or TimeoutException)
         {
-            // Best-effort cleanup.
             _logger.LogWarning(ex, "Failed to remove workflow status key from Redis: {Key}", key);
         }
     }

@@ -1,5 +1,7 @@
 ﻿using System.Diagnostics;
 
+namespace OrderNotification.Shared.Observability;
+
 public static class Observability
 {
     public const string ActivitySourceName = "Contoso.Orders.OrderNotification";

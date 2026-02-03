@@ -1,16 +1,12 @@
 using OrderNotification.Shared.Correlation;
 
-namespace OrderNotification.Application.Abstractions
+namespace OrderNotification.Application.Abstractions;
+
+/// <summary>
+/// Provides the CorrelationId for the current processing context.
+/// The inbound message listener is responsible for setting the CorrelationContext from the payload.
+/// </summary>
+public interface ICorrelationIdProvider
 {
-    /// <summary>
-    /// Defines a provider for managing correlation identifiers across requests.
-    /// </summary>
-    public interface ICorrelationIdProvider
-    {
-        /// <summary>
-        /// Generates a new correlation identifier.
-        /// </summary>
-        /// <returns>A newly generated correlation identifier.</returns>
-        CorrelationId GetCorrelationId();
-    }
+    CorrelationId GetCorrelationId();
 }

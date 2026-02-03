@@ -1,4 +1,4 @@
-using OrderNotification.Shared.Correlation;
+namespace OrderNotification.Shared.Correlation;
 
 public static class CorrelationContext
 {

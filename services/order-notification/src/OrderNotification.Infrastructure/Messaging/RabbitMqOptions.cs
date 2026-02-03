@@ -10,7 +10,17 @@ public sealed class RabbitMqOptions
     public string ConnectionString { get; init; } = "amqp://guest:guest@localhost:5672/";
 
     /// <summary>
-    /// Target queue for OrderNotificationed messages (FIFO semantics in this demo).
+    /// Inbound queue name for OrderProcessed messages.
     /// </summary>
-    public string QueueName { get; init; } = "order.accepted";
+    public string InboundQueueName { get; init; } = "order.processed";
+
+    /// <summary>
+    /// Outbound queue name (unused in order-notification, kept for config parity).
+    /// </summary>
+    public string OutboundQueueName { get; init; } = "order.processed";
+
+    public int MaxProcessingAttempts { get; init; } = 5;
+
+    // Backwards-compatible alias (some templates use QueueName).
+    public string QueueName => OutboundQueueName;
 }

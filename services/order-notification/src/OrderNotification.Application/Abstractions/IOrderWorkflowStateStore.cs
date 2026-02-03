@@ -10,24 +10,24 @@ namespace OrderNotification.Application.Abstractions;
 public interface IOrderWorkflowStateStore
 {
     /// <summary>
-    /// Sets the workflow status for an order associated with the specified correlation ID.
-    /// The status is stored transiently in Redis with an automatic TTL expiration.
+    /// Updates workflow status only if the Redis key already exists.
+    /// This is useful for downstream processors: we don't want to "resurrect" a workflow that has already expired by TTL.
+    /// Returns true if the key existed and was updated.
     /// </summary>
-    /// <param name="correlationId">The correlation ID that uniquely identifies the order workflow.</param>
-    /// <param name="status">The workflow status to set for the order (e.g., Accepted, Processing, Completed).</param>
-    /// <param name="cancellationToken">A token to cancel the asynchronous operation.</param>
-    /// <returns>A task representing the asynchronous operation of setting the workflow status.</returns>
-    Task SetStatusAsync(
+    Task<bool> TrySetStatusIfExistsAsync(
         CorrelationId correlationId,
         OrderWorkflowStatus status,
         CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Asynchronously removes the status associated with the specified correlation identifier.
+    /// Updates workflow state to COMPLETED only if the Redis key already exists.
+    /// Returns true if the key existed and was updated.
     /// </summary>
-    /// <param name="correlationId">The correlation identifier for which the status should be removed. Must not be null.</param>
-    /// <param name="cancellationToken">A cancellation token that can be used to cancel the operation.</param>
-    /// <returns>A task that represents the asynchronous remove operation.</returns>
+    Task<bool> TrySetCompletedIfExistsAsync(
+        CorrelationId correlationId,
+        long orderId,
+        CancellationToken cancellationToken = default);
+
     Task RemoveStatusAsync(
         CorrelationId correlationId,
         CancellationToken cancellationToken = default);
