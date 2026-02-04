@@ -8,7 +8,7 @@ internal sealed class OrderDbMap : IEntityTypeConfiguration<Order>
 {
     public void Configure(EntityTypeBuilder<Order> b)
     {
-        b.ToTable("Order");
+        b.ToTable("Order", tb => tb.HasTrigger("trg_Order_SetUpdatedAt"));
         b.ConfigureBaseEntity();
 
         b.Property(x => x.CorrelationId).HasMaxLength(64).IsRequired();

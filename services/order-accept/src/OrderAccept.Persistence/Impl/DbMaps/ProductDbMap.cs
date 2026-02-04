@@ -8,7 +8,7 @@ internal sealed class ProductDbMap : IEntityTypeConfiguration<Product>
 {
     public void Configure(EntityTypeBuilder<Product> b)
     {
-        b.ToTable("Product");
+        b.ToTable("Product", tb => tb.HasTrigger("trg_Product_SetUpdatedAt"));
         b.ConfigureBaseEntity();
 
         b.Property(x => x.ExternalProductId).HasMaxLength(64).IsRequired();

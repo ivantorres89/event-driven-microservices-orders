@@ -8,7 +8,7 @@ internal sealed class CustomerDbMap : IEntityTypeConfiguration<Customer>
 {
     public void Configure(EntityTypeBuilder<Customer> b)
     {
-        b.ToTable("Customer");
+        b.ToTable("Customer", tb => tb.HasTrigger("trg_Customer_SetUpdatedAt"));
         b.ConfigureBaseEntity();
 
         b.Property(x => x.ExternalCustomerId).HasMaxLength(64).IsRequired();

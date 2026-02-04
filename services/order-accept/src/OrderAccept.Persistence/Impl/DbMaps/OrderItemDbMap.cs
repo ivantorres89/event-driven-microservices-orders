@@ -8,7 +8,7 @@ internal sealed class OrderItemDbMap : IEntityTypeConfiguration<OrderItem>
 {
     public void Configure(EntityTypeBuilder<OrderItem> b)
     {
-        b.ToTable("OrderItem");
+        b.ToTable("OrderItem", tb => tb.HasTrigger("trg_OrderItem_SetUpdatedAt"));
         b.ConfigureBaseEntity();
 
         b.Property(x => x.Quantity).IsRequired();
