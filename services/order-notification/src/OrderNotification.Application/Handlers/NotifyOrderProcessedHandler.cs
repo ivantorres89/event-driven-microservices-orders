@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using OrderNotification.Application.Abstractions;
 using OrderNotification.Application.Commands;
+using OrderNotification.Application.Exceptions;
 using OrderNotification.Shared.Workflow;
 
 namespace OrderNotification.Application.Handlers;
@@ -38,12 +39,9 @@ public sealed class NotifyOrderProcessedHandler : INotifyOrderProcessedHandler
         {
             _logger.LogInformation("Handling OrderProcessed event. OrderId={OrderId}", command.Event.OrderId);
 
-            var userId = await _correlationRegistry.ResolveUserIdAsync(command.Event.CorrelationId, cancellationToken);
-            if (string.IsNullOrWhiteSpace(userId))
-            {
-                _logger.LogInformation("No user mapping found for CorrelationId={CorrelationId}. Skipping notification.", command.Event.CorrelationId);
-                return;
-            }
+            // The mapping is expected to be written by order-accept at accept-time.
+            // Still, Redis is ephemeral and propagation isn't guaranteed, so we do a short local retry.
+            var userId = await ResolveUserIdWithRetryAsync(command.Event.CorrelationId, cancellationToken);
 
             await _notifier.NotifyStatusChangedAsync(
                 userId: userId,
@@ -54,5 +52,38 @@ public sealed class NotifyOrderProcessedHandler : INotifyOrderProcessedHandler
 
             _logger.LogInformation("Pushed OrderProcessed notification to UserId={UserId}", userId);
         }
+    }
+
+    private async Task<string> ResolveUserIdWithRetryAsync(OrderNotification.Shared.Correlation.CorrelationId correlationId, CancellationToken cancellationToken)
+    {
+        // Tight retry to handle rare races (e.g., Redis replication lag) without blocking the broker listener.
+        var delays = new[]
+        {
+            TimeSpan.FromMilliseconds(100),
+            TimeSpan.FromMilliseconds(250),
+            TimeSpan.FromMilliseconds(500)
+        };
+
+        for (var attempt = 0; attempt <= delays.Length; attempt++)
+        {
+            var userId = await _correlationRegistry.ResolveUserIdAsync(correlationId, cancellationToken);
+            if (!string.IsNullOrWhiteSpace(userId))
+                return userId;
+
+            if (attempt == delays.Length)
+                break;
+
+            _logger.LogWarning(
+                "Missing correlation mapping for CorrelationId={CorrelationId}. Retry {Attempt}/{Max} in {Delay}.",
+                correlationId,
+                attempt + 1,
+                delays.Length,
+                delays[attempt]);
+
+            await Task.Delay(delays[attempt], cancellationToken);
+        }
+
+        // Throw to trigger transport-level retry/DLQ, rather than silently losing notifications.
+        throw new CorrelationMappingNotFoundException(correlationId.ToString());
     }
 }

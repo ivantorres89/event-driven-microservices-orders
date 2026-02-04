@@ -6,6 +6,7 @@ using OrderNotification.Infrastructure.Workflow;
 using OrderNotification.Shared.Correlation;
 using OrderNotification.Shared.Observability;
 using OrderNotification.Shared.Resilience;
+using OrderNotification.Shared.Workflow;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Timeout;
@@ -15,7 +16,7 @@ namespace OrderNotification.Infrastructure.Correlation;
 
 /// <summary>
 /// Redis-backed mapping CorrelationId -> UserId used for SignalR routing.
-/// Key: ws:session:{CorrelationId}
+/// Key: order:map:{CorrelationId}
 /// TTL aligned with the workflow TTL.
 /// </summary>
 public sealed class RedisOrderCorrelationRegistry : IOrderCorrelationRegistry
@@ -83,7 +84,7 @@ public sealed class RedisOrderCorrelationRegistry : IOrderCorrelationRegistry
             throw new ArgumentException("UserId is required", nameof(userId));
 
         var db = _redis.GetDatabase();
-        var key = SessionKey(correlationId);
+        var key = WorkflowRedisKeys.OrderUserMap(correlationId);
 
         using var activity = Observability.ActivitySource.StartActivity("Redis SET", ActivityKind.Client);
         activity?.SetTag("db.system", "redis");
@@ -113,7 +114,7 @@ public sealed class RedisOrderCorrelationRegistry : IOrderCorrelationRegistry
     public async Task<string?> ResolveUserIdAsync(CorrelationId correlationId, CancellationToken cancellationToken = default)
     {
         var db = _redis.GetDatabase();
-        var key = SessionKey(correlationId);
+        var key = WorkflowRedisKeys.OrderUserMap(correlationId);
 
         using var activity = Observability.ActivitySource.StartActivity("Redis GET", ActivityKind.Client);
         activity?.SetTag("db.system", "redis");
@@ -129,10 +130,28 @@ public sealed class RedisOrderCorrelationRegistry : IOrderCorrelationRegistry
                 raw = await db.StringGetAsync(key);
             }, cancellationToken);
 
-            if (raw.IsNullOrEmpty)
+            if (!raw.IsNullOrEmpty)
+                return raw.ToString();
+
+            // Backwards-compatible read: older clients previously registered under ws:session:{CorrelationId}.
+            // If found, "heal" by copying to the canonical key.
+            var legacyKey = LegacySessionKey(correlationId);
+            RedisValue legacyRaw = default;
+            await _redisPolicy.ExecuteAsync(async ct =>
+            {
+                legacyRaw = await db.StringGetAsync(legacyKey);
+            }, cancellationToken);
+
+            if (legacyRaw.IsNullOrEmpty)
                 return null;
 
-            return raw.ToString();
+            var legacyUserId = legacyRaw.ToString();
+            await _redisPolicy.ExecuteAsync(async ct =>
+            {
+                await db.StringSetAsync(key, legacyUserId, _options.Ttl);
+            }, cancellationToken);
+
+            return legacyUserId;
         }
         catch (BrokenCircuitException ex)
         {
@@ -144,5 +163,5 @@ public sealed class RedisOrderCorrelationRegistry : IOrderCorrelationRegistry
         }
     }
 
-    private static string SessionKey(CorrelationId correlationId) => $"ws:session:{correlationId}";
+    private static string LegacySessionKey(CorrelationId correlationId) => $"ws:session:{correlationId}";
 }
