@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using OrderAccept.Api;
+using OrderAccept.Persistence.Impl;
+using Microsoft.EntityFrameworkCore;
 
 namespace OrderAccept.IntegrationTests.Fixtures;
 
@@ -14,6 +17,10 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
     public string RedisConnectionString => "localhost:6379";
     public string RabbitConnectionString => "amqp://guest:guest@localhost:5672/";
     public string RabbitQueueName => "order.accepted.it";
+
+    // Dedicated DB for integration tests (keeps local dev DB clean).
+    public string ContosoConnectionString =>
+        "Server=localhost,1433;Database=contoso_it;User Id=sa;Password=YourStrong!Passw0rd;TrustServerCertificate=True;";
 
     // Symmetric key used by the test host for JwtBearer validation (dev/demo mode).
     public string JwtSigningKey => "dev-it-signing-key-please-change-123456";
@@ -34,6 +41,14 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
         }
 
         Factory = new CustomWebApplicationFactory(this);
+
+        // Warm up host & ensure the test database schema exists.
+        _ = Factory.CreateClient();
+
+        using var scope = Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ContosoDbContext>();
+        await db.Database.EnsureCreatedAsync();
+
         await Task.CompletedTask;
     }
 
@@ -47,7 +62,7 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
 
     private static bool IsLocalInfraAvailable()
     {
-        return IsPortOpen("localhost", 6379) && IsPortOpen("localhost", 5672);
+        return IsPortOpen("localhost", 6379) && IsPortOpen("localhost", 5672) && IsPortOpen("localhost", 1433);
     }
 
     private static bool IsPortOpen(string host, int port)
@@ -77,6 +92,7 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
                 var settings = new Dictionary<string, string?>
                 {
                     ["ConnectionStrings:Redis"] = _fixture.RedisConnectionString,
+                    ["ConnectionStrings:Contoso"] = _fixture.ContosoConnectionString,
                     ["RabbitMQ:ConnectionString"] = _fixture.RabbitConnectionString,
                     ["RabbitMQ:OutboundQueueName"] = _fixture.RabbitQueueName,
                     ["Jwt:SigningKey"] = _fixture.JwtSigningKey,
