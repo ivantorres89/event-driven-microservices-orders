@@ -1,0 +1,441 @@
+{
+  "info": {
+    "_postman_id": "4c9acb8b-1b58-40a3-9d0c-c84c29d05e28",
+    "name": "order-accept (local) — Contract smoke tests (JWT POST fixed)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Contract smoke tests aligned to openapi.yaml + order-accept_api_contract.md. Dev JWT request fixed to POST /dev/token with raw JSON body { userId }."
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{jwt}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "devUserId",
+      "value": "CUST-0001",
+      "type": "string"
+    },
+    {
+      "key": "orderAcceptBaseUrl",
+      "value": "https://localhost:5005",
+      "type": "string"
+    },
+    {
+      "key": "authBaseUrl",
+      "value": "https://localhost:5007",
+      "type": "string"
+    },
+    {
+      "key": "jwt",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "productsOffset",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "productsSize",
+      "value": "12",
+      "type": "string"
+    },
+    {
+      "key": "ordersOffset",
+      "value": "0",
+      "type": "string"
+    },
+    {
+      "key": "ordersSize",
+      "value": "10",
+      "type": "string"
+    },
+    {
+      "key": "productId",
+      "value": "AZ-700",
+      "type": "string"
+    },
+    {
+      "key": "orderQuantity",
+      "value": "1",
+      "type": "string"
+    },
+    {
+      "key": "orderId",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "00 - Auth",
+      "item": [
+        {
+          "name": "Get Dev JWT (order-notification)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{authBaseUrl}}/dev/token",
+            "description": "Obtiene un JWT de desarrollo desde order-notification (GET /dev/token?userId=...). Guarda el token en la variable {{jwt}}.",
+            "auth": {
+              "type": "noauth"
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"userId\":\"{{devUserId}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "let token = null;",
+                  "try {",
+                  "  const data = pm.response.json();",
+                  "  token = data.token || data.access_token || data.jwt || data.id_token || data;",
+                  "} catch (e) {",
+                  "  token = pm.response.text();",
+                  "}",
+                  "",
+                  "if (token && typeof token === \"object\") {",
+                  "  token = token.token || token.access_token || token.jwt || token.value || JSON.stringify(token);",
+                  "}",
+                  "",
+                  "token = (token || \"\").toString().trim().replace(/^\"+|\"+$/g, \"\");",
+                  "pm.collectionVariables.set(\"jwt\", token);",
+                  "pm.environment.set(\"jwt\", token);",
+                  "",
+                  "pm.test(\"JWT guardado en {{jwt}}\", function () {",
+                  "  pm.expect(pm.collectionVariables.get(\"jwt\")).to.be.ok;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "01 - Products",
+      "item": [
+        {
+          "name": "List products (paged)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orderAcceptBaseUrl}}/api/products?offset={{productsOffset}}&size={{productsSize}}",
+            "description": "GET /api/products (requiere JWT). Devuelve solo activos y no soft-deleted."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Envelope {offset,size,total,items}\", function () {",
+                  "  pm.expect(body).to.have.property(\"offset\");",
+                  "  pm.expect(body).to.have.property(\"size\");",
+                  "  pm.expect(body).to.have.property(\"total\");",
+                  "  pm.expect(body).to.have.property(\"items\");",
+                  "  pm.expect(body.items).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "if (body.items && body.items.length > 0) {",
+                  "  pm.collectionVariables.set(\"productId\", body.items[0].externalProductId);",
+                  "}",
+                  "",
+                  "pm.test(\"productId definido\", function () {",
+                  "  pm.expect(pm.collectionVariables.get(\"productId\")).to.be.ok;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get product detail (by ExternalProductId)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orderAcceptBaseUrl}}/api/products/{{productId}}",
+            "description": "GET /api/products/{id} donde {id} = ExternalProductId (string)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "const p = pm.response.json();",
+                  "pm.test(\"ProductDto shape\", function () {",
+                  "  pm.expect(p).to.have.property(\"externalProductId\");",
+                  "  pm.expect(p).to.have.property(\"name\");",
+                  "  pm.expect(p).to.have.property(\"category\");",
+                  "  pm.expect(p).to.have.property(\"vendor\");",
+                  "  pm.expect(p).to.have.property(\"imageUrl\");",
+                  "  pm.expect(p).to.have.property(\"discount\");",
+                  "  pm.expect(p).to.have.property(\"billingPeriod\");",
+                  "  pm.expect(p).to.have.property(\"isSubscription\");",
+                  "  pm.expect(p).to.have.property(\"price\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "NEGATIVE: Products invalid pagination (offset=-1,size=0) => 400",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orderAcceptBaseUrl}}/api/products?offset=-1&size=0",
+            "description": "Debe devolver 400 ProblemDetails por paginación inválida."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(400);",
+                  "});",
+                  "",
+                  "pm.test(\"ProblemDetails content-type\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "});",
+                  "",
+                  "const pd = pm.response.json();",
+                  "pm.test(\"ProblemDetails shape\", function () {",
+                  "  pm.expect(pd).to.have.property(\"status\");",
+                  "  pm.expect(pd.status).to.equal(400);",
+                  "  pm.expect(pd).to.have.property(\"title\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Orders",
+      "item": [
+        {
+          "name": "Create order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orderAcceptBaseUrl}}/api/orders",
+            "description": "POST /api/orders. No incluye customerId en el body (se obtiene del JWT).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"productId\": \"{{productId}}\", \"quantity\": {{orderQuantity}} }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"201 Created\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Location header present\", function () {",
+                  "  pm.expect(pm.response.headers.has(\"Location\")).to.be.true;",
+                  "});",
+                  "",
+                  "const o = pm.response.json();",
+                  "pm.test(\"OrderDto shape\", function () {",
+                  "  pm.expect(o).to.have.property(\"id\");",
+                  "  pm.expect(o).to.have.property(\"correlationId\");",
+                  "  pm.expect(o).to.have.property(\"createdAt\");",
+                  "  pm.expect(o).to.have.property(\"items\");",
+                  "  pm.expect(o.items).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "pm.collectionVariables.set(\"orderId\", o.id);",
+                  "",
+                  "pm.test(\"orderId guardado\", function () {",
+                  "  pm.expect(pm.collectionVariables.get(\"orderId\")).to.be.ok;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List orders (paged, for JWT subject)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orderAcceptBaseUrl}}/api/orders?offset={{ordersOffset}}&size={{ordersSize}}",
+            "description": "GET /api/orders (requiere JWT). Filtra por customerId obtenido del JWT (sub/nameidentifier)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "const body = pm.response.json();",
+                  "pm.test(\"Envelope {offset,size,total,items}\", function () {",
+                  "  pm.expect(body).to.have.property(\"offset\");",
+                  "  pm.expect(body).to.have.property(\"size\");",
+                  "  pm.expect(body).to.have.property(\"total\");",
+                  "  pm.expect(body).to.have.property(\"items\");",
+                  "  pm.expect(body.items).to.be.an(\"array\");",
+                  "});",
+                  "",
+                  "if (body.items && body.items.length > 0) {",
+                  "  pm.collectionVariables.set(\"orderId\", body.items[0].id);",
+                  "}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete order (soft-delete)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{orderAcceptBaseUrl}}/api/orders/{{orderId}}",
+            "description": "DELETE /api/orders/{id} (soft delete)."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"204 No Content\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(204);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "NEGATIVE: Create order invalid quantity (0) => 400",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{orderAcceptBaseUrl}}/api/orders",
+            "description": "Debe devolver 400 ValidationProblemDetails (quantity <= 0).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    { \"productId\": \"{{productId}}\", \"quantity\": 0 }\n  ]\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"400 Bad Request\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(400);",
+                  "});",
+                  "",
+                  "pm.test(\"ProblemDetails content-type\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "});",
+                  "",
+                  "const pd = pm.response.json();",
+                  "pm.test(\"ValidationProblemDetails has 'errors'\", function () {",
+                  "  pm.expect(pd).to.have.property(\"errors\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "NEGATIVE: Orders list without token => 401",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orderAcceptBaseUrl}}/api/orders?offset=0&size=10",
+            "description": "Mismo endpoint pero sin Authorization header. Debe devolver 401 ProblemDetails.",
+            "auth": {
+              "type": "noauth"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"401 Unauthorized\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(401);",
+                  "});",
+                  "",
+                  "pm.test(\"ProblemDetails content-type\", function () {",
+                  "  pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"application/problem+json\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "_postman_exported_at": "2026-02-04T21:07:03Z",
+  "_postman_exported_using": "ChatGPT"
+}

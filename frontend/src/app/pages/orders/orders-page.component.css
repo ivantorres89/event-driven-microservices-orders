@@ -40,3 +40,15 @@
 .small{ font-size: 12px; }
 .mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
 .empty{ padding: 18px; border-radius: 16px; }
+
+.notice{
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+.notice.error{
+  border-color: #f3b0b0;
+  background: #fff6f6;
+  color: #9b1c1c;
+}
