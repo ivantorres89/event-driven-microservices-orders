@@ -104,6 +104,7 @@ public sealed class RedisOrderWorkflowStateStore : IOrderWorkflowStateStore
             await _redisPolicy.ExecuteAsync(async ct =>
             {
                 await db.StringSetAsync(key, status.ToString().ToUpperInvariant(), _options.Ttl);
+                await db.KeyExpireAsync(WorkflowRedisKeys.OrderUserMap(correlationId), _options.Ttl);
             }, cancellationToken);
 
             _logger.LogInformation("Set workflow status in Redis: {Key}={Status} (TTL={Ttl})", key, status, _options.Ttl);
@@ -174,6 +175,7 @@ public async Task SetCompletedAsync(CorrelationId correlationId, long orderId, C
             await _redisPolicy.ExecuteAsync(async ct =>
             {
                 await db.StringSetAsync(key, value, _options.Ttl);
+                await db.KeyExpireAsync(WorkflowRedisKeys.OrderUserMap(correlationId), _options.Ttl);
             }, cancellationToken);
 
             _logger.LogInformation("Set workflow status in Redis: {Key}={Value} (ttl={Ttl})",
