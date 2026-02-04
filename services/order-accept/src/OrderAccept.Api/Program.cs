@@ -9,7 +9,6 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Exceptions;
 using System.Text;
@@ -31,6 +30,15 @@ public partial class Program
                .Enrich.WithEnvironmentName()
                .Enrich.WithProcessId()
                .Enrich.WithThreadId();
+        });
+
+        // --- CORS (SPA) ---
+        builder.Services.AddCors(options =>
+        {
+            options.AddPolicy("SpaCors", policy =>
+                policy.WithOrigins("http://localhost:4200")
+                      .AllowAnyHeader()
+                      .AllowAnyMethod());
         });
 
         // --- Security (JWT) ---
@@ -192,57 +200,20 @@ app.UseDependencyUnavailableHandling();
 
 app.UseHttpsRedirection();
 
-// Convert framework-generated 400/401/403/404 into problem+json (only when no body is present).
-app.UseStatusCodePages(async statusContext =>
-{
-    var http = statusContext.HttpContext;
-    var status = http.Response.StatusCode;
-
-    if (http.Response.HasStarted)
-        return;
-
-    if (status is not (400 or 401 or 403 or 404))
-        return;
-
-    http.Response.ContentType = "application/problem+json";
-
-    var title = status switch
-    {
-        400 => "Bad Request",
-        401 => "Unauthorized",
-        403 => "Forbidden",
-        404 => "Not Found",
-        _ => "Error"
-    };
-
-    var instance = $"{http.Request.Path}{http.Request.QueryString}";
-    var traceId = System.Diagnostics.Activity.Current?.Id ?? http.TraceIdentifier;
-
-    var payload = new
-    {
-        type = $"https://httpstatuses.com/{status}",
-        title,
-        status,
-        detail = title,
-        instance,
-        traceId
-    };
-
-    await http.Response.WriteAsJsonAsync(payload);
-});
+app.UseCors("SpaCors");
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 
-        // Health checks (simple for orchestration)
-        app.MapHealthChecks("/health/live").RequireAuthorization();
-        app.MapHealthChecks("/health/ready").RequireAuthorization();
+// Health checks (simple for orchestration)
+app.MapHealthChecks("/health/live").RequireAuthorization();
+app.MapHealthChecks("/health/ready").RequireAuthorization();
 
-        // Endpoints
-        app.MapProductEndpoints();
-        app.MapOrderEndpoints();
+// Endpoints
+app.MapProductEndpoints();
+app.MapOrderEndpoints();
 
-        app.Run();
+app.Run();
     }
 }

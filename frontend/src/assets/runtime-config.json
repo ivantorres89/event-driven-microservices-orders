@@ -3,5 +3,5 @@
   "orderAcceptApiBaseUrl": "http://localhost:8081",
   "defaultUserId": "CUST-0001",
   "signalRForceLongPolling": false,
-  "useMocks": true
+  "useMocks": false
 }

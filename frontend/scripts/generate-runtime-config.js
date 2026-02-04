@@ -27,7 +27,7 @@ const orderAcceptApiBaseUrl = process.env.ORDER_ACCEPT_API_BASE_URL || `http://l
 
 const defaultUserId = process.env.DEFAULT_USER_ID || 'CUST-0001';
 const signalRForceLongPolling = bool(process.env.SIGNALR_FORCE_LONG_POLLING, false);
-const useMocks = bool(process.env.USE_MOCKS, true);
+const useMocks = bool(process.env.USE_MOCKS, false);
 
 const config = {
   signalRBaseUrl,
