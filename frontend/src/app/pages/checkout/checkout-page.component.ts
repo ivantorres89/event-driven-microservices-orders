@@ -9,7 +9,7 @@ import { SignalRService } from '../../core/services/signalr.service';
 import { SpinnerOverlayComponent } from '../../shared/spinner/spinner-overlay.component';
 import { ToastService } from '../../core/services/toast.service';
 import { RuntimeConfigService } from '../../core/services/runtime-config.service';
-import { CartLine, OrderWorkflowStatus } from '../../core/models';
+import { CartLine } from '../../core/models';
 
 @Component({
   selector: 'app-checkout-page',
@@ -37,7 +37,6 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
   async ngOnInit(): Promise<void> {
     this.cartLines = this.cart.snapshot;
 
-    // Make sure we have a live connection on checkout (for reconnection/late-join behavior).
     try {
       await this.signalr.ensureConnected();
     } catch (e) {
@@ -48,7 +47,6 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
     this.sub.add(this.progress.activeOrder$.subscribe(a => {
       this.active = a;
 
-      // When completed, add to "Orders" list once.
       if (a?.status === 'Completed' && a.orderId) {
         const already = this.orders.snapshot.some(o => o.id === a.orderId);
         if (!already) {
@@ -77,7 +75,6 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
   }
 
   get canSubmit(): boolean {
-    // Only allow submit if we have cart items and no active order in-flight.
     return this.cartLines.length > 0 && !this.active;
   }
 
@@ -103,21 +100,19 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
   async submit(): Promise<void> {
     if (!this.canSubmit) return;
 
-    // 1) Call order-accept (mocked by default)
     const lines = [...this.cartLines];
 
     try {
-      const res = await this.orders.submitOrderMock(lines).toPromise();
+      // 1) POST /api/orders
+      const created = await firstValueFrom(this.orders.createOrder(lines));
+      if (!created?.correlationId) throw new Error('Missing correlationId');
 
-      // TODO: replace mock with a real order-accept call once the API is wired up.
-
-      if (!res?.correlationId) throw new Error('Missing correlationId');
-
-      // 2) Persist active order and clear cart (cart is ephemeral for demo)
-      const active = this.progress.startNew(res.correlationId, lines);
+      // 2) Persist active + clear cart
+      const active = this.progress.startNew(created.correlationId, lines);
+      this.progress.setStatus('Accepted', created.id);
       this.cart.clear();
 
-      // 3) Register correlationId with hub (CorrelationId -> UserId in Redis)
+      // 3) Register correlationId with hub
       try {
         await this.signalr.ensureConnected();
         await this.signalr.registerOrder(active.correlationId);
@@ -126,9 +121,9 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
         console.warn('RegisterOrder failed:', e);
       }
 
-      this.toasts.push('info', 'Order submitted', `CorrelationId: ${active.correlationId}`);
+      this.toasts.push('info', 'Order submitted', `Order #${created.id} (CorrelationId: ${active.correlationId})`);
 
-      // 4) If mocks enabled, simulate backend progress + completion (so the demo works without services).
+      // 4) Mocks: simulate workflow
       if (this.cfg.useMocks) {
         this.simulateMockWorkflow(active.correlationId);
       }
@@ -139,11 +134,7 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
   }
 
   private simulateMockWorkflow(correlationId: string): void {
-    // Accepted -> Processing -> Completed with pseudo orderId
-    setTimeout(() => {
-      this.progress.setStatus('Processing', null);
-    }, 900);
-
+    setTimeout(() => this.progress.setStatus('Processing', null), 900);
     setTimeout(() => {
       const orderId = Math.floor(100000 + Math.random() * 900000);
       this.progress.setStatus('Completed', orderId);
@@ -151,7 +142,6 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
   }
 
   done(): void {
-    // Clear active order and go to Orders
     this.progress.clear();
     this.router.navigateByUrl('/orders');
   }

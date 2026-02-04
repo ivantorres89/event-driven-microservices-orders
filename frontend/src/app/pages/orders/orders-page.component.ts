@@ -10,47 +10,44 @@ import { OrdersService } from '../../core/services/orders.service';
   styleUrls: ['./orders-page.component.css']
 })
 export class OrdersPageComponent implements OnInit {
-  loading = false;
-  error = '';
+  loading = true;
+  error: string | null = null;
   deletingId: number | null = null;
 
   constructor(public orders: OrdersService) {}
 
   ngOnInit(): void {
-    // Option A: load ALL orders for the user (backend is paginated; service pulls all pages).
-    void this.load();
-  }
-
-  private async load(): Promise<void> {
     this.loading = true;
-    this.error = '';
-    try {
-      await this.orders.refreshAll();
-    } catch (e: any) {
-      // Keep error UI simple; HttpErrorResponse.message is often generic.
-      const msg = (e?.error?.title || e?.error?.message || e?.message || '').toString().trim();
-      this.error = msg || 'Failed to load orders.';
-    } finally {
-      this.loading = false;
-    }
+    this.error = null;
+
+    this.orders.refreshAll(50).subscribe({
+      next: () => this.loading = false,
+      error: (e) => {
+        console.error(e);
+        this.loading = false;
+        this.error = 'Could not load orders from the API.';
+      }
+    });
   }
 
   async delete(id: number): Promise<void> {
+    if (!id) return;
+
     this.deletingId = id;
-    this.error = '';
+    this.error = null;
+
     try {
       await this.orders.deleteOrder(id);
-    } catch (e: any) {
-      const msg = (e?.error?.title || e?.error?.message || e?.message || '').toString().trim();
-      this.error = msg || 'Failed to delete order.';
+    } catch (e) {
+      console.error(e);
+      this.error = 'Could not delete the order.';
     } finally {
       this.deletingId = null;
     }
   }
 
   format(dt: string): string {
-    const d = new Date(dt);
-    return d.toLocaleString();
+    return new Date(dt).toLocaleString();
   }
 
   total(order: any): number {

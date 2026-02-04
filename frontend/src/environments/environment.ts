@@ -6,7 +6,7 @@ export const environment = {
   // from infra/local/.env (single source of truth for ports).
   signalRBaseUrl: "https://localhost:5007",
 
-  // order-accept API base URL used by DELETE /api/orders/{id}
+  // order-accept API base URL used by Products/Orders API calls
   orderAcceptApiBaseUrl: "http://localhost:8081",
 
   // Default user id prefilled in the Login screen (Development)
@@ -16,5 +16,5 @@ export const environment = {
   signalRForceLongPolling: false,
 
   // For demo without backend, you can enable mocks:
-  useMocks: true
+  useMocks: false
 };

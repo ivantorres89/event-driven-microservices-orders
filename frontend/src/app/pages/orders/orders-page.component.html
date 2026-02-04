@@ -2,14 +2,14 @@
   <div class="top">
     <div>
       <h1 class="h1">Orders</h1>
-      <div class="muted">User orders from the API.</div>
+      <div class="muted">Your orders (loaded from the API).</div>
     </div>
   </div>
 
   <div class="notice" *ngIf="loading">Loading orders…</div>
   <div class="notice error" *ngIf="!loading && error">{{error}}</div>
 
-  <div class="grid" *ngIf="(orders.orders$ | async) as list">
+  <div class="grid" *ngIf="!loading && (orders.orders$ | async) as list">
     <div class="card order" *ngFor="let o of list">
       <div class="head">
         <div>
@@ -20,8 +20,10 @@
 
         <div class="right">
           <div class="price">€{{total(o) | number:'1.2-2'}}</div>
-          <button class="ms-btn danger" [disabled]="deletingId===o.id" (click)="delete(o.id)">
-            {{deletingId===o.id ? 'Deleting…' : 'Delete'}}
+          <button class="ms-btn danger"
+                  (click)="delete(o.id)"
+                  [disabled]="deletingId === o.id">
+            {{deletingId === o.id ? 'Deleting…' : 'Delete'}}
           </button>
         </div>
       </div>
@@ -35,7 +37,7 @@
       </div>
     </div>
 
-    <div class="card empty" *ngIf="!loading && !list.length">
+    <div class="card empty" *ngIf="!list.length">
       <div class="muted">No orders yet.</div>
     </div>
   </div>

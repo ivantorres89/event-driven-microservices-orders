@@ -1,0 +1,36 @@
+<div class="wrap">
+  <a class="back" routerLink="/products">← Back to products</a>
+
+  <div class="notice" *ngIf="loading">Loading product…</div>
+  <div class="notice error" *ngIf="!loading && error">{{error}}</div>
+
+  <div class="card" *ngIf="!loading && product as p">
+    <div class="left">
+      <img class="img" [src]="p.imageUrl" [alt]="p.name" loading="lazy"/>
+    </div>
+
+    <div class="right">
+      <div class="meta muted">{{p.vendor}} • {{p.category}} • {{p.id}}</div>
+      <h1 class="h1">{{p.name}}</h1>
+
+      <div class="price-row">
+        <span class="price">€{{p.price | number:'1.2-2'}}</span>
+        <span class="original" *ngIf="originalPrice(p) as op">€{{op | number:'1.2-2'}}</span>
+        <span class="badge" *ngIf="(p.discountPercent ?? 0) > 0">-{{p.discountPercent}}%</span>
+        <span class="period muted" *ngIf="p.isSubscription">{{p.billingPeriod}}</span>
+      </div>
+
+      <div class="actions">
+        <label class="qty">
+          Qty
+          <input type="number" min="1" [max]="p.stock" [(ngModel)]="qty"/>
+        </label>
+
+        <button class="ms-btn primary" (click)="add()">Add to cart</button>
+        <button class="ms-btn" (click)="goToCheckout()" [disabled]="!cart.snapshot.length">Go to checkout</button>
+      </div>
+
+      <div class="notice success" *ngIf="added">Added to cart ✅</div>
+    </div>
+  </div>
+</div>
