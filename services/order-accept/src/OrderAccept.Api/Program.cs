@@ -9,6 +9,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using Serilog.Exceptions;
 using System.Text;
@@ -155,16 +156,88 @@ public partial class Program
 
         app.UseSerilogRequestLogging();
 
-        // Convert critical dependency outages (Redis/RabbitMQ) into 503 responses.
-        app.UseDependencyUnavailableHandling();
+// Standardize unhandled exceptions as RFC 7807 problem details.
+app.UseExceptionHandler(errorApp =>
+{
+    errorApp.Run(async context =>
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        var feature = context.Features.Get<Microsoft.AspNetCore.Diagnostics.IExceptionHandlerFeature>();
+        var ex = feature?.Error;
 
-        app.UseHttpsRedirection();
-        app.UseAuthentication();
-        app.UseAuthorization();
+        logger.LogError(ex, "Unhandled exception");
+
+        context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+        context.Response.ContentType = "application/problem+json";
+
+        var instance = $"{context.Request.Path}{context.Request.QueryString}";
+        var traceId = System.Diagnostics.Activity.Current?.Id ?? context.TraceIdentifier;
+
+        var payload = new
+        {
+            type = "https://httpstatuses.com/500",
+            title = "Internal Server Error",
+            status = 500,
+            detail = ex?.Message ?? "An unexpected error occurred.",
+            instance,
+            traceId
+        };
+
+        await context.Response.WriteAsJsonAsync(payload);
+    });
+});
+
+// Convert critical dependency outages (Redis/RabbitMQ) into problem+json responses (500 by contract).
+app.UseDependencyUnavailableHandling();
+
+app.UseHttpsRedirection();
+
+// Convert framework-generated 400/401/403/404 into problem+json (only when no body is present).
+app.UseStatusCodePages(async statusContext =>
+{
+    var http = statusContext.HttpContext;
+    var status = http.Response.StatusCode;
+
+    if (http.Response.HasStarted)
+        return;
+
+    if (status is not (400 or 401 or 403 or 404))
+        return;
+
+    http.Response.ContentType = "application/problem+json";
+
+    var title = status switch
+    {
+        400 => "Bad Request",
+        401 => "Unauthorized",
+        403 => "Forbidden",
+        404 => "Not Found",
+        _ => "Error"
+    };
+
+    var instance = $"{http.Request.Path}{http.Request.QueryString}";
+    var traceId = System.Diagnostics.Activity.Current?.Id ?? http.TraceIdentifier;
+
+    var payload = new
+    {
+        type = $"https://httpstatuses.com/{status}",
+        title,
+        status,
+        detail = title,
+        instance,
+        traceId
+    };
+
+    await http.Response.WriteAsJsonAsync(payload);
+});
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 
         // Health checks (simple for orchestration)
-        app.MapHealthChecks("/health/live");
-        app.MapHealthChecks("/health/ready");
+        app.MapHealthChecks("/health/live").RequireAuthorization();
+        app.MapHealthChecks("/health/ready").RequireAuthorization();
 
         // Endpoints
         app.MapProductEndpoints();

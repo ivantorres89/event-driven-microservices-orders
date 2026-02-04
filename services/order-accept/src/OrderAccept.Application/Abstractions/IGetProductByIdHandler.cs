@@ -4,5 +4,7 @@ namespace OrderAccept.Application.Abstractions;
 
 public interface IGetProductByIdHandler
 {
-    Task<ProductDto?> HandleAsync(long id, CancellationToken cancellationToken = default);
+    Task<ProductDto?> HandleAsync(
+        string externalProductId,
+        CancellationToken cancellationToken = default);
 }

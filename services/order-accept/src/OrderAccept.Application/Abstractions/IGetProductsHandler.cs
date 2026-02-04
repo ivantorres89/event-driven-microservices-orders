@@ -4,5 +4,8 @@ namespace OrderAccept.Application.Abstractions;
 
 public interface IGetProductsHandler
 {
-    Task<PagedResult<ProductDto>> HandleAsync(int? offset, int? size, CancellationToken cancellationToken = default);
+    Task<PagedResult<ProductDto>> HandleAsync(
+        int offset,
+        int size,
+        CancellationToken cancellationToken = default);
 }

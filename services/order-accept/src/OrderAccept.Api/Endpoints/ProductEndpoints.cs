@@ -14,38 +14,56 @@ namespace OrderAccept.Api.Endpoints
                 .RequireAuthorization();
 
             // GET /api/products?offset=&size=
-            group.MapGet("/", GetProducts)
+            group.MapGet("", GetProducts)
                 .WithName("GetProducts")
-                .WithSummary("Get all products (optionally paged)")
+                .WithSummary("Get a paged list of active products")
                 .Produces(StatusCodes.Status200OK)
-                .Produces(StatusCodes.Status401Unauthorized);
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status500InternalServerError);
 
             // GET /api/products/{id}
-            group.MapGet("/{id:long}", GetProductById)
+            // Where {id} is the product ExternalProductId (string)
+            group.MapGet("/{id}", GetProductById)
                 .WithName("GetProductById")
-                .WithSummary("Get a product by its internal id")
+                .WithSummary("Get a product by its externalProductId")
                 .Produces(StatusCodes.Status200OK)
+                .Produces(StatusCodes.Status400BadRequest)
                 .Produces(StatusCodes.Status404NotFound)
-                .Produces(StatusCodes.Status401Unauthorized);
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status500InternalServerError);
         }
 
         private static async Task<IResult> GetProducts(
             int? offset,
             int? size,
             IGetProductsHandler handler,
+            HttpContext http,
             CancellationToken cancellationToken)
         {
-            var result = await handler.HandleAsync(offset, size, cancellationToken);
+            var effectiveOffset = offset ?? 0;
+            var effectiveSize = size ?? 12;
+
+            if (effectiveOffset < 0 || effectiveSize < 1 || effectiveSize > 100)
+                return ProblemResults.BadRequest(http, "Invalid pagination parameters.");
+
+            var result = await handler.HandleAsync(effectiveOffset, effectiveSize, cancellationToken);
             return Results.Ok(result);
         }
 
         private static async Task<IResult> GetProductById(
-            long id,
+            string id,
             IGetProductByIdHandler handler,
+            HttpContext http,
             CancellationToken cancellationToken)
         {
+            if (string.IsNullOrWhiteSpace(id))
+                return ProblemResults.BadRequest(http, "Missing or invalid product id.");
+
             var product = await handler.HandleAsync(id, cancellationToken);
-            return product is null ? Results.NotFound() : Results.Ok(product);
+            return product is null
+                ? ProblemResults.NotFound(http, "Product not found.")
+                : Results.Ok(product);
         }
     }
 }

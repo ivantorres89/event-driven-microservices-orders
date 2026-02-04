@@ -16,6 +16,7 @@ public sealed class OrderItemQueryRepository : BaseEfQueryRepository<OrderItem>,
     protected override IQueryable<OrderItem> Queryable(bool asNoTracking)
     {
         var query = Db.OrderItems
+            .Where(i => !i.IsSoftDeleted)
             .Include(i => i.Product);
 
         return asNoTracking ? query.AsNoTracking() : query;

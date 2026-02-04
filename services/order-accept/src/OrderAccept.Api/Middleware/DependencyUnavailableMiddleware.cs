@@ -1,11 +1,11 @@
-using System.Net.Mime;
-using System.Text.Json;
 using OrderAccept.Shared.Resilience;
+using System.Diagnostics;
 
 namespace OrderAccept.Api.Middleware;
 
 /// <summary>
-/// Maps critical dependency outages (Redis/RabbitMQ) to HTTP 503.
+/// Maps critical dependency outages (Redis/RabbitMQ) to HTTP 500 ProblemDetails,
+/// as required by the API contract (no 503 in the public API).
 /// </summary>
 public sealed class DependencyUnavailableMiddleware
 {
@@ -26,31 +26,28 @@ public sealed class DependencyUnavailableMiddleware
         }
         catch (DependencyUnavailableException ex)
         {
-            _logger.LogWarning(ex, "Dependency unavailable: returning 503");
+            _logger.LogError(ex, "Dependency unavailable");
 
-            if (!context.Response.HasStarted)
+            if (context.Response.HasStarted)
+                throw;
+
+            context.Response.StatusCode = StatusCodes.Status500InternalServerError;
+            context.Response.ContentType = "application/problem+json";
+
+            var instance = $"{context.Request.Path}{context.Request.QueryString}";
+            var traceId = Activity.Current?.Id ?? context.TraceIdentifier;
+
+            var payload = new
             {
-                context.Response.StatusCode = StatusCodes.Status503ServiceUnavailable;
-                context.Response.ContentType = MediaTypeNames.Application.Json;
+                type = "https://httpstatuses.com/500",
+                title = "Internal Server Error",
+                status = 500,
+                detail = ex.Message,
+                instance,
+                traceId
+            };
 
-                // Preserve correlation id header if already set by the endpoint.
-                if (!context.Response.Headers.ContainsKey("X-Correlation-Id") &&
-                    context.Request.Headers.TryGetValue("X-Correlation-Id", out var corr))
-                {
-                    context.Response.Headers["X-Correlation-Id"] = corr.ToString();
-                }
-
-                var payload = new
-                {
-                    error = "service_unavailable",
-                    message = ex.Message
-                };
-
-                await context.Response.WriteAsync(JsonSerializer.Serialize(payload));
-                return;
-            }
-
-            throw;
+            await context.Response.WriteAsJsonAsync(payload);
         }
     }
 }

@@ -2,10 +2,12 @@ namespace OrderAccept.Application.Contracts.Responses;
 
 /// <summary>
 /// Simple pagination envelope used by read endpoints.
+///
+/// JSON serialization uses camelCase.
 /// </summary>
 public sealed record PagedResult<T>(
-    IReadOnlyCollection<T> Items,
     int Offset,
     int Size,
-    int TotalCount
+    int Total,
+    IReadOnlyCollection<T> Items
 );

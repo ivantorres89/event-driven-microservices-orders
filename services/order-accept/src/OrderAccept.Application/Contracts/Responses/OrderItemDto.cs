@@ -1,8 +1,9 @@
 namespace OrderAccept.Application.Contracts.Responses;
 
 public sealed record OrderItemDto(
-    long Id,
-    long ProductId,
-    int Quantity,
-    ProductDto? Product
+    string ProductId,
+    string ProductName,
+    string ImageUrl,
+    decimal UnitPrice,
+    int Quantity
 );

@@ -16,10 +16,16 @@ public sealed class GetProductByIdHandler : IGetProductByIdHandler
         _mapper = mapper;
     }
 
-    public async Task<ProductDto?> HandleAsync(long id, CancellationToken cancellationToken = default)
+    public async Task<ProductDto?> HandleAsync(
+        string externalProductId,
+        CancellationToken cancellationToken = default)
     {
         const bool asNoTracking = true;
-        var entity = await _uow.ProductQueries.FindAsync(id, asNoTracking, cancellationToken);
+
+        if (string.IsNullOrWhiteSpace(externalProductId))
+            return null;
+
+        var entity = await _uow.ProductQueries.GetByExternalIdAsync(externalProductId, asNoTracking, cancellationToken);
         return entity is null ? null : _mapper.Map<ProductDto>(entity);
     }
 }

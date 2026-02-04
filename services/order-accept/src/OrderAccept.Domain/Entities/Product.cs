@@ -28,6 +28,21 @@ public sealed class Product : EntityBase
     public string Category { get; set; } = string.Empty;
 
     /// <summary>
+    /// Vendor / brand displayed to the user.
+    /// </summary>
+    public string Vendor { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Product image URL displayed by the SPA.
+    /// </summary>
+    public string ImageUrl { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Percentage discount (0..100).
+    /// </summary>
+    public int Discount { get; set; }
+
+    /// <summary>
     /// Monthly / Annual (kept as string for demo simplicity).
     /// </summary>
     public string BillingPeriod { get; set; } = "Monthly";

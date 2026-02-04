@@ -17,27 +17,20 @@ public sealed class GetProductsHandler : IGetProductsHandler
     }
 
     public async Task<PagedResult<ProductDto>> HandleAsync(
-        int? offset,
-        int? size,
+        int offset,
+        int size,
         CancellationToken cancellationToken = default)
     {
         // Per requirements: application decides, and always uses AsNoTracking for GETs.
         const bool asNoTracking = true;
 
-        if (size is null)
-        {
-            var all = await _uow.ProductQueries.GetAllAsync(asNoTracking, cancellationToken);
-            var dtos = _mapper.Map<IReadOnlyCollection<ProductDto>>(all);
-            return new PagedResult<ProductDto>(dtos, Offset: 0, Size: dtos.Count, TotalCount: dtos.Count);
-        }
-
-        var safeOffset = Math.Max(0, offset ?? 0);
-        var safeSize = Math.Max(1, size.Value);
-
         var total = await _uow.ProductQueries.CountAsync(asNoTracking, cancellationToken);
-        var items = await _uow.ProductQueries.GetPagedAsync(safeOffset, safeSize, asNoTracking, cancellationToken);
+        if (total == 0)
+            return new PagedResult<ProductDto>(offset, size, 0, Array.Empty<ProductDto>());
 
+        var items = await _uow.ProductQueries.GetPagedAsync(offset, size, asNoTracking, cancellationToken);
         var mapped = _mapper.Map<IReadOnlyCollection<ProductDto>>(items);
-        return new PagedResult<ProductDto>(mapped, safeOffset, safeSize, total);
+
+        return new PagedResult<ProductDto>(offset, size, total, mapped);
     }
 }

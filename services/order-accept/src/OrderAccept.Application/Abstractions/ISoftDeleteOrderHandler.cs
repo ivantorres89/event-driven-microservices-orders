@@ -2,7 +2,7 @@ namespace OrderAccept.Application.Abstractions;
 
 public interface ISoftDeleteOrderHandler
 {
-    Task<bool> HandleAsync(
+    Task<SoftDeleteOrderOutcome> HandleAsync(
         long orderId,
         string externalCustomerId,
         CancellationToken cancellationToken = default);

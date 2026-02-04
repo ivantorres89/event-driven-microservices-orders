@@ -25,22 +25,19 @@ public sealed class GetOrdersHandler : IGetOrdersHandler
         const bool asNoTracking = true;
 
         if (string.IsNullOrWhiteSpace(externalCustomerId))
-            return new PagedResult<OrderDto>(Array.Empty<OrderDto>(), offset, size, 0);
+            return new PagedResult<OrderDto>(offset, size, 0, Array.Empty<OrderDto>());
 
         var customer = await _uow.CustomerQueries.GetByExternalIdAsync(externalCustomerId, asNoTracking, cancellationToken);
         if (customer is null)
-            return new PagedResult<OrderDto>(Array.Empty<OrderDto>(), offset, size, 0);
-
-        var safeOffset = Math.Max(0, offset);
-        var safeSize = Math.Max(1, size);
+            return new PagedResult<OrderDto>(offset, size, 0, Array.Empty<OrderDto>());
 
         var total = await _uow.OrderQueries.CountByCustomerIdAsync(customer.Id, asNoTracking, cancellationToken);
         if (total == 0)
-            return new PagedResult<OrderDto>(Array.Empty<OrderDto>(), safeOffset, safeSize, 0);
+            return new PagedResult<OrderDto>(offset, size, 0, Array.Empty<OrderDto>());
 
-        var orders = await _uow.OrderQueries.GetByCustomerIdPagedAsync(customer.Id, safeOffset, safeSize, asNoTracking, cancellationToken);
+        var orders = await _uow.OrderQueries.GetByCustomerIdPagedAsync(customer.Id, offset, size, asNoTracking, cancellationToken);
         var mapped = _mapper.Map<IReadOnlyCollection<OrderDto>>(orders);
 
-        return new PagedResult<OrderDto>(mapped, safeOffset, safeSize, total);
+        return new PagedResult<OrderDto>(offset, size, total, mapped);
     }
 }

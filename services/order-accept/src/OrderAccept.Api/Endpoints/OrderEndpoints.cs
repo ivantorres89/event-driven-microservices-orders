@@ -1,9 +1,8 @@
 using FluentValidation;
-using OpenTelemetry;
 using OrderAccept.Application.Abstractions;
 using OrderAccept.Application.Commands;
 using OrderAccept.Application.Contracts.Requests;
-using System.Diagnostics;
+using OrderAccept.Application.Handlers;
 using System.Security.Claims;
 
 namespace OrderAccept.Api.Endpoints
@@ -19,76 +18,38 @@ namespace OrderAccept.Api.Endpoints
                 .WithName("Orders")
                 .RequireAuthorization();
 
-            // POST /api/orders
-            group.MapPost("/", AcceptOrder)
-                .WithName("CreateOrder")
-                .WithSummary("Accept an order")
-                .Produces(StatusCodes.Status202Accepted)
-                .Produces(StatusCodes.Status400BadRequest)
-                .Produces(StatusCodes.Status403Forbidden)
-                .Produces(StatusCodes.Status401Unauthorized)
-                .Produces(StatusCodes.Status503ServiceUnavailable);
-
             // GET /api/orders?offset=&size=
-            group.MapGet("/", GetOrders)
+            group.MapGet("", GetOrders)
                 .WithName("GetOrders")
-                .WithSummary("Get orders for the current user (JWT sub => Customer.ExternalCustomerId)")
+                .WithSummary("List orders (paged, by authenticated user)")
                 .Produces(StatusCodes.Status200OK)
-                .Produces(StatusCodes.Status401Unauthorized);
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status500InternalServerError);
+
+            // POST /api/orders
+            group.MapPost("", AcceptOrder)
+                .WithName("CreateOrder")
+                .WithSummary("Create an order")
+                .Produces(StatusCodes.Status201Created)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status409Conflict)
+                .Produces(StatusCodes.Status500InternalServerError);
 
             // DELETE /api/orders/{id}
             group.MapDelete("/{id:long}", SoftDeleteOrder)
                 .WithName("SoftDeleteOrder")
-                .WithSummary("Soft delete an order (only if it belongs to the current user)")
+                .WithSummary("Soft-delete an order (ownership validated by authenticated user)")
                 .Produces(StatusCodes.Status204NoContent)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
                 .Produces(StatusCodes.Status404NotFound)
-                .Produces(StatusCodes.Status401Unauthorized);
-        }
-
-        private static async Task<IResult> AcceptOrder(
-            CreateOrderRequest request,
-            IValidator<CreateOrderRequest> validator,
-            IAcceptOrderHandler handler,
-            ICorrelationIdProvider correlationIdProvider,
-            HttpContext http,
-            CancellationToken cancellationToken)
-        {
-            // Authenticated user identity (JWT subject). This is the only trusted source of CustomerId.
-            var subject = GetSubject(http.User);
-            if (string.IsNullOrWhiteSpace(subject))
-                return Results.Unauthorized();
-
-            // If the client sends CustomerId, enforce it matches the JWT to avoid spoofing.
-            if (!string.IsNullOrWhiteSpace(request.CustomerId) && !string.Equals(request.CustomerId, subject, StringComparison.Ordinal))
-                return Results.Forbid();
-
-            // Force CustomerId to the JWT subject (do not trust request body).
-            var effectiveRequest = request with { CustomerId = subject };
-
-            var validation = await validator.ValidateAsync(effectiveRequest, cancellationToken);
-            if (!validation.IsValid)
-            {
-                return Results.ValidationProblem(ToValidationDictionary(validation));
-            }
-
-            var correlationId = correlationIdProvider.GetCorrelationId();
-
-            // Attach correlation id to the current OpenTelemetry context
-            var correlationValue = correlationId.Value.ToString();
-            Activity.Current?.SetTag("correlation_id", correlationValue);
-            Baggage.SetBaggage("correlation_id", correlationValue);
-
-            var command = new AcceptOrderCommand(effectiveRequest);
-            await handler.HandleAsync(command, cancellationToken);
-
-            // Expose correlation id in response header for tracing
-            http.Response.Headers["X-Correlation-Id"] = correlationValue;
-
-            // Return 202 + JSON body
-            return Results.Json(
-                new { correlationId = correlationId.Value },
-                statusCode: StatusCodes.Status202Accepted
-            );
+                .Produces(StatusCodes.Status500InternalServerError);
         }
 
         private static async Task<IResult> GetOrders(
@@ -100,13 +61,53 @@ namespace OrderAccept.Api.Endpoints
         {
             var subject = GetSubject(http.User);
             if (string.IsNullOrWhiteSpace(subject))
-                return Results.Unauthorized();
+            {
+                // Token is valid (endpoint requires auth), but identity claim is missing.
+                return ProblemResults.Forbidden(http, "Missing required identity claim (sub/nameidentifier).");
+            }
 
-            var safeOffset = Math.Max(0, offset ?? 0);
-            var safeSize = Math.Max(1, size ?? 50);
+            var effectiveOffset = offset ?? 0;
+            var effectiveSize = size ?? 10;
 
-            var result = await handler.HandleAsync(subject, safeOffset, safeSize, cancellationToken);
+            if (effectiveOffset < 0 || effectiveSize < 1 || effectiveSize > 100)
+                return ProblemResults.BadRequest(http, "Invalid pagination parameters.");
+
+            var result = await handler.HandleAsync(subject, effectiveOffset, effectiveSize, cancellationToken);
             return Results.Ok(result);
+        }
+
+        private static async Task<IResult> AcceptOrder(
+            CreateOrderRequest request,
+            IValidator<CreateOrderRequest> validator,
+            IAcceptOrderHandler handler,
+            HttpContext http,
+            CancellationToken cancellationToken)
+        {
+            var subject = GetSubject(http.User);
+            if (string.IsNullOrWhiteSpace(subject))
+            {
+                // Token is valid (endpoint requires auth), but identity claim is missing.
+                return ProblemResults.Forbidden(http, "Missing required identity claim (sub/nameidentifier).");
+            }
+
+            var validation = await validator.ValidateAsync(request, cancellationToken);
+            if (!validation.IsValid)
+            {
+                return ProblemResults.ValidationProblem(http, ToValidationDictionary(validation));
+            }
+
+            try
+            {
+                var dto = await handler.HandleAsync(new AcceptOrderCommand(subject, request), cancellationToken);
+
+                // Location header is required by the contract.
+                var location = $"/api/orders/{dto.Id}";
+                return Results.Created(location, dto);
+            }
+            catch (ProductNotFoundException ex)
+            {
+                return ProblemResults.NotFound(http, ex.Message);
+            }
         }
 
         private static async Task<IResult> SoftDeleteOrder(
@@ -115,12 +116,24 @@ namespace OrderAccept.Api.Endpoints
             HttpContext http,
             CancellationToken cancellationToken)
         {
+            if (id < 1)
+                return ProblemResults.BadRequest(http, "Invalid order id.");
+
             var subject = GetSubject(http.User);
             if (string.IsNullOrWhiteSpace(subject))
-                return Results.Unauthorized();
+            {
+                // Token is valid (endpoint requires auth), but identity claim is missing.
+                return ProblemResults.Forbidden(http, "Missing required identity claim (sub/nameidentifier).");
+            }
 
-            var deleted = await handler.HandleAsync(id, subject, cancellationToken);
-            return deleted ? Results.NoContent() : Results.NotFound();
+            var outcome = await handler.HandleAsync(id, subject, cancellationToken);
+
+            return outcome switch
+            {
+                SoftDeleteOrderOutcome.Deleted => Results.NoContent(),
+                SoftDeleteOrderOutcome.Forbidden => ProblemResults.Forbidden(http, "Order does not belong to the authenticated user."),
+                _ => ProblemResults.NotFound(http, "Order not found.")
+            };
         }
 
         private static string? GetSubject(ClaimsPrincipal user)

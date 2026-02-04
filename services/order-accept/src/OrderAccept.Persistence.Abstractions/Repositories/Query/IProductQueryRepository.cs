@@ -10,6 +10,11 @@ public interface IProductQueryRepository : IQueryRepository<Product>
         bool asNoTracking = true,
         CancellationToken cancellationToken = default);
 
+    Task<IReadOnlyList<Product>> GetByExternalIdsAsync(
+        IReadOnlyCollection<string> externalProductIds,
+        bool asNoTracking = true,
+        CancellationToken cancellationToken = default);
+
     Task<IReadOnlyList<Product>> GetAllAsync(
         bool asNoTracking = true,
         CancellationToken cancellationToken = default);

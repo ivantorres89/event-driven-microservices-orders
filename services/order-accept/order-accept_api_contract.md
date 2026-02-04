@@ -60,14 +60,15 @@ Validation errors should use `ValidationProblemDetails`:
 ```
 
 ### Authentication
-- Endpoints under `/api/orders` require `Authorization: Bearer <JWT>`
-- The backend extracts the userId from JWT and maps it to `Customer.ExternalCustomerId`.
+- **All endpoints** require `Authorization: Bearer <JWT>` (JWT must be valid).
+- `/api/products` does not use user identity, but still requires a valid token.
+- `/api/orders` extracts the **userId** from the JWT (`sub` or `nameidentifier`) and maps it to `Customer.ExternalCustomerId` for filtering/ownership.
 
 For unauthorized requests:
 - `401 Unauthorized` with ProblemDetails.
 
-For forbidden access (e.g., delete an order belonging to a different user):
-- Preferred: `403 Forbidden` (or `404 Not Found` if you want to avoid leaking existence; pick one and be consistent)
+For forbidden access:
+- `403 Forbidden` (token valid but missing required identity claim; or trying to delete an order belonging to a different user)
 
 ---
 

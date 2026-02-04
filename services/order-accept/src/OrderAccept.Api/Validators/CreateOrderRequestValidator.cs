@@ -21,10 +21,6 @@ public sealed class CreateOrderRequestValidator : AbstractValidator<CreateOrderR
 {
     public CreateOrderRequestValidator()
     {
-        RuleFor(x => x.CustomerId)
-            .NotEmpty()
-            .WithMessage("CustomerId is required.");
-
         RuleFor(x => x.Items)
             .NotNull()
             .WithMessage("Items collection is required.")

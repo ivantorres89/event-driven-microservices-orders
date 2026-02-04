@@ -15,9 +15,13 @@ public sealed class OrderQueryRepository : BaseEfQueryRepository<Order>, IOrderQ
 
     protected override IQueryable<Order> Queryable(bool asNoTracking)
     {
+        // Contract rules:
+        // - Orders: IsSoftDeleted = 0
+        // - OrderItems: IsSoftDeleted = 0
         var query = Db.Orders
+            .Where(o => !o.IsSoftDeleted)
             .Include(o => o.Customer)
-            .Include(o => o.Items)
+            .Include(o => o.Items.Where(i => !i.IsSoftDeleted))
                 .ThenInclude(i => i.Product);
 
         return asNoTracking ? query.AsNoTracking() : query;
@@ -36,9 +40,6 @@ public sealed class OrderQueryRepository : BaseEfQueryRepository<Order>, IOrderQ
         bool asNoTracking = true,
         CancellationToken cancellationToken = default)
     {
-        if (offset < 0) offset = 0;
-        if (size <= 0) size = 50;
-
         return await Queryable(asNoTracking)
             .Where(o => o.CustomerId == customerId)
             .OrderByDescending(o => o.CreatedAt)
