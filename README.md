@@ -24,36 +24,43 @@ The implementation is inspired by **real-world cloud-native architectures**, foc
 
 ## Local development (Docker Compose + HTTPS)
 
-This repo includes a **full local Docker Compose** setup with **HTTPS enabled** for the SignalR + JWT service (`order-notification`).
+**Recommended (least environment-dependent):**
 
-Recommended start commands:
+1) Export the dev HTTPS certificate (PFX) for Docker (once per machine)
 
-- **Windows (PowerShell):**
-  ```powershell
-  .\infra\local\up.ps1 -Build
-  ```
-- **macOS / Linux:**
+- macOS / Linux:
   ```bash
-  ./infra/local/up.sh --build
+  ./infra/local/ensure-devcert.sh
+  ```
+- Windows (PowerShell):
+  ```powershell
+  .\infra\local\ensure-devcert.ps1
   ```
 
-These scripts will export a local dev cert (`dotnet dev-certs`) into `infra/local/certs/contoso-devcert.pfx` and mount it into the container.
+2) Trust the dev certificate (once per machine)
 
-Local endpoints:
-
-- SPA: `http://localhost:4200`
-- order-notification (HTTPS): `https://localhost:5007` (DEV endpoints: `POST /dev/token`, hub: `/hubs/order-status`)
-
-If you prefer to keep using `docker compose up -d --build` from repo root, run the cert exporter once before starting:
-
-- `./infra/local/ensure-devcert.sh` (macOS/Linux)
-- `./infra/local/ensure-devcert.ps1` (Windows)
-
-And trust the dev cert (Windows/macOS):
-
-```powershell
+```bash
 dotnet dev-certs https --trust
 ```
+
+3) Start / stop the full stack
+
+Start:
+```bash
+docker compose up -d --build
+```
+
+Stop:
+```bash
+docker compose down
+```
+
+Useful URLs:
+
+- SPA: `http://localhost:4200`
+- order-notification HTTPS: `https://localhost:5007` (DEV token: `POST /dev/token`, SignalR hub: `/hubs/order-status` via WSS)
+
+For details and troubleshooting: see `infra/local/README.md`.
 
 ---
 
@@ -300,27 +307,3 @@ The code and architecture examples:
 
 ---
 
-## Run locally (Docker Compose + HTTPS)
-
-This repo includes a full local stack (services + infra) with **order-notification exposed on HTTPS**.
-
-### macOS / Linux
-
-```bash
-./infra/local/up.sh --build
-```
-
-### Windows (PowerShell)
-
-```powershell
-.\infra\local\up.ps1 -Build
-```
-
-Useful URLs:
-
-- SPA: http://localhost:4200
-- order-notification HTTPS: https://localhost:5007 (POST /dev/token, SignalR hub via WSS)
-- RabbitMQ UI: http://localhost:15672 (guest/guest)
-- Jaeger UI: http://localhost:16686
-
-For details: see `infra/local/README.md` and `infra/local/HTTPS.md`.
