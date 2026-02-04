@@ -15,6 +15,11 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
     public string RabbitConnectionString => "amqp://guest:guest@localhost:5672/";
     public string RabbitQueueName => "order.accepted.it";
 
+    // Symmetric key used by the test host for JwtBearer validation (dev/demo mode).
+    public string JwtSigningKey => "dev-it-signing-key-please-change-123456";
+
+
+
     public OrderAcceptApiFixture()
     {
     }
@@ -74,6 +79,7 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
                     ["ConnectionStrings:Redis"] = _fixture.RedisConnectionString,
                     ["RabbitMQ:ConnectionString"] = _fixture.RabbitConnectionString,
                     ["RabbitMQ:OutboundQueueName"] = _fixture.RabbitQueueName,
+                    ["Jwt:SigningKey"] = _fixture.JwtSigningKey,
                     ["OpenTelemetry:Enabled"] = "false"
                 };
 

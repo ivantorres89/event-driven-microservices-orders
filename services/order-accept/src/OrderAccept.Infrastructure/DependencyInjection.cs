@@ -4,6 +4,7 @@ using Microsoft.Extensions.Hosting;
 using OrderAccept.Application.Abstractions;
 using OrderAccept.Infrastructure.Messaging;
 using OrderAccept.Infrastructure.Workflow;
+using OrderAccept.Persistence;
 using StackExchange.Redis;
 
 namespace OrderAccept.Infrastructure;
@@ -26,6 +27,9 @@ public static class DependencyInjection
         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
         services.AddSingleton<IOrderWorkflowStateStore, RedisOrderWorkflowStateStore>();
         services.AddScoped<ICorrelationIdProvider, CorrelationIdProvider>();
+
+        // Contoso OLTP persistence (EF Core + SQL Server/Azure SQL)
+        services.AddOrderAcceptPersistence(configuration);
 
         // --- Messaging transport (env-based) ---
         if (environment.IsDevelopment())

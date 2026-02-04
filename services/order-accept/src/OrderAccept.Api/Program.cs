@@ -5,8 +5,13 @@ using OrderAccept.Api.Endpoints;
 using OrderAccept.Api.Middleware;
 using OrderAccept.Application;
 using OrderAccept.Infrastructure;
+using FluentValidation;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Serilog;
 using Serilog.Exceptions;
+using System.Text;
 
 namespace OrderAccept.Api;
 
@@ -27,11 +32,81 @@ public partial class Program
                .Enrich.WithThreadId();
         });
 
-        // --- Services ---
+        // --- Security (JWT) ---
+        builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
+            {
+                // Keep claims as-is (avoid inbound claim mapping surprises)
+                options.MapInboundClaims = false;
+
+                var authority = builder.Configuration["Jwt:Authority"];
+                var audience = builder.Configuration["Jwt:Audience"];
+                var signingKey = builder.Configuration["Jwt:SigningKey"];
+
+                if (!string.IsNullOrWhiteSpace(authority))
+                {
+                    // Production-like: validate using OIDC metadata from an IDP
+                    options.Authority = authority;
+                    if (!string.IsNullOrWhiteSpace(audience))
+                        options.Audience = audience;
+
+                    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
+                }
+                else
+                {
+                    // Development/demo: symmetric key validation
+                    if (string.IsNullOrWhiteSpace(signingKey))
+                        throw new InvalidOperationException("Either Jwt:Authority or Jwt:SigningKey must be configured");
+
+                    options.TokenValidationParameters = new TokenValidationParameters
+                    {
+                        ValidateIssuer = false,
+                        ValidateAudience = false,
+                        ValidateLifetime = true,
+                        ValidateIssuerSigningKey = true,
+                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+                        ClockSkew = TimeSpan.FromMinutes(2)
+                    };
+                }
+            });
+
         builder.Services.AddAuthorization();
 
         builder.Services.AddEndpointsApiExplorer();
-        builder.Services.AddSwaggerGen();
+        builder.Services.AddSwaggerGen(c =>
+        {
+            c.SwaggerDoc("v1", new OpenApiInfo
+            {
+                Title = "OrderAccept API",
+                Version = "v1"
+            });
+
+            // JWT Bearer auth
+            var scheme = new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                },
+                Name = "Authorization",
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "JWT Authorization header using the Bearer scheme. Example: \"Bearer {token}\""
+            };
+
+            c.AddSecurityDefinition("Bearer", scheme);
+            c.AddSecurityRequirement(new OpenApiSecurityRequirement
+            {
+                { scheme, Array.Empty<string>() }
+            });
+
+});
+
+        // FluentValidation (minimal API: validate explicitly in endpoints)
+        builder.Services.AddValidatorsFromAssemblyContaining<OrderAccept.Api.Validators.CreateOrderRequestValidator>();
 
         builder.Services.AddHealthChecks();
 
@@ -72,10 +147,6 @@ public partial class Program
         var app = builder.Build();
 
         // --- HTTP pipeline ---
-        if (!app.Environment.IsDevelopment())
-        {
-            app.UseHttpsRedirection();
-        }
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();
@@ -88,6 +159,7 @@ public partial class Program
         app.UseDependencyUnavailableHandling();
 
         app.UseHttpsRedirection();
+        app.UseAuthentication();
         app.UseAuthorization();
 
         // Health checks (simple for orchestration)
@@ -95,7 +167,8 @@ public partial class Program
         app.MapHealthChecks("/health/ready");
 
         // Endpoints
-        app.MapOrderAcceptEndpoints();
+        app.MapProductEndpoints();
+        app.MapOrderEndpoints();
 
         app.Run();
     }

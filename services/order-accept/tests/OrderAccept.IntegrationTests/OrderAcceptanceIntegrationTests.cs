@@ -2,6 +2,10 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using System.Net.Http.Headers;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
 using FluentAssertions;
 using OrderAccept.IntegrationTests.Fixtures;
 using OrderAccept.Shared.Correlation;
@@ -24,12 +28,16 @@ public sealed class OrderAcceptanceIntegrationTests : IClassFixture<OrderAcceptA
         // Arrange
         var client = _fixture.Factory.CreateClient();
 
+        // All endpoints require a real JWT. In tests we mint a dev token using the symmetric key configured for the host.
+        var jwt = CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-1");
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
+
         var request = new CreateOrderRequestDto(
             CustomerId: "customer-it-1",
             Items: new[] { new CreateOrderItemDto("product-it-1", 1) });
 
         // Act
-        var response = await client.PostAsJsonAsync("/api/orders/accept", request);
+        var response = await client.PostAsJsonAsync("/api/orders", request);
 
         // Assert: API
         response.StatusCode.Should().Be(HttpStatusCode.Accepted);
@@ -85,5 +93,22 @@ public sealed class OrderAcceptanceIntegrationTests : IClassFixture<OrderAcceptA
     private sealed record CreateOrderRequestDto(string CustomerId, IReadOnlyCollection<CreateOrderItemDto> Items);
 
     private sealed record CreateOrderItemDto(string ProductId, int Quantity);
+
+    private static string CreateJwt(string signingKey, string sub)
+    {
+        var key = new SymmetricSecurityKey(System.Text.Encoding.UTF8.GetBytes(signingKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+        var token = new JwtSecurityToken(
+            issuer: "order-accept-it",
+            audience: "order-accept-it",
+            claims: new[] { new Claim("sub", sub) },
+            notBefore: DateTime.UtcNow.AddMinutes(-1),
+            expires: DateTime.UtcNow.AddHours(1),
+            signingCredentials: creds);
+
+        return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
 
 }

@@ -9,6 +9,7 @@
   <ItemGroup>
     <ProjectReference Include="..\OrderAccept.Application\OrderAccept.Application.csproj" />
     <ProjectReference Include="..\OrderAccept.Shared\OrderAccept.Shared.csproj" />
+    <ProjectReference Include="..\OrderAccept.Persistence\OrderAccept.Persistence.csproj" />
   </ItemGroup>
 
   <ItemGroup>

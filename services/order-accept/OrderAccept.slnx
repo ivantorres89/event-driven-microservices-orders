@@ -2,7 +2,10 @@
   <Folder Name="/src/">
     <Project Path="src/OrderAccept.Api/OrderAccept.Api.csproj" Id="1749c281-79b7-44f7-a7bf-dc22f0c2725a" />
     <Project Path="src/OrderAccept.Application/OrderAccept.Application.csproj" Id="aa368d07-3172-45b8-923b-5ab89fcc13ff" />
+    <Project Path="src/OrderAccept.Domain/OrderAccept.Domain.csproj" />
     <Project Path="src/OrderAccept.Infrastructure/OrderAccept.Infrastructure.csproj" Id="b4c0679e-51be-4177-a741-7156e4fb7547" />
+    <Project Path="src/OrderAccept.Persistence.Abstractions/OrderAccept.Persistence.Abstractions.csproj" />
+    <Project Path="src/OrderAccept.Persistence/OrderAccept.Persistence.csproj" />
     <Project Path="src/OrderAccept.Shared/OrderAccept.Shared.csproj" Id="48c0d94c-a2a4-4d0f-9a09-564c89d0e773" />
   </Folder>
   <Folder Name="/tests/">

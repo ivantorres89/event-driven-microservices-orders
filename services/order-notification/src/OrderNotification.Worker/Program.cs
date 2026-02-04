@@ -43,70 +43,59 @@ public partial class Program
                 policy
                     .WithOrigins("http://localhost:4200", "https://localhost:4200")
                     .AllowAnyHeader()
-                    .AllowAnyMethod();
+                    .AllowAnyMethod()
+                    .AllowCredentials();
             });
         });
 
-                    // CORS for local SPA
-            builder.Services.AddCors(options =>
+        // JWT Auth (DEV symmetric key)
+        var signingKey = builder.Configuration["DevJwt:SigningKey"] ?? string.Empty;
+        if (builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(signingKey))
+        {
+            throw new InvalidOperationException("DevJwt:SigningKey is required in Development.");
+        }
+
+        var issuer = builder.Configuration["DevJwt:Issuer"];
+        var audience = builder.Configuration["DevJwt:Audience"];
+
+        builder.Services
+            .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer(options =>
             {
-                options.AddPolicy("spa-dev", policy =>
+                options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    policy
-                        .WithOrigins("http://localhost:4200", "https://localhost:4200")
-                        .AllowAnyHeader()
-                        .AllowAnyMethod();
-                });
-            });
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
 
-            // JWT Auth (DEV symmetric key)
-            var signingKey = builder.Configuration["DevJwt:SigningKey"] ?? string.Empty;
-            if (builder.Environment.IsDevelopment() && string.IsNullOrWhiteSpace(signingKey))
-            {
-                throw new InvalidOperationException("DevJwt:SigningKey is required in Development.");
-            }
+                    // In DEV you can keep these relaxed by leaving Issuer/Audience empty in config.
+                    ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
+                    ValidIssuer = issuer,
+                    ValidateAudience = !string.IsNullOrWhiteSpace(audience),
+                    ValidAudience = audience,
 
-            var issuer = builder.Configuration["DevJwt:Issuer"];
-            var audience = builder.Configuration["DevJwt:Audience"];
+                    ValidateLifetime = true,
+                    ClockSkew = TimeSpan.FromSeconds(30)
+                };
 
-            builder.Services
-                .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
+                // IMPORTANT for SignalR in browser:
+                // WebSockets cannot set Authorization header; SignalR sends JWT as query param: ?access_token=...
+                options.Events = new JwtBearerEvents
                 {
-                    options.TokenValidationParameters = new TokenValidationParameters
+                    OnMessageReceived = context =>
                     {
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
 
-                        // In DEV you can keep these relaxed by leaving Issuer/Audience empty in config.
-                        ValidateIssuer = !string.IsNullOrWhiteSpace(issuer),
-                        ValidIssuer = issuer,
-                        ValidateAudience = !string.IsNullOrWhiteSpace(audience),
-                        ValidAudience = audience,
-
-                        ValidateLifetime = true,
-                        ClockSkew = TimeSpan.FromSeconds(30)
-                    };
-
-                    // IMPORTANT for SignalR in browser:
-                    // WebSockets cannot set Authorization header; SignalR sends JWT as query param: ?access_token=...
-                    options.Events = new JwtBearerEvents
-                    {
-                        OnMessageReceived = context =>
+                        if (!string.IsNullOrEmpty(accessToken)
+                            && path.StartsWithSegments("/hubs/order-status"))
                         {
-                            var accessToken = context.Request.Query["access_token"];
-                            var path = context.HttpContext.Request.Path;
-
-                            if (!string.IsNullOrEmpty(accessToken)
-                                && path.StartsWithSegments("/hubs/order-status"))
-                            {
-                                context.Token = accessToken;
-                            }
-
-                            return Task.CompletedTask;
+                            context.Token = accessToken;
                         }
-                    };
-                });
+
+                        return Task.CompletedTask;
+                    }
+                };
+            });
 
         // --- Logging (Serilog) ---
         builder.Services.AddSerilog((services, cfg) =>
