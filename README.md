@@ -2,8 +2,13 @@
 [![Coverage](https://raw.githubusercontent.com/ivantorres89/event-driven-microservices-orders/badges/coverage.svg?sanitize=true)](https://github.com/ivantorres89/event-driven-microservices-orders/tree/badges)
 # Contoso Shop— Event-Driven Order Processing Microservices (Azure)
 
-## The shop 
-This demo now seeds **145 certification-prep subscriptions**.
+## The shop
+
+**Contoso Shop** is a fictional, training e-commerce that sells **certification-prep content** (practice exams, labs, and study guides) as **digital subscriptions**.
+
+The target customers range from individual learners to corporate training teams purchasing seats in bulk. Purchases are **business-critical**: once a payment is accepted, the platform must reliably provision entitlements, persist the order history, and keep the learner informed—without double-processing or losing track of status during refreshes or reconnects.
+
+This demo seeds a catalog of **145 certification-prep subscriptions** across multiple vendors (e.g., Microsoft, Cisco, AWS, CompTIA). Users can browse/search, build a cart, submit an order, and track the lifecycle **Accepted → Processing → Completed** with **real-time notifications**.
 
 ## Overview
 
