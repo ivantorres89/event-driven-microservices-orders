@@ -3,6 +3,7 @@ import { BehaviorSubject, distinctUntilChanged, map } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
+import { RuntimeConfigService } from './runtime-config.service';
 import { StorageService } from './storage.service';
 
 type AuthSession = {
@@ -24,7 +25,8 @@ export class AuthService {
 
   constructor(
     private storage: StorageService,
-    private http: HttpClient
+    private http: HttpClient,
+    private cfg: RuntimeConfigService
   ) {
     this._session$.next(this.loadInitialSession());
   }
@@ -56,7 +58,7 @@ export class AuthService {
     const cleaned = (userId ?? '').trim();
     if (!cleaned) throw new Error('userId is required');
 
-    const base = environment.signalRBaseUrl.replace(/\/$/, '');
+    const base = this.cfg.signalRBaseUrl.replace(/\/$/, '');
     const url = `${base}/dev/token`;
 
     const res = await firstValueFrom(
@@ -83,7 +85,7 @@ export class AuthService {
     const stored = this.storage.getJson<AuthSession>(this.key);
     const v = (stored?.userId ?? '').trim();
     if (v) return v;
-    return (environment.defaultUserId ?? '').trim();
+    return (this.cfg.defaultUserId ?? '').trim();
   }
 
   private loadInitialSession(): AuthSession | null {

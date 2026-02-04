@@ -7,7 +7,7 @@ import {
   LogLevel,
   HttpTransportType,
 } from '@microsoft/signalr';
-import { environment } from '../../../environments/environment';
+import { RuntimeConfigService } from './runtime-config.service';
 import { AuthService } from './auth.service';
 import { OrderProgressService } from './order-progress.service';
 import { OrderStatusNotification, OrderWorkflowState } from '../models';
@@ -54,7 +54,8 @@ export class SignalRService {
   constructor(
     private auth: AuthService,
     private progress: OrderProgressService,
-    private toasts: ToastService
+    private toasts: ToastService,
+    private cfg: RuntimeConfigService
   ) {
     // If user changes while connected, force a reconnect.
     this.auth.userId$
@@ -75,16 +76,10 @@ export class SignalRService {
 
     this._state$.next('connecting');
 
-    const base = environment.signalRBaseUrl.replace(/\/$/, '');
+    const base = this.cfg.signalRBaseUrl.replace(/\/$/, '');
     const hubUrl = `${base}/hubs/order-status`;
 
-    // NOTE about DevAuthenticationHandler in backend:
-    // - It currently checks only Authorization header.
-    // - Browser WebSockets cannot send Authorization headers; SignalR uses ?access_token=... for WS.
-    // Best practice is backend: accept token from query `access_token` too.
-    //
-    // If you haven't patched backend yet, you can force LongPolling below.
-    const forceLongPolling = environment.useMocks; // dev-friendly. set false when backend supports WS token.
+    const forceLongPolling = this.cfg.signalRForceLongPolling;
 
     this.connection = new HubConnectionBuilder()
       .withUrl(hubUrl, {

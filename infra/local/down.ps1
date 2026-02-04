@@ -2,12 +2,19 @@ param(
   [switch]$Volumes
 )
 
-# Compose file lives at the repository root (two levels up from /infra/local)
-$composeFile = Join-Path $PSScriptRoot "..\..\docker-compose.yml"
+$ErrorActionPreference = "Stop"
 
-# Default: docker compose down (keeps named volumes).
-# Use -Volumes to also remove named volumes (RabbitMQ/Redis, etc.)
-$cmd = "docker compose -f `"$composeFile`" down"
+$repoRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$composeFile = Join-Path $repoRoot "docker-compose.yml"
+
+$envFile = Join-Path $PSScriptRoot ".env"
+if (!(Test-Path $envFile)) {
+  # Fall back to default envs if .env doesn't exist
+  $cmd = "docker compose -f `"$composeFile`" down"
+} else {
+  $cmd = "docker compose --env-file `"$envFile`" -f `"$composeFile`" down"
+}
+
 if ($Volumes) { $cmd += " -v" }
 
 Write-Host "Running: $cmd"

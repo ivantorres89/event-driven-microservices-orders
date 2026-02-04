@@ -8,7 +8,7 @@ import { OrdersService } from '../../core/services/orders.service';
 import { SignalRService } from '../../core/services/signalr.service';
 import { SpinnerOverlayComponent } from '../../shared/spinner/spinner-overlay.component';
 import { ToastService } from '../../core/services/toast.service';
-import { environment } from '../../../environments/environment';
+import { RuntimeConfigService } from '../../core/services/runtime-config.service';
 import { CartLine, OrderWorkflowStatus } from '../../core/models';
 
 @Component({
@@ -30,7 +30,8 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
     private orders: OrdersService,
     private signalr: SignalRService,
     private toasts: ToastService,
-    private router: Router
+    private router: Router,
+    private cfg: RuntimeConfigService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -106,9 +107,9 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
     const lines = [...this.cartLines];
 
     try {
-      const res = await (environment.useMocks
-        ? this.orders.submitOrderMock(lines).toPromise()
-        : this.orders.submitOrderMock(lines).toPromise()); // Replace with real call later
+      const res = await this.orders.submitOrderMock(lines).toPromise();
+
+      // TODO: replace mock with a real order-accept call once the API is wired up.
 
       if (!res?.correlationId) throw new Error('Missing correlationId');
 
@@ -128,7 +129,7 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
       this.toasts.push('info', 'Order submitted', `CorrelationId: ${active.correlationId}`);
 
       // 4) If mocks enabled, simulate backend progress + completion (so the demo works without services).
-      if (environment.useMocks) {
+      if (this.cfg.useMocks) {
         this.simulateMockWorkflow(active.correlationId);
       }
     } catch (e) {

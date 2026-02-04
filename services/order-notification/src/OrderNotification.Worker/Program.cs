@@ -113,22 +113,7 @@ public partial class Program
             .AddOrderNotificationApplication()
             .AddOrderNotificationInfrastructure(builder.Configuration, builder.Environment);
 
-        // --- Authentication / Authorization ---
-        // Development uses a lightweight authentication handler that treats the Bearer token value as the user id.
-        if (builder.Environment.IsDevelopment())
-        {
-            builder.Services
-                .AddAuthentication(DevAuthenticationDefaults.Scheme)
-                .AddScheme<AuthenticationSchemeOptions, DevAuthenticationHandler>(
-                    DevAuthenticationDefaults.Scheme,
-                    _ => { });
-        }
-        else
-        {
-            // Placeholder for production auth (typically JWT bearer). Configure as needed.
-            builder.Services.AddAuthentication();
-        }
-
+        // --- Authorization ---
         builder.Services.AddAuthorization();
         // Real-time notifier implementation
         builder.Services.AddSingleton<OrderNotification.Application.Abstractions.IOrderStatusNotifier, OrderNotification.Worker.Notifiers.SignalROrderStatusNotifier>();
@@ -243,11 +228,18 @@ public partial class Program
                     Token = jwt,
                     ExpiresAtUtc = expires.UtcDateTime
                 });
-            }).AllowAnonymous();
+            }).AllowAnonymous()
+              .RequireCors("spa-dev");
         }
 
         // SignalR hub endpoint (standard naming conventions)
-        app.MapHub<OrderStatusHub>("/hubs/order-status").RequireAuthorization();
+        var hub = app.MapHub<OrderStatusHub>("/hubs/order-status")
+            .RequireAuthorization();
+
+        if (app.Environment.IsDevelopment())
+        {
+            hub.RequireCors("spa-dev");
+        }
 
         app.Run();
     }

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, delay, Observable, of } from 'rxjs';
 import { ActiveOrder, CartLine, Order } from '../models';
 import { StorageService } from './storage.service';
-import { environment } from '../../../environments/environment';
+import { RuntimeConfigService } from './runtime-config.service';
 import { AuthService } from './auth.service';
 
 const ORDERS_KEY = 'contoso.orders.v1';
@@ -23,7 +23,8 @@ export class OrdersService {
 
   constructor(
     private storage: StorageService,
-    private auth: AuthService
+    private auth: AuthService,
+    private cfg: RuntimeConfigService
   ) {
     const existing = this.storage.getJson<Order[]>(ORDERS_KEY) ?? [];
     this._orders$.next(existing);
@@ -57,7 +58,7 @@ export class OrdersService {
 
   async deleteOrder(orderId: number): Promise<void> {
     // Requirement: call order-accept DELETE /api/orders/{id}
-    const url = `${environment.orderAcceptApiBaseUrl.replace(/\/$/, '')}/api/orders/${orderId}`;
+    const url = `${this.cfg.orderAcceptApiBaseUrl.replace(/\/$/, '')}/api/orders/${orderId}`;
 
     const token = this.auth.getAccessToken();
     const headers: Record<string, string> = token

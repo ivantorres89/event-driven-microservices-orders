@@ -22,6 +22,41 @@ The implementation is inspired by **real-world cloud-native architectures**, foc
 
 ---
 
+## Local development (Docker Compose + HTTPS)
+
+This repo includes a **full local Docker Compose** setup with **HTTPS enabled** for the SignalR + JWT service (`order-notification`).
+
+Recommended start commands:
+
+- **Windows (PowerShell):**
+  ```powershell
+  .\infra\local\up.ps1 -Build
+  ```
+- **macOS / Linux:**
+  ```bash
+  ./infra/local/up.sh --build
+  ```
+
+These scripts will export a local dev cert (`dotnet dev-certs`) into `infra/local/certs/contoso-devcert.pfx` and mount it into the container.
+
+Local endpoints:
+
+- SPA: `http://localhost:4200`
+- order-notification (HTTPS): `https://localhost:5007` (DEV endpoints: `POST /dev/token`, hub: `/hubs/order-status`)
+
+If you prefer to keep using `docker compose up -d --build` from repo root, run the cert exporter once before starting:
+
+- `./infra/local/ensure-devcert.sh` (macOS/Linux)
+- `./infra/local/ensure-devcert.ps1` (Windows)
+
+And trust the dev cert (Windows/macOS):
+
+```powershell
+dotnet dev-certs https --trust
+```
+
+---
+
 ## Architecture Context
 
 ![Architectural design](/design/k8s-websockets-apporders.jpg)
@@ -262,3 +297,30 @@ The code and architecture examples:
 - Do not represent any real customer or system
 
 
+
+---
+
+## Run locally (Docker Compose + HTTPS)
+
+This repo includes a full local stack (services + infra) with **order-notification exposed on HTTPS**.
+
+### macOS / Linux
+
+```bash
+./infra/local/up.sh --build
+```
+
+### Windows (PowerShell)
+
+```powershell
+.\infra\local\up.ps1 -Build
+```
+
+Useful URLs:
+
+- SPA: http://localhost:4200
+- order-notification HTTPS: https://localhost:5007 (POST /dev/token, SignalR hub via WSS)
+- RabbitMQ UI: http://localhost:15672 (guest/guest)
+- Jaeger UI: http://localhost:16686
+
+For details: see `infra/local/README.md` and `infra/local/HTTPS.md`.
