@@ -1,0 +1,396 @@
+openapi: 3.0.3
+info:
+  title: Order-Accept API
+  version: 1.0.0
+  description: >
+    Contract for the order-accept service, aligned with the current database schema and the SPA.
+    JSON uses camelCase. Orders endpoints require JWT Bearer auth.
+servers:
+  - url: https://localhost:5005
+    description: Local (example)
+tags:
+  - name: Products
+  - name: Orders
+
+paths:
+  /api/products:
+    get:
+      tags: [Products]
+      summary: List products (paged)
+      description: Returns active, non-soft-deleted products.
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          required: false
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 12
+          required: false
+      responses:
+        '200':
+          description: Paged products
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedProductResult'
+              examples:
+                example:
+                  value:
+                    offset: 0
+                    size: 12
+                    total: 145
+                    items:
+                      - externalProductId: "AZ-700"
+                        name: "CertKit AZ-700: Designing and Implementing Azure Networking Solutions"
+                        category: "Cloud"
+                        vendor: "Microsoft"
+                        imageUrl: "https://cdn.jsdelivr.net/gh/.../az-700.png"
+                        discount: 35
+                        billingPeriod: "Monthly"
+                        isSubscription: true
+                        price: 191.10
+        '400':
+          $ref: '#/components/responses/Problem400'
+        '500':
+          $ref: '#/components/responses/Problem500'
+
+  /api/products/{id}:
+    get:
+      tags: [Products]
+      summary: Get product detail
+      description: Product id is ExternalProductId (string).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+            minLength: 1
+      responses:
+        '200':
+          description: Product found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/Problem400'
+        '404':
+          $ref: '#/components/responses/Problem404'
+        '500':
+          $ref: '#/components/responses/Problem500'
+
+  /api/orders:
+    get:
+      tags: [Orders]
+      summary: List orders (paged, by authenticated user)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: offset
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+          required: false
+        - in: query
+          name: size
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          required: false
+      responses:
+        '200':
+          description: Paged orders for the authenticated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PagedOrderResult'
+        '400':
+          $ref: '#/components/responses/Problem400'
+        '401':
+          $ref: '#/components/responses/Problem401'
+        '403':
+          $ref: '#/components/responses/Problem403'
+        '500':
+          $ref: '#/components/responses/Problem500'
+
+    post:
+      tags: [Orders]
+      summary: Create an order
+      description: >
+        Creates an order for the authenticated user (mapped to Customer.ExternalCustomerId in the database).
+        Returns id + correlationId for async workflow tracking.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrderRequest'
+            examples:
+              example:
+                value:
+                  items:
+                    - productId: "AZ-700"
+                      quantity: 1
+      responses:
+        '201':
+          description: Created
+          headers:
+            Location:
+              description: URL of the created order
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Problem400'
+        '401':
+          $ref: '#/components/responses/Problem401'
+        '404':
+          $ref: '#/components/responses/Problem404'
+        '409':
+          $ref: '#/components/responses/Problem409'
+        '500':
+          $ref: '#/components/responses/Problem500'
+
+  /api/orders/{id}:
+    delete:
+      tags: [Orders]
+      summary: Soft-delete an order
+      description: Soft-deletes an order. Backend validates ownership by authenticated user.
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '204':
+          description: Deleted (no content)
+        '400':
+          $ref: '#/components/responses/Problem400'
+        '401':
+          $ref: '#/components/responses/Problem401'
+        '403':
+          $ref: '#/components/responses/Problem403'
+        '404':
+          $ref: '#/components/responses/Problem404'
+        '500':
+          $ref: '#/components/responses/Problem500'
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    Problem400:
+      description: Bad Request (validation/paging/body errors)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Problem401:
+      description: Unauthorized
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Problem403:
+      description: Forbidden
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Problem404:
+      description: Not Found
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Problem409:
+      description: Conflict (optional)
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Problem500:
+      description: Internal Server Error
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+
+  schemas:
+    ProblemDetails:
+      type: object
+      properties:
+        type: { type: string, nullable: true }
+        title: { type: string, nullable: true }
+        status: { type: integer, format: int32, nullable: true }
+        detail: { type: string, nullable: true }
+        instance: { type: string, nullable: true }
+        traceId: { type: string, nullable: true }
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+          nullable: true
+      additionalProperties: true
+
+    Product:
+      type: object
+      required:
+        - externalProductId
+        - name
+        - category
+        - vendor
+        - imageUrl
+        - discount
+        - billingPeriod
+        - isSubscription
+        - price
+      properties:
+        externalProductId:
+          type: string
+          description: Public product id (ExternalProductId)
+          example: "AZ-700"
+        name:
+          type: string
+          example: "CertKit AZ-700: Designing and Implementing Azure Networking Solutions"
+        category:
+          type: string
+          example: "Cloud"
+        vendor:
+          type: string
+          example: "Microsoft"
+        imageUrl:
+          type: string
+          format: uri
+          example: "https://cdn.jsdelivr.net/gh/.../az-700.png"
+        discount:
+          type: integer
+          format: int32
+          minimum: 0
+          maximum: 100
+          example: 35
+        billingPeriod:
+          type: string
+          description: Monthly | Annual (demo)
+          example: "Monthly"
+        isSubscription:
+          type: boolean
+          example: true
+        price:
+          type: number
+          format: double
+          example: 191.10
+
+    PagedProductResult:
+      type: object
+      required: [offset, size, total, items]
+      properties:
+        offset: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        total: { type: integer, minimum: 0 }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Product' }
+
+    CreateOrderItem:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId:
+          type: string
+          description: Product ExternalProductId
+          example: "AZ-700"
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+
+    CreateOrderRequest:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/CreateOrderItem' }
+
+    OrderItem:
+      type: object
+      required: [productId, productName, imageUrl, unitPrice, quantity]
+      properties:
+        productId:
+          type: string
+          description: Product ExternalProductId
+          example: "AZ-700"
+        productName:
+          type: string
+          example: "CertKit AZ-700: Designing and Implementing Azure Networking Solutions"
+        imageUrl:
+          type: string
+          format: uri
+        unitPrice:
+          type: number
+          format: double
+          example: 191.10
+        quantity:
+          type: integer
+          minimum: 1
+          example: 1
+
+    Order:
+      type: object
+      required: [id, correlationId, createdAt, items]
+      properties:
+        id:
+          type: integer
+          format: int64
+          example: 123
+        correlationId:
+          type: string
+          format: uuid
+          example: "0a5dfd1a-69d2-4db5-95c0-9d2f18f2a5b3"
+        createdAt:
+          type: string
+          format: date-time
+          example: "2026-02-04T10:12:45.123Z"
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/OrderItem' }
+
+    PagedOrderResult:
+      type: object
+      required: [offset, size, total, items]
+      properties:
+        offset: { type: integer, minimum: 0 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        total: { type: integer, minimum: 0 }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/Order' }
