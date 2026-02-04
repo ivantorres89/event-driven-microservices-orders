@@ -25,6 +25,7 @@ namespace OrderAccept.Api.Endpoints
                 .WithSummary("Accept an order")
                 .Produces(StatusCodes.Status202Accepted)
                 .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status403Forbidden)
                 .Produces(StatusCodes.Status401Unauthorized)
                 .Produces(StatusCodes.Status503ServiceUnavailable);
 
@@ -52,7 +53,19 @@ namespace OrderAccept.Api.Endpoints
             HttpContext http,
             CancellationToken cancellationToken)
         {
-            var validation = await validator.ValidateAsync(request, cancellationToken);
+            // Authenticated user identity (JWT subject). This is the only trusted source of CustomerId.
+            var subject = GetSubject(http.User);
+            if (string.IsNullOrWhiteSpace(subject))
+                return Results.Unauthorized();
+
+            // If the client sends CustomerId, enforce it matches the JWT to avoid spoofing.
+            if (!string.IsNullOrWhiteSpace(request.CustomerId) && !string.Equals(request.CustomerId, subject, StringComparison.Ordinal))
+                return Results.Forbid();
+
+            // Force CustomerId to the JWT subject (do not trust request body).
+            var effectiveRequest = request with { CustomerId = subject };
+
+            var validation = await validator.ValidateAsync(effectiveRequest, cancellationToken);
             if (!validation.IsValid)
             {
                 return Results.ValidationProblem(ToValidationDictionary(validation));
@@ -65,7 +78,7 @@ namespace OrderAccept.Api.Endpoints
             Activity.Current?.SetTag("correlation_id", correlationValue);
             Baggage.SetBaggage("correlation_id", correlationValue);
 
-            var command = new AcceptOrderCommand(request);
+            var command = new AcceptOrderCommand(effectiveRequest);
             await handler.HandleAsync(command, cancellationToken);
 
             // Expose correlation id in response header for tracing

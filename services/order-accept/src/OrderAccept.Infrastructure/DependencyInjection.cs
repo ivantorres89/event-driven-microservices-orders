@@ -26,6 +26,7 @@ public static class DependencyInjection
 
         services.AddSingleton<IConnectionMultiplexer>(_ => ConnectionMultiplexer.Connect(redisConn));
         services.AddSingleton<IOrderWorkflowStateStore, RedisOrderWorkflowStateStore>();
+        services.AddSingleton<IOrderCorrelationMapStore, RedisOrderCorrelationMapStore>();
         services.AddScoped<ICorrelationIdProvider, CorrelationIdProvider>();
 
         // Contoso OLTP persistence (EF Core + SQL Server/Azure SQL)
