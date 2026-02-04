@@ -50,7 +50,7 @@ public sealed class RabbitMqOrderProcessedMessageListener : BackgroundService, I
     {
         _logger.LogInformation("Starting RabbitMQ listener for queue {Queue}", _options.InboundQueueName);
 
-        await using var connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
+        await using var connection = await ConnectWithRetryAsync(stoppingToken);
         await using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await channel.QueueDeclareAsync(
@@ -77,6 +77,28 @@ public sealed class RabbitMqOrderProcessedMessageListener : BackgroundService, I
 
         // Keep the background service alive.
         await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
+    }
+
+    private async Task<IConnection> ConnectWithRetryAsync(CancellationToken ct)
+    {
+        var delay = TimeSpan.FromSeconds(2);
+
+        while (true)
+        {
+            try
+            {
+                return await _connectionFactory.CreateConnectionAsync(ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "RabbitMQ connection failed. Retrying in {DelaySeconds}s.", delay.TotalSeconds);
+                await Task.Delay(delay, ct);
+            }
+        }
     }
 
     internal async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea, CancellationToken ct)
