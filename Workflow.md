@@ -4,6 +4,15 @@ This document explains, step by step and “low level”, what **each microservi
 
 ---
 
+## “One-liner” summary per microservice
+
+- **SPA**: connects SignalR + posts order + receives notification by `correlationId`.
+- **order-accept**: JWT → `userId`; generates `correlationId`; writes Redis `order:map:{correlationId}` & `order:status:{correlationId}`; publishes event.
+- **order-process**: consumes event; updates statuses in Redis; persists to SQL database; refreshes mapping TTL; publishes processed.
+- **order-notification**: consumes processed; looks up `userId` in Redis; `Clients.User(userId)`.
+
+---
+
 ## Components (who is who)
 
 - **SPA (Angular)**
@@ -74,6 +83,18 @@ await hubContext.Clients.User(userId)
 
 **Result:** all active connections for that `userId` (multi-tab, multi-device) receive the message.
 
+### Multi-pod delivery (Redis backplane)
+
+When `order-notification` runs with multiple replicas (multiple Hub instances), a single browser tab is connected to **one** pod, but different tabs (or devices) can be connected to **different** pods.
+
+To ensure `Clients.User(userId)` reaches **all** of a user’s active connections across all pods, SignalR uses **Redis pub/sub as a backplane**:
+
+1) The pod that executes `Clients.User(userId)` publishes the message to Redis pub/sub.
+2) Every `order-notification` pod is subscribed and receives the message.
+3) Each pod forwards it only to its **local** WebSocket connections whose `Context.UserIdentifier == userId`.
+
+The backplane channels are isolated using a Redis `ChannelPrefix` (e.g. `contoso-signalr`) so backplane traffic does not collide with other Redis usage (like `order:*` keys).
+
 ---
 
 # Full workflow (step by step)
@@ -81,15 +102,23 @@ await hubContext.Clients.User(userId)
 ## 0) The SPA opens the WSS channel (SignalR)
 
 **SPA → order-notification Hub (WSS):**
-- Connects with a JWT.
-- The Hub takes `sub` (ExternalCustomerId) and uses it as the `UserIdentifier`.
+- The SPA opens a **WebSocket (WSS)** connection to the SignalR Hub and authenticates with a JWT.
+- The Hub derives `Context.UserIdentifier` from the JWT (typically the `sub` claim / ExternalCustomerId).
 
-**What happens internally:**
-- SignalR creates one connection per tab/window (or per device).
-- All those connections hang off the same `userId`.
+**What happens with WebSocket “sessions” (per tab / per pod):**
+- **One browser tab = one SignalR connection.** If the user opens 2 tabs, there are 2 independent WebSocket connections.
+- In a scaled deployment, each WebSocket is accepted by **one** `order-notification` pod. Different tabs can end up connected to different pods.
+- Connections are long-lived: once a WebSocket is established, it stays attached to that pod until it disconnects.
 
-> If the user closes the browser, that connection drops.  
-> **Nothing is stored in Redis just because the client is connected** (unless you implement explicit presence).
+**How notifications still reach all tabs (Redis + backplane):**
+- The worker notifies users with `Clients.User(userId)`.
+- With a Redis backplane enabled, the sending pod publishes the notification over Redis pub/sub (using a `ChannelPrefix`, e.g. `contoso-signalr`).
+- Every `order-notification` pod receives that backplane message and delivers it to its **local** connections for that user.
+- Result: **all tabs** for the user get the notification even if they are connected to different pods.
+
+**What happens if the connected pod goes away:**
+- If a pod is terminated (scale-in) or the network drops, the WebSocket disconnects and the SPA’s reconnect logic establishes a **new** WebSocket (which may land on a different pod).
+- After reconnect, the SPA can refresh the current order status; Redis stores transient workflow state (e.g. `order:status:{correlationId}` and `order:map:{correlationId}`) with TTL, so the UI can rehydrate even after brief disconnects.
 
 ---
 
@@ -252,24 +281,6 @@ The connection stays alive, but the message is never sent.
 - **order-accept**: JWT → `userId`; generates `correlationId`; persists to SQL; writes Redis `cid→userId`; publishes event.
 - **order-process**: consumes event; updates status; refreshes mapping TTL; publishes processed.
 - **order-notification**: consumes processed; looks up `userId` in Redis; `Clients.User(userId)`.
-
----
-
-# Quick checklist (the minimum to make it work)
-
-1) In **order-accept**:
-   - write `order:map:{cid} = userId` with TTL
-   - write `order:status:{cid} = ACCEPTED` with TTL
-
-2) In **order-process**:
-   - refresh TTL for `order:map:{cid}` on PROCESSING/COMPLETED
-
-3) In **order-notification**:
-   - use `order:map:{cid}` to resolve `userId`
-   - retry + DLQ if the mapping is missing
-
-4) In the Hub:
-   - make sure `Context.UserIdentifier` == JWT `sub`
 
 ---
 
