@@ -1,7 +1,6 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -28,6 +27,8 @@ namespace OrderNotification.Worker;
 /// </summary>
 public partial class Program
 {
+    private static volatile bool _isDraining;
+
     public static void Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
@@ -179,8 +180,7 @@ public partial class Program
         //  1) preStop touches /tmp/draining so readiness flips to 503 immediately (no new traffic).
         //  2) SIGTERM triggers ApplicationStopping; we keep returning 503 and let existing connections finish/reconnect.
         const string drainFilePath = "/tmp/draining";
-        volatile bool isDraining = false;
-        app.Lifetime.ApplicationStopping.Register(() => isDraining = true);
+        app.Lifetime.ApplicationStopping.Register(() => _isDraining = true);
 
         static bool IsReady(bool draining, string drainFile) => !(draining || File.Exists(drainFile));
 
@@ -188,7 +188,7 @@ public partial class Program
             .AllowAnonymous();
 
         app.MapGet("/health/ready", () =>
-                IsReady(isDraining, drainFilePath)
+                IsReady(_isDraining, drainFilePath)
                     ? Results.Ok(new { status = "ready" })
                     : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
             .AllowAnonymous();
