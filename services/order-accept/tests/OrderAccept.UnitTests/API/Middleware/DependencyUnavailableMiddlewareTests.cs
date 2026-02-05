@@ -1,6 +1,7 @@
 using System.Text.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 using Moq;
 using OrderAccept.Api.Middleware;
@@ -47,7 +48,12 @@ public sealed class DependencyUnavailableMiddlewareTests
 
         var context = new DefaultHttpContext();
         context.Response.Body = new MemoryStream();
-        await context.Response.StartAsync();
+        context.Features.Set<IHttpResponseFeature>(new StartedResponseFeature
+        {
+            Body = context.Response.Body,
+            Headers = new HeaderDictionary(),
+            StatusCode = StatusCodes.Status200OK
+        });
 
         var act = async () => await middleware.InvokeAsync(context);
 
@@ -76,5 +82,22 @@ public sealed class DependencyUnavailableMiddlewareTests
 
         nextCalled.Should().BeTrue();
         context.Response.StatusCode.Should().Be(StatusCodes.Status204NoContent);
+    }
+
+    private sealed class StartedResponseFeature : IHttpResponseFeature
+    {
+        public Stream Body { get; set; } = Stream.Null;
+        public bool HasStarted { get; set; } = true;
+        public IHeaderDictionary Headers { get; set; } = new HeaderDictionary();
+        public string? ReasonPhrase { get; set; }
+        public int StatusCode { get; set; }
+
+        public void OnStarting(Func<object, Task> callback, object state)
+        {
+        }
+
+        public void OnCompleted(Func<object, Task> callback, object state)
+        {
+        }
     }
 }

@@ -54,6 +54,7 @@ public sealed class AcceptOrderHandlerTests
         };
 
         var request = new CreateOrderRequest(
+            CustomerId: "customer-123",
             Items: new[] { new CreateOrderItem(ProductId: "product-1", Quantity: 2) });
 
         var command = new AcceptOrderCommand(
@@ -113,10 +114,9 @@ public sealed class AcceptOrderHandlerTests
             .Setup(p => p.PublishAsync(
                 It.Is<OrderAcceptedEvent>(e =>
                     e.CorrelationId == _correlationId &&
-                    e.OrderId == 1001 &&
-                    e.ExternalCustomerId == "customer-123" &&
-                    e.Items.Single().ProductId == "product-1" &&
-                    e.Items.Single().Quantity == 2),
+                    e.Order.CustomerId == "customer-123" &&
+                    e.Order.Items.Single().ProductId == "product-1" &&
+                    e.Order.Items.Single().Quantity == 2),
                 null,
                 It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
@@ -175,6 +175,7 @@ public sealed class AcceptOrderHandlerTests
         var logger = Mock.Of<ILogger<AcceptOrderHandler>>();
 
         var request = new CreateOrderRequest(
+            CustomerId: "customer-123",
             Items: new[]
             {
                 new CreateOrderItem(ProductId: "missing-1", Quantity: 1),
@@ -243,7 +244,9 @@ public sealed class AcceptOrderHandlerTests
             IsActive = true
         };
 
-        var request = new CreateOrderRequest(new[] { new CreateOrderItem("product-1", 1) });
+        var request = new CreateOrderRequest(
+            CustomerId: "customer-123",
+            Items: new[] { new CreateOrderItem("product-1", 1) });
         var command = new AcceptOrderCommand("customer-123", request);
 
         uow.SetupGet(x => x.ProductQueries).Returns(productQueries.Object);

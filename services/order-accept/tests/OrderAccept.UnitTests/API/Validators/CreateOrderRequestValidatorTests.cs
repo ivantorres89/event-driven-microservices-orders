@@ -10,7 +10,7 @@ public sealed class CreateOrderRequestValidatorTests
     public void Validate_WhenItemsIsNull_IsInvalid()
     {
         var validator = new CreateOrderRequestValidator();
-        var result = validator.Validate(new CreateOrderRequest(null!));
+        var result = validator.Validate(new CreateOrderRequest(CustomerId: "customer-1", Items: null));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Items");
@@ -20,7 +20,7 @@ public sealed class CreateOrderRequestValidatorTests
     public void Validate_WhenItemsIsEmpty_IsInvalid()
     {
         var validator = new CreateOrderRequestValidator();
-        var result = validator.Validate(new CreateOrderRequest(Array.Empty<CreateOrderItem>()));
+        var result = validator.Validate(new CreateOrderRequest(CustomerId: "customer-1", Items: []));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Items");
@@ -30,10 +30,10 @@ public sealed class CreateOrderRequestValidatorTests
     public void Validate_WhenItemsContainInvalidItem_IsInvalid()
     {
         var validator = new CreateOrderRequestValidator();
-        var result = validator.Validate(new CreateOrderRequest(new[]
-        {
+        var result = validator.Validate(new CreateOrderRequest(CustomerId: "customer-1", Items:
+        [
             new CreateOrderItem("", 0)
-        }));
+        ]));
 
         result.IsValid.Should().BeFalse();
         result.Errors.Should().Contain(e => e.PropertyName == "Items[0].ProductId");
@@ -44,7 +44,7 @@ public sealed class CreateOrderRequestValidatorTests
     public void Validate_WhenValid_IsValid()
     {
         var validator = new CreateOrderRequestValidator();
-        var result = validator.Validate(new CreateOrderRequest(new[]
+        var result = validator.Validate(new CreateOrderRequest(CustomerId: "customer-1", Items: new[]
         {
             new CreateOrderItem("p-1", 1)
         }));
