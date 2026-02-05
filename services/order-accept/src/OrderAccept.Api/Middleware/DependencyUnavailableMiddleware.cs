@@ -1,6 +1,5 @@
 using OrderAccept.Shared.Resilience;
 using System.Diagnostics;
-using System.Text.Json;
 
 namespace OrderAccept.Api.Middleware;
 
@@ -48,7 +47,7 @@ public sealed class DependencyUnavailableMiddleware
                 traceId
             };
 
-            await JsonSerializer.SerializeAsync(context.Response.Body, payload);
+            await context.Response.WriteAsJsonAsync(payload);
         }
     }
 }

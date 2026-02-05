@@ -23,6 +23,8 @@ The recommended workflow is intentionally **environment-agnostic**:
 
 > Ports/passwords are defined in `infra/local/.env` (create it from `.env.example`).
 
+> For SQL Server, make sure `SA_PASSWORD` is set (and matches what your apps/tests use to connect).
+
 ## Local HTTPS (order-notification)
 
 `order-notification` exposes **both** HTTP and HTTPS:
