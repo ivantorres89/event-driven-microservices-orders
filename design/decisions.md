@@ -109,6 +109,33 @@ Use Redis as a short-lived correlation and session registry.
 
 Redis is not used as a message broker or system of record.
 
+
+---
+
+## Real-time Notifications (SignalR) and Scale-Out
+
+### Decision
+Use **ASP.NET Core SignalR** for real-time order updates, and enable **scale-out** with a **Redis backplane** (`Microsoft.AspNetCore.SignalR.StackExchangeRedis`) using the project’s existing Redis instance. Backplane pub/sub traffic is isolated with a Redis **`ChannelPrefix`** (e.g., `contoso-signalr`).
+
+### Rationale
+- **Multi-pod fan-out:** when a worker calls `Clients.User(userId)`, the sending pod publishes the message to Redis pub/sub; *all* SignalR pods receive it and forward it to their **local WebSocket connections** for that `userId`. This ensures a user with multiple tabs/devices connected to different pods still receives every notification.
+- **Redis reuse without collisions:** the same Redis instance can store `order:*` workflow keys and also carry backplane pub/sub. Using a **`ChannelPrefix`** prevents backplane channels from colliding with other Redis pub/sub consumers and keeps the backplane logically isolated.
+- **No PII in messages:** the Hub targets users via `Context.UserIdentifier` derived from the JWT (`sub`), while the workflow uses Redis `order:map:{correlationId} -> userId` mapping. Service Bus events do not contain `userId`.
+
+---
+
+## Sticky Sessions (Ingress-pod Affinity)
+
+### Decision
+Do **not** rely on sticky sessions / ingress affinity for SignalR.
+
+### Rationale
+- **Portability and simplicity:** sticky sessions couple correctness to a specific ingress/controller configuration and increase operational complexity.
+- **Load distribution:** WebSockets are long-lived by nature; affinity can lead to uneven pod utilization when many clients stay pinned to the same endpoints.
+- **Deterministic connection establishment:** the client forces **WebSockets-only** with **`skipNegotiation: true`** so the SignalR connection is established in a single WebSocket hop. This avoids the classic cross-pod `/negotiate` vs WebSocket upgrade mismatch.
+- **Resilience during scale events:** when pods scale in/out, existing sockets may drop, but clients automatically reconnect to any healthy pod and rehydrate state (e.g., by re-querying current order status backed by Redis TTL state).
+
+
 ---
 
 ## Messaging Strategy
