@@ -49,12 +49,10 @@ This document explains, step by step and “low level”, what **each microservi
 
 ## Redis: keys and TTL (what we store)
 
-Recommended keys:
+Used keys:
 
 - `order:status:{correlationId}` = `ACCEPTED | PROCESSING | COMPLETED` (TTL)
-- `order:map:{correlationId}` = `{userId}` (TTL)  ✅ critical key for notifications
-- (optional) `order:id:{correlationId}` = `{orderId}` (TTL)
-- (optional) `order:last:{userId}` = `{correlationId}` (TTL)
+- `order:map:{correlationId}` = `{userId}` (TTL) critical key for notifications
 
 Typical TTL: **30–60 minutes**.  
 Also, **order-process refreshes the TTL** so the mapping doesn’t expire if processing takes long.
@@ -117,7 +115,6 @@ With TTL (e.g., 45 min):
 
 - `SET order:map:{correlationId} {userId} EX 2700`
 - `SET order:status:{correlationId} ACCEPTED EX 2700`
-- (optional) `SET order:id:{correlationId} {orderId} EX 2700`
 
 Real example:
 - `order:map:9e9b0b12-... = user-123`
@@ -157,12 +154,11 @@ HTTP 201:
 - `SET order:status:{correlationId} PROCESSING EX <ttl>`
 - **Refreshes the TTL** of the mapping (without changing it):
   - `EXPIRE order:map:{correlationId} <ttl>`
-  - (optional) `EXPIRE order:id:{correlationId} <ttl>`
 
 This prevents the issue: “it took more than 30 minutes and the mapping expired”.
 
-### 2.2) order-accept writes to SQL (SoR)
-- Inserts `Order` + `OrderItems` into Azure SQL.
+### 2.2) order-process writes to SQL (SoR)
+- Inserts `Order` + `OrderItems` into Azure SQL/SQL Server.
 - Gets `orderId` (PK) from the table.
 
 Example:

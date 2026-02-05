@@ -56,12 +56,69 @@ public sealed class ApiContractIntegrationTests : IClassFixture<OrderAcceptApiFi
     }
 
     [Fact]
+    public async Task GetProducts_WhenValid_Returns200PagedResult()
+    {
+        var externalProductId = $"it-prod-{Guid.NewGuid():N}";
+        await SeedActiveProductAsync(externalProductId, name: "IT Product", imageUrl: "https://img.example/it.png", price: 25.50m);
+
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-1"));
+
+        var response = await client.GetAsync("/api/products?offset=0&size=10");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var payload = await response.Content.ReadFromJsonAsync<PagedResultResponse<ProductDtoResponse>>(JsonOptions);
+        payload.Should().NotBeNull();
+        payload!.Items.Should().ContainSingle(p => p.ExternalProductId == externalProductId);
+    }
+
+    [Fact]
+    public async Task GetProductById_WhenMissing_Returns404ProblemDetails()
+    {
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-1"));
+
+        var response = await client.GetAsync("/api/products/missing-product-it");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("status").GetInt32().Should().Be(404);
+        doc.RootElement.TryGetProperty("traceId", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetProductById_WhenValid_Returns200ProductDto()
+    {
+        var externalProductId = $"it-prod-{Guid.NewGuid():N}";
+        await SeedActiveProductAsync(externalProductId, name: "IT Product", imageUrl: "https://img.example/it.png", price: 25.50m);
+
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-1"));
+
+        var response = await client.GetAsync($"/api/products/{externalProductId}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var dto = await response.Content.ReadFromJsonAsync<ProductDtoResponse>(JsonOptions);
+        dto.Should().NotBeNull();
+        dto!.ExternalProductId.Should().Be(externalProductId);
+        dto.Name.Should().Be("IT Product");
+        dto.ImageUrl.Should().Be("https://img.example/it.png");
+        dto.Price.Should().Be(25.50m);
+    }
+
+    [Fact]
     public async Task PostOrders_WithValidationErrors_Returns400ValidationProblem_WithCamelCaseErrorKeys()
     {
         var client = _fixture.Factory.CreateClient();
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-2"));
 
         var request = new CreateOrderRequestDto(
+            CustomerId: "customer-it-2",
             Items: new[] { new CreateOrderItemDto(ProductId: "", Quantity: 0) });
 
         var response = await client.PostAsJsonAsync("/api/orders", request, JsonOptions);
@@ -90,6 +147,7 @@ public sealed class ApiContractIntegrationTests : IClassFixture<OrderAcceptApiFi
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-3"));
 
         var request = new CreateOrderRequestDto(
+            CustomerId: "customer-it-3",
             Items: new[] { new CreateOrderItemDto(ProductId: "missing-product-it", Quantity: 1) });
 
         var response = await client.PostAsJsonAsync("/api/orders", request, JsonOptions);
@@ -113,6 +171,7 @@ public sealed class ApiContractIntegrationTests : IClassFixture<OrderAcceptApiFi
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-4"));
 
         var request = new CreateOrderRequestDto(
+            CustomerId: "customer-it-4",
             Items: new[] { new CreateOrderItemDto(ProductId: externalProductId, Quantity: 2) });
 
         var response = await client.PostAsJsonAsync("/api/orders", request, JsonOptions);
@@ -152,6 +211,7 @@ public sealed class ApiContractIntegrationTests : IClassFixture<OrderAcceptApiFi
         clientOwner.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: owner));
 
         var createRequest = new CreateOrderRequestDto(
+            CustomerId: owner,
             Items: new[] { new CreateOrderItemDto(ProductId: externalProductId, Quantity: 1) });
 
         var createResponse = await clientOwner.PostAsJsonAsync("/api/orders", createRequest, JsonOptions);
@@ -175,6 +235,155 @@ public sealed class ApiContractIntegrationTests : IClassFixture<OrderAcceptApiFi
         using var doc = JsonDocument.Parse(json);
         doc.RootElement.GetProperty("status").GetInt32().Should().Be(403);
         doc.RootElement.TryGetProperty("traceId", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetOrders_WithoutToken_Returns401ProblemDetails()
+    {
+        var client = _fixture.Factory.CreateClient();
+
+        var response = await client.GetAsync("/api/orders");
+
+        response.StatusCode.Should().Be(HttpStatusCode.Unauthorized);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("status").GetInt32().Should().Be(401);
+        doc.RootElement.TryGetProperty("traceId", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetOrders_WithInvalidPaging_Returns400ProblemDetails()
+    {
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-10"));
+
+        var response = await client.GetAsync("/api/orders?offset=-1&size=10");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("status").GetInt32().Should().Be(400);
+        doc.RootElement.GetProperty("title").GetString().Should().Be("Bad Request");
+        doc.RootElement.TryGetProperty("traceId", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetOrders_WhenValid_Returns200PagedResult()
+    {
+        var externalProductId = $"it-prod-{Guid.NewGuid():N}";
+        await SeedActiveProductAsync(externalProductId, name: "IT Product", imageUrl: "https://img.example/it.png", price: 25.50m);
+
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-11"));
+
+        var request = new CreateOrderRequestDto(
+            CustomerId: "customer-it-11",
+            Items: new[] { new CreateOrderItemDto(ProductId: externalProductId, Quantity: 2) });
+
+        var createResponse = await client.PostAsJsonAsync("/api/orders", request, JsonOptions);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var created = await createResponse.Content.ReadFromJsonAsync<OrderDtoResponse>(JsonOptions);
+        created.Should().NotBeNull();
+
+        var response = await client.GetAsync("/api/orders?offset=0&size=10");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var payload = await response.Content.ReadFromJsonAsync<PagedResultResponse<OrderDtoResponse>>(JsonOptions);
+        payload.Should().NotBeNull();
+        payload!.Items.Should().ContainSingle(o => o.Id == created!.Id);
+    }
+
+    [Fact]
+    public async Task GetOrderById_WhenInvalidId_Returns400ProblemDetails()
+    {
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-12"));
+
+        var response = await client.GetAsync("/api/orders/0");
+
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("status").GetInt32().Should().Be(400);
+        doc.RootElement.GetProperty("title").GetString().Should().Be("Bad Request");
+        doc.RootElement.TryGetProperty("traceId", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetOrderById_WhenMissing_Returns404ProblemDetails()
+    {
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-13"));
+
+        var response = await client.GetAsync("/api/orders/999999");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        response.Content.Headers.ContentType?.MediaType.Should().Be("application/problem+json");
+
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        doc.RootElement.GetProperty("status").GetInt32().Should().Be(404);
+        doc.RootElement.TryGetProperty("traceId", out _).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetOrderById_WhenValid_Returns200OrderDto()
+    {
+        var externalProductId = $"it-prod-{Guid.NewGuid():N}";
+        await SeedActiveProductAsync(externalProductId, name: "IT Product", imageUrl: "https://img.example/it.png", price: 25.50m);
+
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-14"));
+
+        var request = new CreateOrderRequestDto(
+            CustomerId: "customer-it-14",
+            Items: new[] { new CreateOrderItemDto(ProductId: externalProductId, Quantity: 1) });
+
+        var createResponse = await client.PostAsJsonAsync("/api/orders", request, JsonOptions);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var created = await createResponse.Content.ReadFromJsonAsync<OrderDtoResponse>(JsonOptions);
+        created.Should().NotBeNull();
+
+        var response = await client.GetAsync($"/api/orders/{created!.Id}");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var dto = await response.Content.ReadFromJsonAsync<OrderDtoResponse>(JsonOptions);
+        dto.Should().NotBeNull();
+        dto!.Id.Should().Be(created.Id);
+    }
+
+    [Fact]
+    public async Task DeleteOrders_WhenValid_Returns204NoContent()
+    {
+        var externalProductId = $"it-prod-{Guid.NewGuid():N}";
+        await SeedActiveProductAsync(externalProductId, name: "IT Product", imageUrl: "https://img.example/it.png", price: 25.50m);
+
+        var client = _fixture.Factory.CreateClient();
+        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-15"));
+
+        var request = new CreateOrderRequestDto(
+            CustomerId: "customer-it-15",
+            Items: new[] { new CreateOrderItemDto(ProductId: externalProductId, Quantity: 1) });
+
+        var createResponse = await client.PostAsJsonAsync("/api/orders", request, JsonOptions);
+        createResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+
+        var created = await createResponse.Content.ReadFromJsonAsync<OrderDtoResponse>(JsonOptions);
+        created.Should().NotBeNull();
+
+        var deleteResponse = await client.DeleteAsync($"/api/orders/{created!.Id}");
+
+        deleteResponse.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }
 
     [Fact]
@@ -234,11 +443,24 @@ public sealed class ApiContractIntegrationTests : IClassFixture<OrderAcceptApiFi
         await db.SaveChangesAsync();
     }
 
-    private sealed record CreateOrderRequestDto(IReadOnlyCollection<CreateOrderItemDto> Items);
+    private sealed record CreateOrderRequestDto(string CustomerId, IReadOnlyCollection<CreateOrderItemDto> Items);
     private sealed record CreateOrderItemDto(string ProductId, int Quantity);
 
     private sealed record OrderDtoResponse(long Id, string CorrelationId, DateTime CreatedAt, IReadOnlyCollection<OrderItemDtoResponse> Items);
     private sealed record OrderItemDtoResponse(string ProductId, string ProductName, string ImageUrl, decimal UnitPrice, int Quantity);
+
+    private sealed record ProductDtoResponse(
+        string ExternalProductId,
+        string Name,
+        string Category,
+        string Vendor,
+        string ImageUrl,
+        int Discount,
+        string BillingPeriod,
+        bool IsSubscription,
+        decimal Price);
+
+    private sealed record PagedResultResponse<T>(int Offset, int Size, int Total, IReadOnlyCollection<T> Items);
 
     private static string CreateJwt(string signingKey, string? sub)
     {
