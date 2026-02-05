@@ -15,19 +15,18 @@ import { CartService } from '../../core/services/cart.service';
   styleUrls: ['./products-page.component.css']
 })
 export class ProductsPageComponent implements OnInit {
-
-  /** all products loaded from API */
+  /** All products loaded from API (unfiltered). */
   private allProducts: Product[] = [];
 
-  /** products displayed after filtering */
+  /** Products displayed after filtering. */
   products: Product[] = [];
 
-  /** filters */
+  /** Filters. */
   search = '';
   category = '';
   categories: string[] = [];
 
-  /** qty per product */
+  /** Quantity per product. */
   qty: Record<string, number> = {};
 
   loading = true;
@@ -45,7 +44,16 @@ export class ProductsPageComponent implements OnInit {
     this.productsApi.getProducts().subscribe({
       next: (list) => {
         this.allProducts = list;
+
+        // Build category list (client-side filters)
         this.categories = [...new Set(list.map(p => p.category).filter(Boolean))];
+
+        // Default quantity should be 1 for every product
+        for (const p of list) {
+          const v = this.qty[p.id];
+          if (!Number.isFinite(v) || (v as number) < 1) this.qty[p.id] = 1;
+        }
+
         this.applyFilters();
         this.loading = false;
       },
@@ -57,7 +65,7 @@ export class ProductsPageComponent implements OnInit {
     });
   }
 
-  /** MUST be public – used by the template */
+  /** Public (used by template). */
   applyFilters(): void {
     const s = this.search.trim().toLowerCase();
 
@@ -67,26 +75,29 @@ export class ProductsPageComponent implements OnInit {
         p.name.toLowerCase().includes(s) ||
         (p.vendor ?? '').toLowerCase().includes(s);
 
-      const matchesCategory =
-        !this.category || p.category === this.category;
+      const matchesCategory = !this.category || p.category === this.category;
 
       return matchesSearch && matchesCategory;
     });
+
+    // Ensure visible products also default to qty=1 (covers edge cases)
+    for (const p of this.products) {
+      const v = this.qty[p.id];
+      if (!Number.isFinite(v) || (v as number) < 1) this.qty[p.id] = 1;
+    }
   }
 
   add(p: Product): void {
-    const q = Math.max(1, Number(this.qty[p.id] || 1));
+    const q = Math.max(1, Math.floor(Number(this.qty[p.id] ?? 1)));
     this.cart.add(p, q);
+
+    // Reset to default (UX)
     this.qty[p.id] = 1;
   }
 
   badgeText(p: Product): string | null {
-    if (p.discountPercent && p.discountPercent > 0) {
-      return `-${p.discountPercent}%`;
-    }
-    if (p.isSubscription) {
-      return 'SUB';
-    }
+    if (p.discountPercent && p.discountPercent > 0) return `-${p.discountPercent}%`;
+    if (p.isSubscription) return 'SUB';
     return null;
   }
 

@@ -21,8 +21,6 @@
       <span class="muted">User</span>
       <strong>{{userId}}</strong>
     </span>
-
-    <a class="pill link" routerLink="/login" title="Change user">Change user</a>
     <button class="pill btnlink" (click)="signOut()" title="Sign out">Sign out</button>
 
     <span *ngIf="active" class="pill active">

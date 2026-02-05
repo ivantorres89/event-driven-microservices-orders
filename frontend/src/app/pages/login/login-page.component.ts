@@ -38,9 +38,6 @@ export class LoginPageComponent {
       // Obtain a signed DEV JWT from order-notification (/dev/token)
       await this.auth.loginDev(cleaned);
 
-      // Recreate SignalR connection for the new identity
-      await this.signalr.disconnect();
-
       await this.router.navigateByUrl('/products');
     } catch (e: any) {
       console.error(e);

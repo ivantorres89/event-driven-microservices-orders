@@ -11,6 +11,7 @@ import { CartOverlayComponent } from './shared/cart/cart-overlay.component';
 import { SignalRService } from './core/services/signalr.service';
 import { CartService } from './core/services/cart.service';
 import { OrderProgressService } from './core/services/order-progress.service';
+import { AuthService } from './core/services/auth.service';
 import { CartLine } from './core/models';
 
 @Component({
@@ -39,7 +40,8 @@ export class AppComponent implements OnInit, OnDestroy {
   constructor(
     private signalr: SignalRService,
     private cart: CartService,
-    private progress: OrderProgressService
+    private progress: OrderProgressService,
+    private auth: AuthService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -49,6 +51,16 @@ export class AppComponent implements OnInit, OnDestroy {
     } catch {
       // It's ok in mock mode / offline; the app will still render.
     }
+
+    // Reconnect SignalR after login (logout disconnects it).
+    this.sub.add(this.auth.userId$.subscribe(async () => {
+      if (!this.auth.isLoggedIn()) return;
+      try {
+        await this.signalr.ensureConnected();
+      } catch {
+        // Non-blocking: UI can still render without SignalR.
+      }
+    }));
 
     // Track active status so we can avoid "stale completed order" interfering with a new cart.
     this.sub.add(this.progress.activeOrder$.subscribe(a => {
