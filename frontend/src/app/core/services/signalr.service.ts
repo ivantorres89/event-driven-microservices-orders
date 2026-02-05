@@ -84,7 +84,9 @@ export class SignalRService {
     this.connection = new HubConnectionBuilder()
       .withUrl(hubUrl, {
         accessTokenFactory: () => this.auth.getAccessToken(),
-        transport: forceLongPolling ? HttpTransportType.LongPolling : HttpTransportType.WebSockets,
+        ...(forceLongPolling
+          ? { transport: HttpTransportType.LongPolling }
+          : { transport: HttpTransportType.WebSockets, skipNegotiation: true }),
       })
       .withAutomaticReconnect()
       .configureLogging(LogLevel.Information)

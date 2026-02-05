@@ -15,22 +15,61 @@ spec:
       labels:
         app.kubernetes.io/name: order-notification
     spec:
+      terminationGracePeriodSeconds: 60
       containers:
         - name: order-notification
           image: ${IMAGE_ORDER_NOTIFICATION}
           imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
           env:
+            - name: ASPNETCORE_URLS
+              value: "http://0.0.0.0:8080"
             - name: DOTNET_ENVIRONMENT
               value: "Production"
+
+            # Redis (shared: order:* keys + SignalR backplane pub/sub)
             - name: ConnectionStrings__Redis
               valueFrom:
                 secretKeyRef:
                   name: contoso-orders-secrets
                   key: ConnectionStrings__Redis
+            - name: SignalR__ChannelPrefix
+              value: "contoso-signalr"
+
+            # Messaging (Azure Service Bus)
             - name: AzureServiceBus__ConnectionString
               valueFrom:
                 secretKeyRef:
                   name: contoso-orders-secrets
                   key: AzureServiceBus__ConnectionString
-            - name: AzureServiceBus__QueueName
+            - name: AzureServiceBus__InboundQueueName
               value: "order.processed"
+            - name: AzureServiceBus__OutboundQueueName
+              value: "order.processed"
+
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 2
+
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+
+          lifecycle:
+            preStop:
+              exec:
+                # Give the Service time to remove this pod from endpoints before SIGKILL.
+                # The app also flips readiness to 503 on SIGTERM (see /health/ready).
+                command: ["sh", "-c", "touch /tmp/draining; sleep 15"]

@@ -5,10 +5,25 @@ metadata:
   namespace: contoso-orders
   annotations:
     kubernetes.io/ingress.class: nginx
+
+    # WebSockets / long-lived connections (SignalR)
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
 spec:
   rules:
     - http:
         paths:
+          # SignalR Hub (WSS)
+          - path: /hubs/order-status
+            pathType: Prefix
+            backend:
+              service:
+                name: order-notification
+                port:
+                  number: 8080
+
+          # API + SPA backend
           - path: /
             pathType: Prefix
             backend:

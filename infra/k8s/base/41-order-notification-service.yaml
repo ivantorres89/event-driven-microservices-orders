@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-notification
+  namespace: contoso-orders
+  labels:
+    app.kubernetes.io/name: order-notification
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: order-notification
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

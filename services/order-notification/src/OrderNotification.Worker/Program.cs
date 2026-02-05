@@ -127,9 +127,14 @@ public partial class Program
         if (string.IsNullOrWhiteSpace(redisConn))
             throw new InvalidOperationException("ConnectionStrings:Redis is required");
 
+        var channelPrefix = builder.Configuration["SignalR:ChannelPrefix"] ?? "contoso-signalr";
+
         builder.Services
             .AddSignalR()
-            .AddStackExchangeRedis(redisConn);
+            .AddStackExchangeRedis(redisConn, o =>
+            {
+                o.Configuration.ChannelPrefix = channelPrefix;
+            });
 
         // --- OpenTelemetry (Tracing + Metrics) ---
         var otelEnabled = builder.Configuration.GetValue<bool?>("OpenTelemetry:Enabled") ?? true;
@@ -169,10 +174,29 @@ public partial class Program
         app.UseAuthentication();
         app.UseAuthorization();
 
-        
+        // --- Health endpoints (K8s probes + graceful drain) ---
+        // During scale-in, Kubernetes will start terminating the pod. We "drain" in two steps:
+        //  1) preStop touches /tmp/draining so readiness flips to 503 immediately (no new traffic).
+        //  2) SIGTERM triggers ApplicationStopping; we keep returning 503 and let existing connections finish/reconnect.
+        const string drainFilePath = "/tmp/draining";
+        volatile bool isDraining = false;
+        app.Lifetime.ApplicationStopping.Register(() => isDraining = true);
+
+        static bool IsReady(bool draining, string drainFile) => !(draining || File.Exists(drainFile));
+
+        app.MapGet("/health/live", () => Results.Ok(new { status = "ok" }))
+            .AllowAnonymous();
+
+        app.MapGet("/health/ready", () =>
+                IsReady(isDraining, drainFilePath)
+                    ? Results.Ok(new { status = "ready" })
+                    : Results.StatusCode(StatusCodes.Status503ServiceUnavailable))
+            .AllowAnonymous();
+
+        // Backwards-compatible endpoint (kept for convenience)
         app.MapGet("/healthz", () => Results.Ok(new { status = "ok" }))
             .AllowAnonymous();
-        
+
         // DEV: Issue a JWT for a given userId (used by SPA for REST + SignalR).
         // POST /dev/token  { "userId": "contoso-user-001" }
         if (app.Environment.IsDevelopment())
