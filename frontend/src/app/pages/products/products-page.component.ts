@@ -90,6 +90,7 @@ export class ProductsPageComponent implements OnInit {
   add(p: Product): void {
     const q = Math.max(1, Math.floor(Number(this.qty[p.id] ?? 1)));
     this.cart.add(p, q);
+    this.cart.openOverlay();
 
     // Reset to default (UX)
     this.qty[p.id] = 1;

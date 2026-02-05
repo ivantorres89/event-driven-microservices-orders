@@ -57,6 +57,7 @@ export class ProductDetailPageComponent implements OnInit {
     if (!this.product) return;
     const q = Math.max(1, Number(this.qty || 1));
     this.cart.add(this.product, q);
+    this.cart.openOverlay();
     this.added = true;
   }
 

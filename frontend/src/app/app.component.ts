@@ -11,7 +11,6 @@ import { CartOverlayComponent } from './shared/cart/cart-overlay.component';
 import { SignalRService } from './core/services/signalr.service';
 import { CartService } from './core/services/cart.service';
 import { OrderProgressService } from './core/services/order-progress.service';
-import { AuthService } from './core/services/auth.service';
 import { CartLine } from './core/models';
 
 @Component({
@@ -35,13 +34,14 @@ export class AppComponent implements OnInit, OnDestroy {
 
   private lastQty = 0;
   private activeStatus: string | null = null;
+  private initialized = false;
+
   private sub = new Subscription();
 
   constructor(
     private signalr: SignalRService,
     private cart: CartService,
-    private progress: OrderProgressService,
-    private auth: AuthService
+    private progress: OrderProgressService
   ) {}
 
   async ngOnInit(): Promise<void> {
@@ -52,27 +52,27 @@ export class AppComponent implements OnInit, OnDestroy {
       // It's ok in mock mode / offline; the app will still render.
     }
 
-    // Reconnect SignalR after login (logout disconnects it).
-    this.sub.add(this.auth.userId$.subscribe(async () => {
-      if (!this.auth.isLoggedIn()) return;
-      try {
-        await this.signalr.ensureConnected();
-      } catch {
-        // Non-blocking: UI can still render without SignalR.
-      }
-    }));
+    // Keep local open flag in sync (header button toggles the overlay)
+    this.sub.add(this.cart.overlayOpen$.subscribe(open => this.cartOpen = open));
 
     // Track active status so we can avoid "stale completed order" interfering with a new cart.
     this.sub.add(this.progress.activeOrder$.subscribe(a => {
       this.activeStatus = a?.status ?? null;
     }));
 
-    // Wire cart overlay + auto-open when items are added.
+    // Wire cart lines + totals, and auto-open when items are added (only in the tab that did the action).
     this.sub.add(this.cart.lines$.subscribe(lines => {
       this.cartLines = lines;
       this.cartTotal = lines.reduce((sum, l) => sum + l.product.price * l.quantity, 0);
 
       const qty = lines.reduce((sum, l) => sum + l.quantity, 0);
+
+      // First emission: don't auto-open (covers initial load from localStorage).
+      if (!this.initialized) {
+        this.initialized = true;
+        this.lastQty = qty;
+        return;
+      }
 
       // If user starts shopping again after a completed workflow, drop the stale "Active Completed" state.
       if (qty > 0 && this.activeStatus === 'Completed') {
@@ -80,14 +80,14 @@ export class AppComponent implements OnInit, OnDestroy {
         this.activeStatus = null;
       }
 
-      // Auto-open overlay only when quantity increases (Add button / +qty).
-      if (qty > this.lastQty && qty > 0) {
-        this.cartOpen = true;
+      // Auto-open overlay only when quantity increases AND the change originated in this tab.
+      if (qty > this.lastQty && qty > 0 && this.cart.lastChangeIsLocal()) {
+        this.cart.openOverlay();
       }
 
       // Auto-close if empty.
       if (qty === 0) {
-        this.cartOpen = false;
+        this.cart.closeOverlay();
       }
 
       this.lastQty = qty;
@@ -99,7 +99,7 @@ export class AppComponent implements OnInit, OnDestroy {
   }
 
   closeCart(): void {
-    this.cartOpen = false;
+    this.cart.closeOverlay();
   }
 
   onUpdateQty(e: { productId: string; quantity: number }): void {

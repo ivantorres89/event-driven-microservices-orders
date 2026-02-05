@@ -39,3 +39,27 @@
 
 .logo img{ width: 36px; height: 36px; display:block; }
 .logo{ background: transparent; }
+
+/* Cart button (header) */
+.cartbtn{
+  cursor: pointer;
+  font: inherit;
+  color: var(--primary);
+  border-color: rgba(0,120,212,.25);
+  background: transparent;
+}
+.cartbtn:hover{ background: rgba(0,120,212,.08); }
+.cartbadge{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 6px;
+  margin-left: 6px;
+  border-radius: 999px;
+  background: rgba(0,120,212,.12);
+  border: 1px solid rgba(0,120,212,.25);
+  font-size: 12px;
+  font-weight: 700;
+}

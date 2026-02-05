@@ -5,6 +5,7 @@ import { Subscription } from 'rxjs';
 import { SignalRService } from '../../core/services/signalr.service';
 import { AuthService } from '../../core/services/auth.service';
 import { OrderProgressService } from '../../core/services/order-progress.service';
+import { CartService } from '../../core/services/cart.service';
 
 @Component({
   selector: 'app-header',
@@ -18,12 +19,16 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
   userId = '';
   active: { status: string; orderId: number | null; correlationId: string } | null = null;
 
+  cartCount = 0;
+  cartTotal = 0;
+
   private sub = new Subscription();
 
   constructor(
     private signalr: SignalRService,
     private auth: AuthService,
     private progress: OrderProgressService,
+    public cart: CartService,
     private router: Router
   ) {}
 
@@ -32,6 +37,11 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     this.sub.add(this.signalr.state$.subscribe(s => this.state = s));
     this.sub.add(this.progress.activeOrder$.subscribe(a => {
       this.active = a ? { status: a.status, orderId: a.orderId, correlationId: a.correlationId } : null;
+    }));
+
+    this.sub.add(this.cart.lines$.subscribe(lines => {
+      this.cartCount = lines.reduce((n, l) => n + l.quantity, 0);
+      this.cartTotal = lines.reduce((sum, l) => sum + l.product.price * l.quantity, 0);
     }));
   }
 
@@ -43,6 +53,10 @@ export class AppHeaderComponent implements OnInit, OnDestroy {
     if (this.state === 'connected') return 'dot success';
     if (this.state === 'connecting') return 'dot';
     return 'dot danger';
+  }
+
+  toggleCart(): void {
+    this.cart.toggleOverlay();
   }
 
   async signOut(): Promise<void> {

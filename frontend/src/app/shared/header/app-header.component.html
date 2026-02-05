@@ -21,6 +21,12 @@
       <span class="muted">User</span>
       <strong>{{userId}}</strong>
     </span>
+    <button class="pill cartbtn" (click)="toggleCart()" title="Cart">
+      🛒 Cart
+      <span *ngIf="cartCount" class="cartbadge">{{cartCount}}</span>
+      <span class="muted" *ngIf="cartCount">· €{{cartTotal | number:'1.2-2'}}</span>
+    </button>
+
     <button class="pill btnlink" (click)="signOut()" title="Sign out">Sign out</button>
 
     <span *ngIf="active" class="pill active">
