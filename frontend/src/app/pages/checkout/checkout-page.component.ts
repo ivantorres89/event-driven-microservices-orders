@@ -9,7 +9,7 @@ import { SignalRService } from '../../core/services/signalr.service';
 import { SpinnerOverlayComponent } from '../../shared/spinner/spinner-overlay.component';
 import { ToastService } from '../../core/services/toast.service';
 import { RuntimeConfigService } from '../../core/services/runtime-config.service';
-import { CartLine } from '../../core/models';
+import { ActiveOrder, CartLine } from '../../core/models';
 
 @Component({
   selector: 'app-checkout-page',
@@ -20,9 +20,10 @@ import { CartLine } from '../../core/models';
 })
 export class CheckoutPageComponent implements OnInit, OnDestroy {
   cartLines: CartLine[] = [];
-  active = this.progress.snapshot;
+  active: ActiveOrder | null = this.progress.snapshot;
 
   private sub = new Subscription();
+  private navigatedToDetail = false;
 
   constructor(
     private cart: CartService,
@@ -35,7 +36,9 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
   ) {}
 
   async ngOnInit(): Promise<void> {
+    // Keep cart in sync (so checkout reflects real selection)
     this.cartLines = this.cart.snapshot;
+    this.sub.add(this.cart.lines$.subscribe(lines => this.cartLines = lines));
 
     try {
       await this.signalr.ensureConnected();
@@ -47,22 +50,40 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
     this.sub.add(this.progress.activeOrder$.subscribe(a => {
       this.active = a;
 
+      // When workflow completes, ensure it's visible in Orders list (local) at least once.
       if (a?.status === 'Completed' && a.orderId) {
         const already = this.orders.snapshot.some(o => o.id === a.orderId);
         if (!already) {
           this.orders.addFromActive(a);
           this.toasts.push('success', 'Order saved', `Order #${a.orderId} added to Orders.`);
         }
+
+        // UX: jump straight to the read-only order detail when the workflow completes.
+        if (!this.navigatedToDetail) {
+          this.navigatedToDetail = true;
+          this.router.navigateByUrl(`/orders/${a.orderId}`);
+        }
       }
     }));
+  }
+
+  isCompletedStatus(status: string | null | undefined): boolean {
+    return status === 'Completed';
   }
 
   ngOnDestroy(): void {
     this.sub.unsubscribe();
   }
 
+  /** Active order only blocks checkout while it's in-flight (Accepted/Processing). */
+  private get activeInFlight(): ActiveOrder | null {
+    return this.active && this.active.status !== 'Completed' ? this.active : null;
+  }
+
   get lines(): Array<{ name: string; qty: number; unitPrice: number; total: number }> {
-    const fromActive = this.active?.lines?.length ? this.active.lines : null;
+    // BUGFIX: do NOT render lines from a completed workflow; show current cart selection instead.
+    const fromActive = this.activeInFlight?.lines?.length ? this.activeInFlight.lines : null;
+
     const src = fromActive
       ? fromActive.map(l => ({ name: l.productName, qty: l.quantity, unitPrice: l.unitPrice }))
       : this.cartLines.map(l => ({ name: l.product.name, qty: l.quantity, unitPrice: l.product.price }));
@@ -75,25 +96,29 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
   }
 
   get canSubmit(): boolean {
-    return this.cartLines.length > 0 && !this.active;
+    // BUGFIX: allow submitting a new order even if there's a stale completed "active" order.
+    return this.cartLines.length > 0 && !this.activeInFlight;
   }
 
   get spinnerVisible(): boolean {
-    return !!this.active && this.active.status !== 'Completed';
+    // Spinner only while in-flight
+    return !!this.activeInFlight;
   }
 
   get spinnerTitle(): string {
-    if (!this.active) return 'Submitting…';
-    return this.active.status === 'Accepted'
+    const a = this.activeInFlight;
+    if (!a) return 'Submitting…';
+    return a.status === 'Accepted'
       ? 'Order accepted…'
-      : this.active.status === 'Processing'
+      : a.status === 'Processing'
       ? 'Processing order…'
       : 'Finishing…';
   }
 
   get spinnerSubtitle(): string | undefined {
-    if (!this.active) return undefined;
-    const short = this.active.correlationId.slice(0, 8);
+    const a = this.activeInFlight;
+    if (!a) return undefined;
+    const short = a.correlationId.slice(0, 8);
     return `CorrelationId: ${short}…`;
   }
 
@@ -139,6 +164,14 @@ export class CheckoutPageComponent implements OnInit, OnDestroy {
       const orderId = Math.floor(100000 + Math.random() * 900000);
       this.progress.setStatus('Completed', orderId);
     }, 2800);
+  }
+
+
+
+  viewOrderDetail(): void {
+    if (this.active?.orderId) {
+      this.router.navigateByUrl(`/orders/${this.active.orderId}`);
+    }
   }
 
   done(): void {

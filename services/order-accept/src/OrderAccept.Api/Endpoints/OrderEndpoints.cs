@@ -28,6 +28,17 @@ namespace OrderAccept.Api.Endpoints
                 .Produces(StatusCodes.Status403Forbidden)
                 .Produces(StatusCodes.Status500InternalServerError);
 
+            // GET /api/orders/{id}
+            group.MapGet("/{id:long}", GetOrderById)
+                .WithName("GetOrderById")
+                .WithSummary("Get order detail by id (authenticated user)")
+                .Produces(StatusCodes.Status200OK)
+                .Produces(StatusCodes.Status400BadRequest)
+                .Produces(StatusCodes.Status401Unauthorized)
+                .Produces(StatusCodes.Status403Forbidden)
+                .Produces(StatusCodes.Status404NotFound)
+                .Produces(StatusCodes.Status500InternalServerError);
+
             // POST /api/orders
             group.MapPost("", AcceptOrder)
                 .WithName("CreateOrder")
@@ -74,6 +85,28 @@ namespace OrderAccept.Api.Endpoints
 
             var result = await handler.HandleAsync(subject, effectiveOffset, effectiveSize, cancellationToken);
             return Results.Ok(result);
+        }
+
+        private static async Task<IResult> GetOrderById(
+            long id,
+            IGetOrderByIdHandler handler,
+            HttpContext http,
+            CancellationToken cancellationToken)
+        {
+            if (id < 1)
+                return ProblemResults.BadRequest(http, "Invalid order id.");
+
+            var subject = GetSubject(http.User);
+            if (string.IsNullOrWhiteSpace(subject))
+            {
+                // Token is valid (endpoint requires auth), but identity claim is missing.
+                return ProblemResults.Forbidden(http, "Missing required identity claim (sub/nameidentifier).");
+            }
+
+            var order = await handler.HandleAsync(subject, id, cancellationToken);
+            return order is null
+                ? ProblemResults.NotFound(http, "Order not found.")
+                : Results.Ok(order);
         }
 
         private static async Task<IResult> AcceptOrder(

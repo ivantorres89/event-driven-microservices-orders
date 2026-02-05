@@ -1,6 +1,7 @@
 namespace OrderAccept.Application.Contracts.Requests;
 
 public sealed record CreateOrderRequest(
+    string CustomerId,
     IReadOnlyCollection<CreateOrderItem> Items
 );
 

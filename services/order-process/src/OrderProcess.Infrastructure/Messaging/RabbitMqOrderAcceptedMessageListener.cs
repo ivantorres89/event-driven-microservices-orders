@@ -11,6 +11,7 @@ using OpenTelemetry.Context.Propagation;
 using OrderProcess.Application.Abstractions.Messaging;
 using OrderProcess.Application.Commands;
 using OrderProcess.Application.Contracts.Events;
+using OrderProcess.Application.Contracts.Requests;
 using OrderProcess.Application.Handlers;
 using OrderProcess.Shared.Correlation;
 using OrderProcess.Shared.Observability;
@@ -50,7 +51,7 @@ public sealed class RabbitMqOrderAcceptedMessageListener : BackgroundService, IO
     {
         _logger.LogInformation("Starting RabbitMQ listener for queue {Queue}", _options.InboundQueueName);
 
-        await using var connection = await _connectionFactory.CreateConnectionAsync(stoppingToken);
+        await using var connection = await ConnectWithRetryAsync(stoppingToken);
         await using var channel = await connection.CreateChannelAsync(cancellationToken: stoppingToken);
 
         await channel.QueueDeclareAsync(
@@ -79,6 +80,28 @@ public sealed class RabbitMqOrderAcceptedMessageListener : BackgroundService, IO
         await Task.Delay(Timeout.InfiniteTimeSpan, stoppingToken);
     }
 
+    private async Task<IConnection> ConnectWithRetryAsync(CancellationToken ct)
+    {
+        var delay = TimeSpan.FromSeconds(2);
+
+        while (true)
+        {
+            try
+            {
+                return await _connectionFactory.CreateConnectionAsync(ct);
+            }
+            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "RabbitMQ connection failed. Retrying in {DelaySeconds}s.", delay.TotalSeconds);
+                await Task.Delay(delay, ct);
+            }
+        }
+    }
+
     internal async Task HandleMessageAsync(IChannel channel, BasicDeliverEventArgs ea, CancellationToken ct)
     {
         IDictionary<string, object> headers = ea.BasicProperties.Headers ?? new Dictionary<string, object>();
@@ -101,7 +124,7 @@ public sealed class RabbitMqOrderAcceptedMessageListener : BackgroundService, IO
         try
         {
             var json = Encoding.UTF8.GetString(ea.Body.ToArray());
-            message = JsonSerializer.Deserialize<OrderAcceptedEvent>(json, _json);
+            message = DeserializeAcceptedEvent(json);
 
             if (message is null)
                 throw new JsonException("Deserialized OrderAcceptedEvent is null.");
@@ -184,6 +207,41 @@ public sealed class RabbitMqOrderAcceptedMessageListener : BackgroundService, IO
             CorrelationContext.Current = null;
         }
     }
+
+    private OrderAcceptedEvent? DeserializeAcceptedEvent(string json)
+    {
+        try
+        {
+            var evt = JsonSerializer.Deserialize<OrderAcceptedEvent>(json, _json);
+            if (evt?.Order is not null)
+                return evt;
+        }
+        catch (JsonException)
+        {
+            // Fall through to v2 shape
+        }
+
+        try
+        {
+            var v2 = JsonSerializer.Deserialize<OrderAcceptedEventV2>(json, _json);
+            if (v2 is null)
+                return null;
+
+            var items = v2.Items ?? Array.Empty<CreateOrderItem>();
+            var order = new CreateOrderRequest(v2.ExternalCustomerId, items);
+            return new OrderAcceptedEvent(v2.CorrelationId, order);
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
+    }
+
+    private sealed record OrderAcceptedEventV2(
+        CorrelationId CorrelationId,
+        long OrderId,
+        string ExternalCustomerId,
+        IReadOnlyCollection<CreateOrderItem> Items);
 
     private static IEnumerable<string> ExtractHeaderValues(IDictionary<string, object> headers, string key)
     {

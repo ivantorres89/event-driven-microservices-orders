@@ -173,6 +173,34 @@ paths:
           $ref: '#/components/responses/Problem500'
 
   /api/orders/{id}:
+    get:
+      tags: [Orders]
+      summary: Get order detail by id (authenticated user)
+      description: Returns a single order detail. Backend validates ownership by authenticated user.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        '200':
+          description: Order detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/Problem400'
+        '401':
+          $ref: '#/components/responses/Problem401'
+        '403':
+          $ref: '#/components/responses/Problem403'
+        '404':
+          $ref: '#/components/responses/Problem404'
+        '500':
+          $ref: '#/components/responses/Problem500'
     delete:
       tags: [Orders]
       summary: Soft-delete an order
@@ -195,8 +223,6 @@ paths:
           $ref: '#/components/responses/Problem403'
         '404':
           $ref: '#/components/responses/Problem404'
-        '401':
-          $ref: '#/components/responses/Problem401'
         '500':
           $ref: '#/components/responses/Problem500'
 

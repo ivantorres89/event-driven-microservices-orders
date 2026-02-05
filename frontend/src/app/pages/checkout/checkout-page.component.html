@@ -11,7 +11,8 @@
     </div>
   </div>
 
-  <div class="card info" *ngIf="active">
+  <!-- In-flight workflow (Accepted/Processing) -->
+  <div class="card info" *ngIf="active && active.status !== 'Completed'">
     <div class="row">
       <div>
         <div class="k muted">CorrelationId</div>
@@ -20,17 +21,32 @@
       <div>
         <div class="k muted">Status</div>
         <div class="v">
-          <span class="badge" [class.ok]="active.status==='Completed'">{{active.status}}</span>
+          <span class="badge" [class.ok]="isCompletedStatus(active.status)">{{active.status}}</span>
           <span class="muted" *ngIf="active.orderId"> · Order #{{active.orderId}}</span>
         </div>
       </div>
-      <div class="right">
-        <button class="ms-btn primary" *ngIf="active.status==='Completed'" (click)="done()">Go to Orders</button>
-      </div>
+      <div class="right"></div>
     </div>
 
     <div class="muted small">
       If you close the tab and come back, the app restores the active order from localStorage and re-registers it to SignalR.
+    </div>
+  </div>
+
+  <!-- Completed workflow (kept for info only) -->
+  <div class="card info" *ngIf="active && active.status === 'Completed'">
+    <div class="row">
+      <div>
+        <div class="k muted">Previous order</div>
+        <div class="v">
+          <span class="badge ok">Completed</span>
+          <span class="muted" *ngIf="active.orderId"> · Order #{{active.orderId}}</span>
+        </div>
+      </div>
+
+      <div class="right">
+        <button class="ms-btn primary" (click)="viewOrderDetail()">View order</button>
+      </div>
     </div>
   </div>
 

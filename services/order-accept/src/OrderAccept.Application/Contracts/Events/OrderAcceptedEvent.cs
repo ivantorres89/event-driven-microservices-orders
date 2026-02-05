@@ -5,7 +5,5 @@ namespace OrderAccept.Application.Contracts.Events;
 
 public sealed record OrderAcceptedEvent(
     CorrelationId CorrelationId,
-    long OrderId,
-    string ExternalCustomerId,
-    IReadOnlyCollection<CreateOrderItem> Items
+    CreateOrderRequest Order
 );

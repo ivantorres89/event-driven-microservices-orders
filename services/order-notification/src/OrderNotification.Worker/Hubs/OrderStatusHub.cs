@@ -56,12 +56,22 @@ public sealed class OrderStatusHub : Hub<IOrderStatusClient>
             throw new HubException("Missing user identifier");
 
         if (!Guid.TryParse(correlationId, out var guid) || guid == Guid.Empty)
+        {
+            _logger.LogWarning("RegisterOrder rejected due to invalid correlationId. CorrelationId={CorrelationId} UserId={UserId}", correlationId, Context.UserIdentifier);
             throw new HubException("Invalid correlationId");
+        }
 
         var corr = new CorrelationId(guid);
-        await _correlationRegistry.RegisterAsync(corr, Context.UserIdentifier, cancellationToken);
-
-        _logger.LogInformation("Registered order correlation. CorrelationId={CorrelationId} UserId={UserId}", corr, Context.UserIdentifier);
+        try
+        {
+            await _correlationRegistry.RegisterAsync(corr, Context.UserIdentifier, cancellationToken);
+            _logger.LogInformation("Registered order correlation. CorrelationId={CorrelationId} UserId={UserId}", corr, Context.UserIdentifier);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "RegisterOrder failed. CorrelationId={CorrelationId} UserId={UserId}", corr, Context.UserIdentifier);
+            throw new HubException("RegisterOrder failed on server");
+        }
     }
 
     /// <summary>
@@ -70,9 +80,20 @@ public sealed class OrderStatusHub : Hub<IOrderStatusClient>
     public async Task<OrderWorkflowState?> GetCurrentStatus(string correlationId, CancellationToken cancellationToken = default)
     {
         if (!Guid.TryParse(correlationId, out var guid) || guid == Guid.Empty)
+        {
+            _logger.LogWarning("GetCurrentStatus rejected due to invalid correlationId. CorrelationId={CorrelationId} UserId={UserId}", correlationId, Context.UserIdentifier);
             throw new HubException("Invalid correlationId");
+        }
 
         var corr = new CorrelationId(guid);
-        return await _workflowQuery.GetAsync(corr, cancellationToken);
+        try
+        {
+            return await _workflowQuery.GetAsync(corr, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "GetCurrentStatus failed. CorrelationId={CorrelationId} UserId={UserId}", corr, Context.UserIdentifier);
+            throw new HubException("GetCurrentStatus failed on server");
+        }
     }
 }

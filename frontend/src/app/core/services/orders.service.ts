@@ -14,7 +14,7 @@ type PageEnvelope<T> = {
   items: T[];
 };
 
-type OrderItemDto = {
+export type OrderItemDto = {
   productId: string;
   productName: string;
   imageUrl?: string;
@@ -22,7 +22,7 @@ type OrderItemDto = {
   quantity: number;
 };
 
-type OrderDto = {
+export type OrderDto = {
   id: number;
   correlationId: string;
   createdAt: string;
@@ -75,7 +75,33 @@ export class OrdersService {
     );
   }
 
-  /** POST /api/orders (checkout) */
+    /** GET /api/orders/{id} (read-only order detail) */
+  getOrderById(orderId: number): Observable<OrderDto> {
+    if (this.cfg.useMocks) {
+      // In mock mode, try to build a detail from local storage snapshot.
+      const hit = this._orders$.value.find(o => o.id === orderId);
+      if (!hit) return of({ id: orderId, correlationId: 'mock', createdAt: new Date().toISOString(), items: [] } as OrderDto).pipe(delay(150));
+
+      return of({
+        id: hit.id,
+        correlationId: hit.correlationId,
+        createdAt: hit.createdAtUtc,
+        items: hit.lines.map(l => ({
+          productId: l.productId,
+          productName: l.productName,
+          unitPrice: l.unitPrice,
+          quantity: l.quantity,
+          imageUrl: undefined
+        }))
+      } as OrderDto).pipe(delay(150));
+    }
+
+    const base = this.cfg.orderAcceptApiBaseUrl.replace(/\/$/, '');
+    const url = `${base}/api/orders/${orderId}`;
+    return this.http.get<OrderDto>(url);
+  }
+
+/** POST /api/orders (checkout) */
   createOrder(lines: CartLine[]): Observable<Order> {
     if (this.cfg.useMocks) {
       const correlationId = uuidv4();

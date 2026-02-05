@@ -10,6 +10,7 @@ public static class DependencyInjection
     public static IServiceCollection AddOrderAcceptApplication(this IServiceCollection services)
     {
         services.AddTransient<IAcceptOrderHandler, AcceptOrderHandler>();
+        services.AddTransient<IGetOrderByIdHandler, GetOrderByIdHandler>();
         services.AddTransient<IGetProductsHandler, GetProductsHandler>();
         services.AddTransient<IGetProductByIdHandler, GetProductByIdHandler>();
         services.AddTransient<IGetOrdersHandler, GetOrdersHandler>();

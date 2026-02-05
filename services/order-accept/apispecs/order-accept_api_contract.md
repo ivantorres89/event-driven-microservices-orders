@@ -169,7 +169,23 @@ Returns a paged list of orders for the authenticated user (`Customer.ExternalCus
 
 ---
 
-### 4) POST /api/orders
+### 4) GET /api/orders/{id}
+Returns a single order detail for the authenticated user.
+
+**200 OK**
+Returns `OrderDto`.
+
+**Possible status codes**
+- `200 OK`
+- `400 Bad Request` (invalid id)
+- `401 Unauthorized` (missing/invalid/expired token)
+- `403 Forbidden` (token valid but missing required identity claim, if enforced)
+- `404 Not Found` (order does not exist or does not belong to user)
+- `500 Internal Server Error`
+
+---
+
+### 5) POST /api/orders
 Creates a new order for the authenticated user, and returns order id + correlationId.
 
 **Request body**
@@ -217,7 +233,7 @@ Notes:
 
 ---
 
-### 5) DELETE /api/orders/{id}
+### 6) DELETE /api/orders/{id}
 Soft-deletes an order. Backend must ensure the order belongs to the authenticated user.
 
 **204 No Content** (recommended)

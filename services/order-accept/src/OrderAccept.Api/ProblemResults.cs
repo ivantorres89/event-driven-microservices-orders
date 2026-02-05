@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using System.Text.Json;
+using Microsoft.AspNetCore.Http.Json;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace OrderAccept.Api;
 
@@ -46,7 +49,7 @@ internal static class ProblemResults
             traceId
         };
 
-        return Results.Json(payload, statusCode: status, contentType: ContentType);
+        return Results.Json(payload, ResolveSerializerOptions(http), statusCode: status, contentType: ContentType);
     }
 
     public static IResult Problem(HttpContext http, int status, string title, string detail)
@@ -64,7 +67,7 @@ internal static class ProblemResults
             traceId
         };
 
-        return Results.Json(payload, statusCode: status, contentType: ContentType);
+        return Results.Json(payload, ResolveSerializerOptions(http), statusCode: status, contentType: ContentType);
     }
 
     private static string BuildInstance(HttpContext http)
@@ -72,4 +75,10 @@ internal static class ProblemResults
 
     private static string BuildTraceId(HttpContext http)
         => Activity.Current?.Id ?? http.TraceIdentifier;
+
+    private static JsonSerializerOptions ResolveSerializerOptions(HttpContext http)
+    {
+        var options = http.RequestServices?.GetService<Microsoft.Extensions.Options.IOptions<JsonOptions>>();
+        return options?.Value?.SerializerOptions ?? new JsonSerializerOptions(JsonSerializerDefaults.Web);
+    }
 }

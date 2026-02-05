@@ -36,3 +36,6 @@
   border-color: rgba(164,38,44,.25);
 }
 .btnlink:hover{ background: rgba(164,38,44,.06); }
+
+.logo img{ width: 36px; height: 36px; display:block; }
+.logo{ background: transparent; }

@@ -8,4 +8,13 @@
   </main>
 </div>
 
+<app-cart-overlay
+  [open]="cartOpen"
+  [lines]="cartLines"
+  [total]="cartTotal"
+  (close)="closeCart()"
+  (updateQty)="onUpdateQty($event)"
+  (removeLine)="onRemoveLine($event)">
+</app-cart-overlay>
+
 <app-toast-stack></app-toast-stack>

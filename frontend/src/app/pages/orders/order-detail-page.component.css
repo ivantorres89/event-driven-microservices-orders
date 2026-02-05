@@ -1,0 +1,95 @@
+.wrap{
+  padding: 18px;
+  display:flex;
+  flex-direction:column;
+  gap: 14px;
+}
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.h1{ margin: 6px 0 0 0; font-size: 22px; }
+.back{
+  text-decoration:none;
+  color: inherit;
+  font-weight: 700;
+}
+.actions{ display:flex; gap: 10px; align-items:center; }
+
+.card{
+  background:#fff;
+  border: 1px solid rgba(0,0,0,.08);
+  border-radius: 16px;
+  padding: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,.05);
+}
+
+.lines{
+  display:flex;
+  flex-direction:column;
+  gap: 10px;
+}
+
+.line{
+  display:grid;
+  grid-template-columns: 56px 1fr auto auto;
+  gap: 12px;
+  align-items:center;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: #fff;
+}
+
+.imgbox{
+  width:56px; height:56px;
+  border-radius: 14px;
+  background: #f6f7f9;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.img{
+  width:56px; height:56px;
+  object-fit: contain;
+}
+.placeholder{
+  font-weight: 900;
+  color: rgba(0,0,0,.55);
+  font-size: 12px;
+}
+
+.name{ font-weight: 900; }
+.qty{ white-space: nowrap; }
+.sum{ font-weight: 900; white-space: nowrap; }
+
+.total{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  border-top: 1px solid rgba(0,0,0,.08);
+  padding-top: 12px;
+  margin-top: 12px;
+}
+.grand{
+  font-weight: 900;
+  font-size: 22px;
+}
+
+.small{ font-size: 12px; }
+.mono{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size: 12px; }
+
+.notice{
+  padding: 12px 14px;
+  border-radius: 12px;
+  border: 1px solid rgba(0,0,0,.12);
+  background: rgba(0,0,0,.02);
+}
+.notice.error{
+  border-color: rgba(180,0,0,.25);
+  background: rgba(180,0,0,.06);
+}

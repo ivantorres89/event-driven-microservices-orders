@@ -3,6 +3,7 @@ using OrderAccept.Application.Abstractions;
 using OrderAccept.Application.Abstractions.Persistence;
 using OrderAccept.Application.Commands;
 using OrderAccept.Application.Contracts.Events;
+using OrderAccept.Application.Contracts.Requests;
 using OrderAccept.Application.Contracts.Responses;
 using OrderAccept.Domain.Entities;
 using OrderAccept.Shared.Workflow;
@@ -125,12 +126,11 @@ public sealed class AcceptOrderHandler : IAcceptOrderHandler
 
             try
             {
-                var @event = new OrderAcceptedEvent(
-                    correlationId,
-                    order.Id,
-                    command.ExternalCustomerId,
-                    command.Order.Items);
+                var evtOrder = new CreateOrderRequest(
+                    CustomerId: command.ExternalCustomerId,
+                    Items: command.Order.Items);
 
+                var @event = new OrderAcceptedEvent(correlationId, evtOrder);
                 await _publisher.PublishAsync(@event, null, cancellationToken);
             }
             catch (Exception ex)

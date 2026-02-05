@@ -60,18 +60,17 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
                 _logger.LogWarning("Workflow state missing in Redis for CorrelationId={CorrelationId}. Proceeding without updating transient completion.", command.Event.CorrelationId);
             _logger.LogInformation("Updated workflow state in Redis: COMPLETED (OrderId={OrderId})", orderId);
 
-            // 4) Publish integration event (idempotent)
-            //    If the order already existed for this CorrelationId, we avoid publishing again to prevent duplicate downstream notifications.
-            if (persisted.IsNew)
+            // 4) Publish integration event
+            //    Even if the order already existed (idempotent persistence), we still publish so the
+            //    notification service can push updates to the client.
+            if (!persisted.IsNew)
             {
-                var @event = new OrderProcessedEvent(command.Event.CorrelationId, orderId);
-                await _publisher.PublishAsync(@event, routingKey: null, cancellationToken);
-                _logger.LogInformation("Published OrderProcessed integration event");
+                _logger.LogInformation("Order already existed for CorrelationId={CorrelationId}. Publishing OrderProcessed for notification.", command.Event.CorrelationId);
             }
-            else
-            {
-                _logger.LogInformation("Order already existed for CorrelationId={CorrelationId}. Skipping OrderProcessed publish.", command.Event.CorrelationId);
-            }
+
+            var @event = new OrderProcessedEvent(command.Event.CorrelationId, orderId);
+            await _publisher.PublishAsync(@event, routingKey: null, cancellationToken);
+            _logger.LogInformation("Published OrderProcessed integration event");
         }
     }
 

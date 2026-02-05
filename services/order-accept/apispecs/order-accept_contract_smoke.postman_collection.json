@@ -343,6 +343,37 @@
           ]
         },
         {
+          "name": "Get order detail (by id)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{orderAcceptBaseUrl}}/api/orders/{{orderId}}",
+            "description": "GET /api/orders/{id} (requiere JWT). Devuelve OrderDto del usuario autenticado."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"200 OK\", function () {",
+                  "  pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "",
+                  "const o = pm.response.json();",
+                  "pm.test(\"OrderDto shape\", function () {",
+                  "  pm.expect(o).to.have.property(\"id\");",
+                  "  pm.expect(o).to.have.property(\"correlationId\");",
+                  "  pm.expect(o).to.have.property(\"createdAt\");",
+                  "  pm.expect(o).to.have.property(\"items\");",
+                  "  pm.expect(o.items).to.be.an(\"array\");",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "Delete order (soft-delete)",
           "request": {
             "method": "DELETE",

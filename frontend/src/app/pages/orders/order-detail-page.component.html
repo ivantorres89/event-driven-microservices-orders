@@ -1,0 +1,48 @@
+<div class="wrap">
+  <div class="top">
+    <div>
+      <a class="back" routerLink="/orders">← Back to orders</a>
+      <h1 class="h1" *ngIf="order as o">Order #{{o.id}}</h1>
+      <h1 class="h1" *ngIf="!order">Order detail</h1>
+      <div class="muted" *ngIf="order as o">
+        Created: {{format(o.createdAt)}} · CorrelationId: <span class="mono">{{o.correlationId}}</span>
+      </div>
+    </div>
+
+    <div class="actions">
+      <a class="ms-btn" routerLink="/products">Continue shopping</a>
+      <a class="ms-btn primary" routerLink="/checkout">Checkout</a>
+    </div>
+  </div>
+
+  <div class="notice" *ngIf="loading">Loading order…</div>
+  <div class="notice error" *ngIf="!loading && error">{{error}}</div>
+
+  <div class="card" *ngIf="!loading && order as o">
+    <div class="lines" *ngIf="items.length; else empty">
+      <div class="line" *ngFor="let it of items">
+        <div class="imgbox">
+          <img *ngIf="it.imageUrl" class="img" [src]="it.imageUrl" [alt]="it.productName" loading="lazy">
+          <div *ngIf="!it.imageUrl" class="img placeholder">CERT</div>
+        </div>
+
+        <div class="info">
+          <div class="name">{{it.productName}}</div>
+          <div class="muted small">ProductId: <span class="mono">{{it.productId}}</span></div>
+        </div>
+
+        <div class="qty muted">{{it.quantity}} × €{{it.unitPrice | number:'1.2-2'}}</div>
+        <div class="sum">€{{it.lineTotal | number:'1.2-2'}}</div>
+      </div>
+    </div>
+
+    <ng-template #empty>
+      <div class="muted">No items in this order.</div>
+    </ng-template>
+
+    <div class="total">
+      <div class="muted">Grand total</div>
+      <div class="grand">€{{grandTotal | number:'1.2-2'}}</div>
+    </div>
+  </div>
+</div>

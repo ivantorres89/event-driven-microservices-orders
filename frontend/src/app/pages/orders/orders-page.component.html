@@ -20,6 +20,7 @@
 
         <div class="right">
           <div class="price">€{{total(o) | number:'1.2-2'}}</div>
+          <a class="ms-btn" [routerLink]="['/orders', o.id]">View</a>
           <button class="ms-btn danger"
                   (click)="delete(o.id)"
                   [disabled]="deletingId === o.id">
