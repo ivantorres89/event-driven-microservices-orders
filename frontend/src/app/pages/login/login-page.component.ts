@@ -38,6 +38,12 @@ export class LoginPageComponent {
       // Obtain a signed DEV JWT from order-notification (/dev/token)
       await this.auth.loginDev(cleaned);
 
+      try {
+        await this.signalr.ensureConnected();
+      } catch (e) {
+        console.warn('SignalR connection failed after login:', e);
+      }
+
       await this.router.navigateByUrl('/products');
     } catch (e: any) {
       console.error(e);
