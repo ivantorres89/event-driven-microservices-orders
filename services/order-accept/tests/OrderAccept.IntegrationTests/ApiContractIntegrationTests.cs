@@ -14,7 +14,8 @@ using OrderAccept.Persistence.Impl;
 
 namespace OrderAccept.IntegrationTests;
 
-public sealed class ApiContractIntegrationTests : IClassFixture<OrderAcceptApiFixture>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class ApiContractIntegrationTests
 {
     private readonly OrderAcceptApiFixture _fixture;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

@@ -11,7 +11,7 @@ namespace OrderProcess.IntegrationTests.Fixtures;
 /// - Assumes local infra is started externally (docker compose up -d)
 /// - Fails fast if RabbitMQ/Redis ports are not open.
 /// </summary>
-public sealed class OrderProcessLocalInfraFixture : IAsyncLifetime
+public sealed class OrderAcceptLocalInfraFixture : IAsyncLifetime
 {
     private static readonly SemaphoreSlim InitLock = new(1, 1);
     private static bool _initialized;
@@ -19,7 +19,7 @@ public sealed class OrderProcessLocalInfraFixture : IAsyncLifetime
     private readonly IConfiguration _configuration;
     private bool _infraResolved;
 
-    public OrderProcessLocalInfraFixture()
+    public OrderAcceptLocalInfraFixture()
     {
         _configuration = BuildConfiguration();
     }
@@ -84,13 +84,9 @@ public sealed class OrderProcessLocalInfraFixture : IAsyncLifetime
 
             EnsureSafeDatabaseName();
 
-            var skipReset = IsTrue(Environment.GetEnvironmentVariable("CONTOSO_IT_SKIP_DB_RESET"));
-            if (!skipReset)
-            {
-                var sqlBase = BuildMasterConnectionString(SqlConnectionString);
-                await RecreateDatabaseAsync(sqlBase, SqlDatabaseName);
-                ContosoMigrator.MigrateUp(SqlConnectionString);
-            }
+            var sqlBase = BuildMasterConnectionString(SqlConnectionString);
+            await RecreateDatabaseAsync(sqlBase, SqlDatabaseName);
+            ContosoMigrator.MigrateUp(SqlConnectionString);
 
             _initialized = true;
         }
@@ -103,10 +99,6 @@ public sealed class OrderProcessLocalInfraFixture : IAsyncLifetime
     public async Task DisposeAsync()
     {
         if (!_infraResolved)
-            return;
-
-        var skipReset = IsTrue(Environment.GetEnvironmentVariable("CONTOSO_IT_SKIP_DB_RESET"));
-        if (skipReset)
             return;
 
         var dropDb = _configuration.GetValue("IntegrationTests:Sql:DropDatabaseOnDispose", defaultValue: true);
@@ -266,13 +258,4 @@ END";
             return IsPortOpen("localhost", 5672);
         }
     }
-
-    private static bool IsTrue(string? value)
-    {
-        if (string.IsNullOrWhiteSpace(value)) return false;
-        return value.Equals("true", StringComparison.OrdinalIgnoreCase)
-               || value.Equals("1", StringComparison.OrdinalIgnoreCase)
-               || value.Equals("yes", StringComparison.OrdinalIgnoreCase);
-    }
-
 }

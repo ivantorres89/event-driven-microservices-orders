@@ -15,7 +15,8 @@ using StackExchange.Redis;
 
 namespace OrderAccept.IntegrationTests;
 
-public sealed class OrderAcceptanceIntegrationTests : IClassFixture<OrderAcceptApiFixture>
+[Collection(IntegrationTestCollection.Name)]
+public sealed class OrderAcceptanceIntegrationTests
 {
     private readonly OrderAcceptApiFixture _fixture;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);

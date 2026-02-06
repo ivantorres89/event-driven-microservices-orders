@@ -97,29 +97,35 @@ jobs:
 
           docker compose ps
 
-      - name: Backend integration tests (.NET) - with coverage
+      - name: Backend integration tests - run DB migrations once
         shell: bash
         env:
           CONTOSO_IT_SQL_BASE: Server=localhost,1433;User ID=sa;Password=Your_strong_Password123!;TrustServerCertificate=True;Encrypt=False
         run: |
           set -euo pipefail
+          CONN="${CONTOSO_IT_SQL_BASE};Database=contoso-integrationtests"
+          echo "▶ Running DB migrations once against: ${CONN}"
+          dotnet run --project services/order-process/src/OrderProcess.DatabaseMigrations/OrderProcess.DatabaseMigrations.csproj -- --connection "${CONN}"
+      - name: Backend integration tests (.NET) - with coverage
+        shell: bash
+        env:
+          CONTOSO_IT_SQL_BASE: Server=localhost,1433;User ID=sa;Password=Your_strong_Password123!;TrustServerCertificate=True;Encrypt=False
+          CONTOSO_IT_SKIP_DB_RESET: "true"
+        run: |
+          set -euo pipefail
           mkdir -p TestResults
 
-          echo "Discovering integration test projects..."
-          mapfile -t it_projects < <(find services -type f -path "*/tests/*" -name "*.IntegrationTests.csproj" | sort)
+          echo ""
+          echo "▶ dotnet test (integration): services/order-accept"
+          dotnet test services/order-accept/tests/OrderAccept.IntegrationTests/OrderAccept.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-accept-OrderAccept.IntegrationTests.trx"
 
-          if [ "${#it_projects[@]}" -eq 0 ]; then
-            echo "No integration test projects found."
-          else
-            for csproj in "${it_projects[@]}"; do
-              svc="$(echo "$csproj" | cut -d'/' -f2)"
-              proj="$(basename "$csproj" .csproj)"
-              trx="${svc}-${proj}.trx"
-              echo ""
-              echo "▶ dotnet test (integration): $csproj"
-              dotnet test "$csproj" -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=${trx}"
-            done
-          fi
+          echo ""
+          echo "▶ dotnet test (integration): services/order-process"
+          dotnet test services/order-process/tests/OrderProcess.IntegrationTests/OrderProcess.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-process-OrderProcess.IntegrationTests.trx"
+
+          echo ""
+          echo "▶ dotnet test (integration): services/order-notification"
+          dotnet test services/order-notification/tests/OrderNotification.IntegrationTests/OrderNotification.IntegrationTests.csproj -c Release --collect:"XPlat Code Coverage" --results-directory ./TestResults --logger "trx;LogFileName=order-notification-OrderNotification.IntegrationTests.trx"
       - name: Backend integration tests - stop local infra
         if: always()
         run: |

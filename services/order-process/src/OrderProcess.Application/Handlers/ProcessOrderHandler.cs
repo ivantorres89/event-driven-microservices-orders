@@ -65,7 +65,8 @@ public sealed class ProcessOrderHandler : IProcessOrderHandler
             //    notification service can push updates to the client.
             if (!persisted.IsNew)
             {
-                _logger.LogInformation("Order already existed for CorrelationId={CorrelationId}. Publishing OrderProcessed for notification.", command.Event.CorrelationId);
+                _logger.LogInformation("Order already existed for CorrelationId={CorrelationId}. Skipping publish for idempotency.", command.Event.CorrelationId);
+                return;
             }
 
             var @event = new OrderProcessedEvent(command.Event.CorrelationId, orderId);

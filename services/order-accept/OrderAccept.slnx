@@ -17,4 +17,7 @@
       <BuildDependency Project="src/OrderAccept.Shared/OrderAccept.Shared.csproj" />
     </Project>
   </Folder>
+  <Folder Name="/external/">
+    <Project Path="../order-process/src/OrderProcess.DatabaseMigrations/OrderProcess.DatabaseMigrations.csproj" Id="a1a7d2f5-8b0d-4d2b-bbb1-2f482a5f60a1" />
+  </Folder>
 </Solution>
