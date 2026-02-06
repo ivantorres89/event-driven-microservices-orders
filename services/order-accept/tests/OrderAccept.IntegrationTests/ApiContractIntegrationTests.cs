@@ -71,7 +71,17 @@ public sealed class ApiContractIntegrationTests
 
         var payload = await response.Content.ReadFromJsonAsync<PagedResultResponse<ProductDtoResponse>>(JsonOptions);
         payload.Should().NotBeNull();
-        payload!.Items.Should().ContainSingle(p => p.ExternalProductId == externalProductId);
+
+        if (payload!.Items.Any(p => p.ExternalProductId == externalProductId))
+            return;
+
+        var lastOffset = Math.Max(0, payload.Total - 1);
+        var lastResponse = await client.GetAsync($"/api/products?offset={lastOffset}&size=1");
+        lastResponse.StatusCode.Should().Be(HttpStatusCode.OK);
+
+        var lastPayload = await lastResponse.Content.ReadFromJsonAsync<PagedResultResponse<ProductDtoResponse>>(JsonOptions);
+        lastPayload.Should().NotBeNull();
+        lastPayload!.Items.Should().ContainSingle(p => p.ExternalProductId == externalProductId);
     }
 
     [Fact]

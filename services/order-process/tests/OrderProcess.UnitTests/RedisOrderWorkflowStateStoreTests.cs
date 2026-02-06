@@ -41,6 +41,13 @@ public sealed class RedisOrderWorkflowStateStoreTests
             })
             .ReturnsAsync(true);
 
+        db.Setup(d => d.KeyExpireAsync(
+                It.IsAny<RedisKey>(),
+                It.IsAny<TimeSpan?>(),
+                It.IsAny<ExpireWhen>(),
+                It.IsAny<CommandFlags>()))
+            .ReturnsAsync(true);
+
         redis.Setup(r => r.GetDatabase(It.IsAny<int>(), It.IsAny<object?>()))
             .Returns(db.Object);
 

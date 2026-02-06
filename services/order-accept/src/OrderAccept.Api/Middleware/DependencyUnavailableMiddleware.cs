@@ -47,7 +47,11 @@ public sealed class DependencyUnavailableMiddleware
                 traceId
             };
 
-            await context.Response.WriteAsJsonAsync(payload);
+            await context.Response.WriteAsJsonAsync(
+                payload,
+                options: null,
+                contentType: "application/problem+json",
+                cancellationToken: default);
         }
     }
 }
