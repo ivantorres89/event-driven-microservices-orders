@@ -43,6 +43,7 @@ public sealed class ContosoDbContext : DbContext
                 case EntityState.Added:
                     entry.Entity.CreatedAt = utcNow;
                     entry.Entity.UpdatedAt = utcNow;
+                    entry.Entity.IsSoftDeleted = false;
                     break;
 
                 case EntityState.Modified:

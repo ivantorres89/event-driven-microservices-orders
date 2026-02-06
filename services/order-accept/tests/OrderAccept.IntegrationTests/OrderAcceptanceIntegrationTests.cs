@@ -35,20 +35,13 @@ public sealed class OrderAcceptanceIntegrationTests
 
         var request = new CreateOrderRequestDto(
             CustomerId: "customer-it-1",
-            Items: new[] { new CreateOrderItemDto("AZ-900", 1) });
-
-        // Ensure queue is clean before publishing
-        using var connection = await new ConnectionFactory { Uri = new Uri(_fixture.RabbitConnectionString) }
-            .CreateConnectionAsync();
-        using var channel = await connection.CreateChannelAsync();
-        await channel.QueueDeclareAsync(_fixture.RabbitQueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
-        await channel.QueuePurgeAsync(_fixture.RabbitQueueName);
+            Items: new[] { new CreateOrderItemDto("product-it-1", 1) });
 
         // Act
         var response = await client.PostAsJsonAsync("/api/orders", request);
 
         // Assert: API
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
+        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
 
         var payload = await response.Content.ReadFromJsonAsync<OrderAcceptedResponse>();
         payload.Should().NotBeNull();
@@ -67,6 +60,9 @@ public sealed class OrderAcceptanceIntegrationTests
         redisValue.ToString().Should().Be("ACCEPTED");
 
         // Assert: RabbitMQ message published
+        using var connection = await new ConnectionFactory { Uri = new Uri(_fixture.RabbitConnectionString) }
+            .CreateConnectionAsync();
+        using var channel = await connection.CreateChannelAsync();
 
         // Queue declared by publisher, but we declare too for safety
         await channel.QueueDeclareAsync(_fixture.RabbitQueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);

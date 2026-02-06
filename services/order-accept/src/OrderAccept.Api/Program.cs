@@ -202,20 +202,6 @@ app.UseHttpsRedirection();
 
 app.UseCors("SpaCors");
 
-app.UseStatusCodePages(async statusCodeContext =>
-{
-    var http = statusCodeContext.HttpContext;
-
-    if (http.Response.StatusCode == StatusCodes.Status401Unauthorized)
-    {
-        await ProblemResults.Unauthorized(http).ExecuteAsync(http);
-    }
-    else if (http.Response.StatusCode == StatusCodes.Status403Forbidden)
-    {
-        await ProblemResults.Forbidden(http).ExecuteAsync(http);
-    }
-});
-
 app.UseAuthentication();
 app.UseAuthorization();
 

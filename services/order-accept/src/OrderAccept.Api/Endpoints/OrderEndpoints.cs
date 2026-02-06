@@ -4,7 +4,6 @@ using OrderAccept.Application.Commands;
 using OrderAccept.Application.Contracts.Requests;
 using OrderAccept.Application.Handlers;
 using System.Security.Claims;
-using System.Text.Json;
 
 namespace OrderAccept.Api.Endpoints
 {
@@ -177,31 +176,7 @@ namespace OrderAccept.Api.Endpoints
 
         private static Dictionary<string, string[]> ToValidationDictionary(FluentValidation.Results.ValidationResult result)
             => result.Errors
-                .GroupBy(e => ToCamelCasePath(e.PropertyName))
+                .GroupBy(e => e.PropertyName)
                 .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray());
-
-        private static string ToCamelCasePath(string propertyName)
-        {
-            if (string.IsNullOrWhiteSpace(propertyName))
-                return propertyName;
-
-            var segments = propertyName.Split('.');
-            for (var i = 0; i < segments.Length; i++)
-            {
-                var segment = segments[i];
-                var bracketIndex = segment.IndexOf('[');
-                var namePart = bracketIndex < 0 ? segment : segment[..bracketIndex];
-                var indexPart = bracketIndex < 0 ? string.Empty : segment[bracketIndex..];
-
-                if (!string.IsNullOrWhiteSpace(namePart))
-                {
-                    namePart = JsonNamingPolicy.CamelCase.ConvertName(namePart);
-                }
-
-                segments[i] = namePart + indexPart;
-            }
-
-            return string.Join('.', segments);
-        }
     }
 }
