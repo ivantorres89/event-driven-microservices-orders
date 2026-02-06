@@ -28,6 +28,11 @@ public abstract class BaseEfCommandRepository<TEntity> : ICommandRepository<TEnt
     {
         try
         {
+            if (entity is null)
+            {
+                throw new ArgumentNullException(nameof(entity));
+            }
+
             Set.Add(entity);
             Logger.LogInformation("Queued INSERT for {Entity}", typeof(TEntity).Name);
         }

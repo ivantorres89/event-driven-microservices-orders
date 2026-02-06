@@ -50,7 +50,7 @@ public sealed class OrderStatusHub : Hub<IOrderStatusClient>
     /// Registers the current authenticated user as the owner of the provided correlationId.
     /// Stores a CorrelationId -> UserId mapping in Redis with the workflow TTL.
     /// </summary>
-    public async Task RegisterOrder(string correlationId, CancellationToken cancellationToken = default)
+    public async Task RegisterOrder(string correlationId)
     {
         if (string.IsNullOrWhiteSpace(Context.UserIdentifier))
             throw new HubException("Missing user identifier");
@@ -64,7 +64,7 @@ public sealed class OrderStatusHub : Hub<IOrderStatusClient>
         var corr = new CorrelationId(guid);
         try
         {
-            await _correlationRegistry.RegisterAsync(corr, Context.UserIdentifier, cancellationToken);
+            await _correlationRegistry.RegisterAsync(corr, Context.UserIdentifier, Context.ConnectionAborted);
             _logger.LogInformation("Registered order correlation. CorrelationId={CorrelationId} UserId={UserId}", corr, Context.UserIdentifier);
         }
         catch (Exception ex)
@@ -77,7 +77,7 @@ public sealed class OrderStatusHub : Hub<IOrderStatusClient>
     /// <summary>
     /// Returns the current transient workflow status for the given correlation id, if present in Redis.
     /// </summary>
-    public async Task<OrderWorkflowState?> GetCurrentStatus(string correlationId, CancellationToken cancellationToken = default)
+    public async Task<OrderWorkflowState?> GetCurrentStatus(string correlationId)
     {
         if (!Guid.TryParse(correlationId, out var guid) || guid == Guid.Empty)
         {
@@ -88,7 +88,7 @@ public sealed class OrderStatusHub : Hub<IOrderStatusClient>
         var corr = new CorrelationId(guid);
         try
         {
-            return await _workflowQuery.GetAsync(corr, cancellationToken);
+            return await _workflowQuery.GetAsync(corr, Context.ConnectionAborted);
         }
         catch (Exception ex)
         {

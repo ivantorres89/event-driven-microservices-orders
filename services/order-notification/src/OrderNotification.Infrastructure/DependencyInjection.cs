@@ -5,9 +5,9 @@ using OrderNotification.Application.Abstractions;
 using OrderNotification.Application.Abstractions.Messaging;
 using OrderNotification.Infrastructure.Correlation;
 using OrderNotification.Infrastructure.Messaging;
+using OrderNotification.Infrastructure.Services;
 using OrderNotification.Infrastructure.Workflow;
 using StackExchange.Redis;
-using CorrelationIdProvider = OrderNotification.Infrastructure.Services.CorrelationIdProvider;
 
 namespace OrderNotification.Infrastructure;
 
