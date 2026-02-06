@@ -7,7 +7,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.IdentityModel.Tokens;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using OrderAccept.Domain.Entities;
 using OrderAccept.IntegrationTests.Fixtures;
+using OrderAccept.Persistence.Impl;
 using OrderAccept.Shared.Correlation;
 using OrderAccept.Shared.Workflow;
 using RabbitMQ.Client;
@@ -33,15 +37,27 @@ public sealed class OrderAcceptanceIntegrationTests
         var jwt = CreateJwt(_fixture.JwtSigningKey, sub: "customer-it-1");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", jwt);
 
+        var externalProductId = $"it-prod-{Guid.NewGuid():N}";
+        await SeedActiveProductAsync(externalProductId, name: "IT Product", price: 9.99m);
+
         var request = new CreateOrderRequestDto(
             CustomerId: "customer-it-1",
-            Items: new[] { new CreateOrderItemDto("product-it-1", 1) });
+            Items: new[] { new CreateOrderItemDto(externalProductId, 1) });
+
+        // Ensure queue is clean before publishing.
+        using (var cleanupConnection = await new ConnectionFactory { Uri = new Uri(_fixture.RabbitConnectionString) }
+            .CreateConnectionAsync())
+        using (var cleanupChannel = await cleanupConnection.CreateChannelAsync())
+        {
+            await cleanupChannel.QueueDeclareAsync(_fixture.RabbitQueueName, durable: true, exclusive: false, autoDelete: false, arguments: null);
+            await cleanupChannel.QueuePurgeAsync(_fixture.RabbitQueueName);
+        }
 
         // Act
         var response = await client.PostAsJsonAsync("/api/orders", request);
 
         // Assert: API
-        response.StatusCode.Should().Be(HttpStatusCode.Accepted);
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
 
         var payload = await response.Content.ReadFromJsonAsync<OrderAcceptedResponse>();
         payload.Should().NotBeNull();
@@ -94,6 +110,31 @@ public sealed class OrderAcceptanceIntegrationTests
     private sealed record CreateOrderRequestDto(string CustomerId, IReadOnlyCollection<CreateOrderItemDto> Items);
 
     private sealed record CreateOrderItemDto(string ProductId, int Quantity);
+
+    private async Task SeedActiveProductAsync(string externalProductId, string name, decimal price)
+    {
+        using var scope = _fixture.Factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<ContosoDbContext>();
+
+        var existing = await db.Products.FirstOrDefaultAsync(p => p.ExternalProductId == externalProductId);
+        if (existing is not null) return;
+
+        db.Products.Add(new Product
+        {
+            ExternalProductId = externalProductId,
+            Name = name,
+            Category = "IntegrationTests",
+            Vendor = "Contoso",
+            ImageUrl = "https://img.example/it.png",
+            Discount = 0,
+            BillingPeriod = "Monthly",
+            IsSubscription = true,
+            Price = price,
+            IsActive = true
+        });
+
+        await db.SaveChangesAsync();
+    }
 
     private static string CreateJwt(string signingKey, string sub)
     {

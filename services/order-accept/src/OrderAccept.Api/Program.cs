@@ -77,6 +77,27 @@ public partial class Program
                         ClockSkew = TimeSpan.FromMinutes(2)
                     };
                 }
+
+                options.Events = new JwtBearerEvents
+                {
+                    OnChallenge = async context =>
+                    {
+                        if (context.Response.HasStarted)
+                            return;
+
+                        context.HandleResponse();
+                        await ProblemResults.Unauthorized(context.HttpContext)
+                            .ExecuteAsync(context.HttpContext);
+                    },
+                    OnForbidden = async context =>
+                    {
+                        if (context.Response.HasStarted)
+                            return;
+
+                        await ProblemResults.Forbidden(context.HttpContext)
+                            .ExecuteAsync(context.HttpContext);
+                    }
+                };
             });
 
         builder.Services.AddAuthorization();

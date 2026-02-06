@@ -170,6 +170,8 @@ public sealed class OrderAcceptApiFixture : IAsyncLifetime
                     ["RabbitMQ:ConnectionString"] = _fixture.RabbitConnectionString,
                     ["RabbitMQ:OutboundQueueName"] = _fixture.RabbitQueueName,
                     ["Jwt:SigningKey"] = _fixture.JwtSigningKey,
+                    ["Jwt:Authority"] = string.Empty,
+                    ["Jwt:Audience"] = string.Empty,
                     ["OpenTelemetry:Enabled"] = "false"
                 };
 

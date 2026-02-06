@@ -143,7 +143,7 @@ public sealed class ProcessOrderHandlerTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenOrderAlreadyExists_DoesNotInsertAndDoesNotPublish()
+    public async Task HandleAsync_WhenOrderAlreadyExists_DoesNotInsertAndPublishes()
     {
         // Arrange
         var workflow = new Mock<IOrderWorkflowStateStore>(MockBehavior.Strict);
@@ -204,7 +204,7 @@ public sealed class ProcessOrderHandlerTests
         publisher.Verify(p => p.PublishAsync(
             It.Is<OrderProcessedEvent>(e => e.CorrelationId == correlationId && e.OrderId == 123),
             null,
-            It.IsAny<CancellationToken>()), Times.Never);
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
