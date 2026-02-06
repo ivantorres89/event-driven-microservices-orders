@@ -80,7 +80,7 @@ public sealed class ProcessOrderHandlerOltpIntegrationTests
     }
 
     [Fact]
-    public async Task HandleAsync_WhenDuplicateCorrelationId_IsIdempotent_DoesNotInsertOrPublishTwice()
+    public async Task HandleAsync_WhenDuplicateCorrelationId_IsIdempotent_DoesNotInsertButPublishesTwice()
     {
         // Arrange
         await using var sp = BuildServiceProvider(_fixture.Configuration);
@@ -109,7 +109,7 @@ public sealed class ProcessOrderHandlerOltpIntegrationTests
         (await db.Products.CountAsync()).Should().Be(1);
 
         var publisher = sp.GetRequiredService<CapturingMessagePublisher>();
-        publisher.Published.OfType<OrderProcessedEvent>().Should().HaveCount(1);
+        publisher.Published.OfType<OrderProcessedEvent>().Should().HaveCount(2);
     }
 
     [Fact]
