@@ -25,6 +25,36 @@ The project is intended as a **technical portfolio**, demonstrating:
 
 The implementation is inspired by **real-world cloud-native architectures**, focusing on **system behavior, responsibilities, and interactions** rather than production hardening.
 
+## Local development (Docker Compose + HTTPS)
+
+
+**Recommended (least environment‑dependent):**
+
+1) Export the dev HTTPS certificate for Docker *(once per machine)*  
+- macOS/Linux: `./infra/local/ensure-devcert.sh`  
+- Windows (PowerShell): `./infra/local/ensure-devcert.ps1`
+
+2) Trust the dev certificate *(once per machine)*  
+```bash
+dotnet dev-certs https --trust
+```
+
+3) Start / stop the full stack  
+```bash
+docker compose up -d --build
+# ...
+docker compose down
+```
+
+Useful URLs:
+- SPA: `http://localhost:4200`
+- order-notification HTTPS: `https://localhost:5007` (SignalR hub: `/hubs/order-status` via WSS)
+- RabbitMQ UI: `http://localhost:15672`
+- Jaeger UI: `http://localhost:16686`
+
+For details & troubleshooting: `infra/local/README.md`.
+
+
 ---
 
 ## Frontend demo
@@ -77,35 +107,6 @@ The implementation is inspired by **real-world cloud-native architectures**, foc
 </table>
 
 ---
-
-## Local development (Docker Compose + HTTPS)
-
-
-**Recommended (least environment‑dependent):**
-
-1) Export the dev HTTPS certificate for Docker *(once per machine)*  
-- macOS/Linux: `./infra/local/ensure-devcert.sh`  
-- Windows (PowerShell): `./infra/local/ensure-devcert.ps1`
-
-2) Trust the dev certificate *(once per machine)*  
-```bash
-dotnet dev-certs https --trust
-```
-
-3) Start / stop the full stack  
-```bash
-docker compose up -d --build
-# ...
-docker compose down
-```
-
-Useful URLs:
-- SPA: `http://localhost:4200`
-- order-notification HTTPS: `https://localhost:5007` (SignalR hub: `/hubs/order-status` via WSS)
-- RabbitMQ UI: `http://localhost:15672`
-- Jaeger UI: `http://localhost:16686`
-
-For details & troubleshooting: `infra/local/README.md`.
 
 ## Architecture Context
 
