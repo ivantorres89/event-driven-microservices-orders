@@ -117,7 +117,7 @@ The implementation is inspired by **real-world cloud-native architectures**, foc
 
 ## Architecture Context
 
-![Architectural design](/design/k8s-websockets-apporders.jpg)
+![Architectural design](/architecture/eventdriven-k8s-websockets-redisbackplane-orderprocessing.jpg)
 
 This repository contains the **implementation** of an event‑driven order workflow. The diagram above reflects the **cloud reference architecture** (AKS + Service Bus + Azure SQL + Redis + WebSockets), while the repo ships a **local equivalent** via Docker Compose.
 

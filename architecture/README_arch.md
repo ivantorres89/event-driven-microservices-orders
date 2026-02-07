@@ -8,7 +8,7 @@ This document describes the **implemented** architecture in this repository: com
 
 ## Architecture at a glance
 
-![Architectural design](/design/k8s-websockets-apporders.jpg)
+![Architectural design](/eventdriven-k8s-websockets-redisbackplane-orderprocessing.jpg)
 
 The system implements an **event-driven, asynchronous order workflow** with **real-time UX**:
 
