@@ -27,6 +27,57 @@ The implementation is inspired by **real-world cloud-native architectures**, foc
 
 ---
 
+## Frontend demo
+
+<table>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/images/demo/01_login.png" width="260" alt="login" />
+      <br/>
+      <sub><b>login</b></sub>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/images/demo/02_products.png" width="260" alt="products" />
+      <br/>
+      <sub><b>products</b></sub>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/images/demo/03_websockets_connected.png" width="260" alt="websockets connected" />
+      <br/>
+      <sub><b>websockets connected</b></sub>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/images/demo/04_cart.png" width="260" alt="cart" />
+      <br/>
+      <sub><b>cart</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" valign="top">
+      <img src="docs/images/demo/05_checkout.png" width="260" alt="checkout" />
+      <br/>
+      <sub><b>checkout</b></sub>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/images/demo/06_order_accepted.png" width="260" alt="order accepted" />
+      <br/>
+      <sub><b>order accepted</b></sub>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/images/demo/07_order_completed.png" width="260" alt="order completed" />
+      <br/>
+      <sub><b>order completed</b></sub>
+    </td>
+    <td align="center" valign="top">
+      <img src="docs/images/demo/08_wss_multitab.png" width="260" alt="wss multitab" />
+      <br/>
+      <sub><b>wss multitab</b></sub>
+    </td>
+  </tr>
+</table>
+
+---
+
 ## Local development (Docker Compose + HTTPS)
 
 
