@@ -301,7 +301,11 @@ For integration tests locally local infra must be run . Pipeline mounts containe
 
 ## Continuous Integration (and not delivery)
 
-![Pipeline is defined here](/.github/workflows/ci.yml)
+[YAML pipeline definition](/.github/workflows/ci.yml)
+
+
+
+### GitVersion
 
 
 ---
