@@ -44,7 +44,7 @@ Useful URLs:
 - Jaeger UI: `http://localhost:16686`
 
 
-[For details & troubleshooting:](/infra/local/README.md)
+[For details & troubleshooting see infra README:](/infra/local/README.md)
 
 ---
 
@@ -247,7 +247,6 @@ RabbitMQ is used **only** for local development and integration testing purposes
 
 ## Repository Structure
 
-
 This is a **monorepo** for ease of exploration (in production, services are often split into separate repos).
 
 - `docker-compose.yml` — local stack (services + infra)
@@ -265,8 +264,6 @@ This is a **monorepo** for ease of exploration (in production, services are ofte
 
 ## Testing Strategy
 
-![All tests passing](/docs/images/order-process-tests.png)
-
 This repository applies a **layered testing approach**:
 
 ### Unit Tests
@@ -278,6 +275,7 @@ This repository applies a **layered testing approach**:
 Integration tests are intentionally **limited in scope** and focus on validating:
 
 - HTTP request handling at service boundaries
+- OLTP transactions against SQL relational database.
 - REDIS Operations: GET, SET, DEL.
 - Message publishing and consumption behavior
 - Messaging contracts and serialization
@@ -290,6 +288,21 @@ Integration tests **do not** cover:
 - Azure-managed services
 
 Their purpose is to validate **service contracts and distributed behavior**, not infrastructure correctness.
+
+Test pass just not locally in our IDEs, but also in GithubActions pipeline.
+
+![All tests passing](/docs/images/order-process-tests.png)
+
+For integration tests locally local infra must be run . Pipeline mounts containers and executes integration tests for three of the services order-accept, order-process and order-notification and executes them in real world. Database migrations are executed on new created database to have a clean environment up to date. Also publishes test report and coverage.
+
+![Build & tests steps](/docs/images/tests_integration_pipeline.png)
+
+---
+
+## Continuous Integration (and not delivery)
+
+![Pipeline is defined here](/.github/workflows/ci.yml)
+
 
 ---
 
