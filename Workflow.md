@@ -63,6 +63,10 @@ Used keys:
 - `order:status:{correlationId}` = `ACCEPTED | PROCESSING | COMPLETED` (TTL)
 - `order:map:{correlationId}` = `{userId}` (TTL) critical key for notifications
 
+A screenshot of how looks like Redis:
+
+![Redis Business keys](/docs/images/redis_business_keys.png)
+
 Typical TTL: **30–60 minutes**.  
 Also, **order-process refreshes the TTL** so the mapping doesn’t expire if processing takes long.
 
@@ -90,8 +94,18 @@ When `order-notification` runs with multiple replicas (multiple Hub instances), 
 To ensure `Clients.User(userId)` reaches **all** of a user’s active connections across all pods, SignalR uses **Redis pub/sub as a backplane**:
 
 1) The pod that executes `Clients.User(userId)` publishes the message to Redis pub/sub.
-2) Every `order-notification` pod is subscribed and receives the message.
-3) Each pod forwards it only to its **local** WebSocket connections whose `Context.UserIdentifier == userId`.
+2) Every `order-notification` pod is subscribed and receives the message. 
+
+Order is submitted with correlationId {375e...} 
+
+![Redis Pub/Sub Order submitted](/docs/images/redis_backplane/redis_pub_sub_02.png)
+
+and then we see on Redis Pub/Sub the following message in the channel:
+
+![Redis Pub/Sub](/docs/images/redis_backplane/redis_pub_sub_01.png)
+
+
+3) Each pod gets the message and forwards it only to its **local** WebSocket connections whose `Context.UserIdentifier == userId`.
 
 The backplane channels are isolated using a Redis `ChannelPrefix` (e.g. `contoso-signalr`) so backplane traffic does not collide with other Redis usage (like `order:*` keys).
 
