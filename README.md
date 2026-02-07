@@ -10,7 +10,7 @@ The target customers range from individual learners to corporate training teams 
 
 This demo seeds a catalog of **145 certification-prep subscriptions** across multiple vendors (e.g., Microsoft, Cisco, AWS, CompTIA). Users can browse/search, build a cart, submit an order, and track the lifecycle **Accepted → Processing → Completed** with **real-time notifications**.
 
-To see the full workflow please do read: [Workflow full documentation](/WORKFLOW.md)
+To see the full workflow please do read: [Workflow full documentation](/Workflow.md)
 
 To see full OpenAPI specifications please do check:
 [YAML OpenAPI Spec](/services/order-accept/apispecs/openapi.yaml)
