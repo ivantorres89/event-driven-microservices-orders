@@ -94,16 +94,15 @@ When `order-notification` runs with multiple replicas (multiple Hub instances), 
 To ensure `Clients.User(userId)` reaches **all** of a user’s active connections across all pods, SignalR uses **Redis pub/sub as a backplane**:
 
 1) The pod that executes `Clients.User(userId)` publishes the message to Redis pub/sub.
-2) Every `order-notification` pod is subscribed and receives the message. 
+2) Every `order-notification` pod is subscribed to the channel {contoso-signalROrderNotification} and receives the message. 
+
+We can see on Redis Pub/Sub the following serialized payload in the channel:
+
+![Redis Pub/Sub](/docs/images/redis_backplane/redis_pub_sub_01.png)
 
 Order is submitted with correlationId {375e...} 
 
 ![Redis Pub/Sub Order submitted](/docs/images/redis_backplane/redis_pub_sub_02.png)
-
-and then we see on Redis Pub/Sub the following message in the channel:
-
-![Redis Pub/Sub](/docs/images/redis_backplane/redis_pub_sub_01.png)
-
 
 3) Each pod gets the message and forwards it only to its **local** WebSocket connections whose `Context.UserIdentifier == userId`.
 

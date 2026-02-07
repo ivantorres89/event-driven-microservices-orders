@@ -10,20 +10,11 @@ The target customers range from individual learners to corporate training teams 
 
 This demo seeds a catalog of **145 certification-prep subscriptions** across multiple vendors (e.g., Microsoft, Cisco, AWS, CompTIA). Users can browse/search, build a cart, submit an order, and track the lifecycle **Accepted → Processing → Completed** with **real-time notifications**.
 
-## Overview
+To see the full workflow please do read: [Workflow full documentation](WORKFLOW.md)
 
-This repository showcases an **event-driven, asynchronous microservices system** designed to process orders at scale while providing **real-time user notifications**.
-
-The project is intended as a **technical portfolio**, demonstrating:
-
-- Backend microservices design
-- Event-driven and asynchronous workflows
-- Messaging-based integration
-- Real-time communication using WebSockets
-- Clean service boundaries and stateless services
-- Observability concerns (logging, metrics, tracing) are implemented at service boundaries to support debugging and distributed traceability.
-
-The implementation is inspired by **real-world cloud-native architectures**, focusing on **system behavior, responsibilities, and interactions** rather than production hardening.
+To see full OpenAPI specifications please do check:
+[YAML OpenAPI Spec](/services/order-accept/apispecs/openapi.yaml)
+[API & interfaces fully explained](/services/order-accept/apispecs/order-accept_api_contract.md)
 
 ## Local development (Docker Compose + HTTPS)
 
@@ -52,12 +43,12 @@ Useful URLs:
 - RabbitMQ UI: `http://localhost:15672`
 - Jaeger UI: `http://localhost:16686`
 
-For details & troubleshooting: `infra/local/README.md`.
 
+[For details & troubleshooting:](/infra/local/README.md)
 
 ---
 
-## Frontend demo
+## Some screenshots
 
 <table>
   <tr>
@@ -108,8 +99,23 @@ For details & troubleshooting: `infra/local/README.md`.
 
 ---
 
-## Architecture Context
+## Overview
 
+This repository showcases an **event-driven, asynchronous microservices system** designed to process orders at scale while providing **real-time user notifications**.
+
+The project is intended as a **technical portfolio**, demonstrating:
+
+- Backend microservices design
+- Event-driven and asynchronous workflows
+- Messaging-based integration
+- Real-time communication using WebSockets
+- Clean service boundaries and stateless services
+- Observability concerns (logging, metrics, tracing) are implemented at service boundaries to support debugging and distributed traceability.
+
+The implementation is inspired by **real-world cloud-native architectures**, focusing on **system behavior, responsibilities, and interactions** rather than production hardening.
+
+
+## Architecture Context
 
 ![Architectural design](/design/k8s-websockets-apporders.jpg)
 
@@ -173,7 +179,8 @@ This system is **asynchronous by design**: the HTTP request is accepted fast, an
    - Sets `order:status:{correlationId} = COMPLETED` (TTL refreshed)
 3) **`order-notification` consumes `order.processed`**
    - Resolves `userId` via `GET order:map:{correlationId}` (with **short retries** for races)
-   - Pushes a WebSocket message to the user via `Clients.User(userId)`
+   - Sets serialized message containing {correlationId} on Redis Pub/Sub channel contoso-signalrOrderNotification to notify all pods the order was completed succesfully.
+   - Every pod pushes a WebSocket message to the user via `Clients.User(userId)`
 
 ### Redis backplane resilience (what happens when things go wrong)
 - **Redis mapping missing** (`order:map:{cid}` not found): `order-notification` retries briefly; if still missing it **does not ACK** the message so the broker can retry and eventually route to **DLQ** (no silent loss).
