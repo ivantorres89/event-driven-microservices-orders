@@ -114,6 +114,8 @@ The project is intended as a **technical portfolio**, demonstrating:
 
 The implementation is inspired by **real-world cloud-native architectures**, focusing on **system behavior, responsibilities, and interactions** rather than production hardening.
 
+---
+
 ## Tech Stack (Backend)
 
 This project is intentionally **backend-first** and focuses on modern **.NET microservices** with event-driven integration and real-time updates.
@@ -160,6 +162,8 @@ This project is intentionally **backend-first** and focuses on modern **.NET mic
 - **DDD-inspired modeling** (explicit domain entities and service boundaries per microservice)
 - **At-least-once messaging** handled with **retries + idempotency** (CorrelationId as the workflow key)  
   *(an Outbox pattern is intentionally omitted in this demo to keep focus on the workflow and patterns—see ADRs)*
+
+---
 
 ## Architecture Context
 
