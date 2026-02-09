@@ -114,6 +114,52 @@ The project is intended as a **technical portfolio**, demonstrating:
 
 The implementation is inspired by **real-world cloud-native architectures**, focusing on **system behavior, responsibilities, and interactions** rather than production hardening.
 
+## Tech Stack (Backend)
+
+This project is intentionally **backend-first** and focuses on modern **.NET microservices** with event-driven integration and real-time updates.
+
+### Core platform
+- **C# / .NET10 (LTS) **, **ASP.NET Core Minimal APIs**
+- **Entity Framework Core 9** as ORM + **SQL Server** (local via Docker) / **Azure SQL Database** (cloud)
+
+### Messaging, integration & real-time
+- **Event-Driven Architecture** with brokered messaging via **Azure Service Bus (cloud)** and **RabbitMQ (local/dev)**  
+  *(the services depend on **messaging abstractions**, so the broker can be swapped without touching business logic)*
+- **HTTP/REST** for synchronous boundaries
+- **SignalR (WebSockets)** for real-time notifications + **Redis backplane** for scale-out / reconnect resilience
+
+### Data & state
+- **Redis 7** for workflow state/correlation mapping and SignalR scale-out
+- **SQL Server 2022** for OLTP persistence
+
+### Observability & reliability
+- **OpenTelemetry** (OTLP exporter) + **OTel Collector** + **JaegerUI** for distributed tracing (correlationId)
+- **Serilog** structured logging (enrichers for environment/process/thread, exceptions)
+- **Polly** for transient-fault handling (retry/backoff) around infrastructure interactions
+
+### DevOps & delivery assets
+- **Docker Compose** for local dependencies (SQL Server, Redis, RabbitMQ, Jaeger, OTel Collector)
+- **GitHub Actions** CI (build, tests, coverage)
+- Reference **cloud/IaC & orchestration assets** under `/infra` (Terraform + Kubernetes/AKS manifests)
+
+### Testing
+- **xUnit** + **FluentAssertions** + **Moq**
+- **Integration tests** coverage via `coverlet.collector`
+
+## Software Design & Architecture
+
+### Architectural style
+- **Hexagonal Architecture (Ports & Adapters)** / **Clean Architecture** per microservice:
+  - **Domain** contains business concepts (entities/invariants) and stays infrastructure-agnostic
+  - **Application** orchestrates use-cases and depends on **abstractions** (ports)
+  - **Infrastructure** provides adapters (messaging, Redis, Service Bus/RabbitMQ, etc.)
+  - Persistence is separated behind explicit **Persistence.Abstractions** to keep the core isolated
+
+### Engineering practices
+- **Clean Code** & **SOLID** (SRP, DIP via abstractions, explicit boundaries)
+- **DDD-inspired modeling** (explicit domain entities and service boundaries per microservice)
+- **At-least-once messaging** handled with **retries + idempotency** (CorrelationId as the workflow key)  
+  *(an Outbox pattern is intentionally omitted in this demo to keep focus on the workflow and patterns—see ADRs)*
 
 ## Architecture Context
 
