@@ -1,0 +1,22 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: order-process
+  description: Background worker that persists orders and publishes completion events.
+  tags:
+    - contoso-orders
+    - azure
+    - aks
+    - dotnet
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    backstage.io/kubernetes-id: order-process
+spec:
+  type: service
+  lifecycle: production
+  owner: group:platform
+  system: contoso-orders
+  dependsOn:
+    - resource:default/contoso-orders-redis
+    - resource:default/contoso-orders-sql
+    - resource:default/contoso-orders-servicebus

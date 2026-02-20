@@ -1,0 +1,6 @@
+site_name: order-accept
+nav:
+  - Overview: docs/index.md
+  - Runbook: docs/runbook.md
+plugins:
+  - techdocs-core

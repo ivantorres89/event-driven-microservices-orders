@@ -1,0 +1,72 @@
+apiVersion: backstage.io/v1alpha1
+kind: Location
+metadata:
+  name: contoso-orders-services
+  description: Backstage entrypoint for Contoso Orders (monorepo)
+spec:
+  targets:
+    - ./services/order-accept/catalog-info.yaml
+    - ./services/order-process/catalog-info.yaml
+    - ./services/order-notification/catalog-info.yaml
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: contoso-orders
+  description: Event-driven order processing with real-time notifications (portfolio).
+  tags:
+    - event-driven
+    - aks
+    - servicebus
+    - redis
+    - azure-sql
+    - signalr
+  annotations:
+    azure.com/tag-selector: workload/contoso-orders
+spec:
+  owner: group:platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: contoso-orders-aks
+  description: AKS cluster hosting the microservices.
+spec:
+  type: kubernetes-cluster
+  owner: group:platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: contoso-orders-sql
+  description: Azure SQL Database (system of record for orders).
+spec:
+  type: database
+  owner: group:platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: contoso-orders-redis
+  description: Azure Cache for Redis (workflow state + SignalR backplane).
+spec:
+  type: cache
+  owner: group:platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: contoso-orders-servicebus
+  description: Azure Service Bus queues for order workflow events.
+spec:
+  type: message-broker
+  owner: group:platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: contoso-orders-apim
+  description: API Management gateway (optional).
+spec:
+  type: gateway
+  owner: group:platform
