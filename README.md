@@ -421,14 +421,18 @@ This portfolio includes a **Backstage** (Internal Platform Portal) setup so we c
 
 ### Some screenshots
 
-- Service catalog:
+Service catalog:
+
 ![Service catalog](/docs/images/backstage/service-catalog.png)
 
-- Resource Graph for Message Broker (ServiceBus):
+Resource Graph for Message Broker (ServiceBus):
+
 ![Resource Graph for Message Broker (ServiceBus)](/docs/images/backstage/resource-graph.png)
 
-- Runbook for microservice order-accept
+Runbook for microservice order-accept:
+
 ![Runbook for microservice order-accept](/docs/images/backstage/runbook-01.png)
 
-- Runbook for microservice order-accept
+Runbook for microservice order-accept:
+
 ![Runbook for microservice order-accept](/docs/images/backstage/runbook-02.png)
