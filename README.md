@@ -402,9 +402,9 @@ The code and architecture examples:
 
 ---
 
-## Developer Portal (Backstage)
+## Backstage
 
-This portfolio includes a **Backstage** (Internal Developer Portal) setup so you can browse the **service catalog**, open **runbooks**, and read **TechDocs** in a single UI.
+This portfolio includes a **Backstage** (Internal Platform Portal) setup so we can browse the **service catalog**, open **runbooks**, and read **TechDocs** in a single UI.
 
 - Setup instructions: `developer-portal/README.md`
 - After starting the portal, open `http://localhost:3000` and browse:
@@ -419,12 +419,16 @@ This portfolio includes a **Backstage** (Internal Developer Portal) setup so you
 
 > The portfolio uses static `catalog-info.yaml` files (no Azure discovery / Resource Graph).
 
-- Some screenshots:
+### Some screenshots
 
+- Service catalog:
 ![Service catalog](/docs/images/backstage/service-catalog.png)
 
+- Resource Graph for Message Broker (ServiceBus):
 ![Resource Graph for Message Broker (ServiceBus)](/docs/images/backstage/resource-graph.png)
 
+- Runbook for microservice order-accept
 ![Runbook for microservice order-accept](/docs/images/backstage/runbook-01.png)
 
+- Runbook for microservice order-accept
 ![Runbook for microservice order-accept](/docs/images/backstage/runbook-02.png)
