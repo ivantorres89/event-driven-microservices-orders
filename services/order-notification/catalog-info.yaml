@@ -13,7 +13,7 @@ metadata:
   - messaging
   - websockets
   annotations:
-    backstage.io/techdocs-ref: dir:services/order-notification/docs
+    backstage.io/techdocs-ref: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-notification
     github.com/project-slug: ivantorres89/event-driven-microservices-orders
     backstage.io/source-location: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-notification
   links:
@@ -35,5 +35,5 @@ spec:
   owner: group:platform
   system: contoso-orders
   dependsOn:
-    - resource:redis
-    - resource:message-broker
+  - resource:redis
+  - resource:message-broker

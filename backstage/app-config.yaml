@@ -1,56 +1,61 @@
 app:
   title: Contoso Developer Portal (Portfolio)
   baseUrl: http://localhost:3000
-
 organization:
   name: Contoso
-
 backend:
   baseUrl: http://localhost:7007
   listen:
     port: 7007
   csp:
-    connect-src: ["'self'", "http:", "https:"]
+    connect-src:
+    - '''self'''
+    - 'http:'
+    - 'https:'
   cors:
     origin: http://localhost:3000
-    methods: [GET, HEAD, PATCH, POST, PUT, DELETE]
+    methods:
+    - GET
+    - HEAD
+    - PATCH
+    - POST
+    - PUT
+    - DELETE
     credentials: true
-
-  # Local dev DB (Backstage docs: use Postgres for production).
   database:
     client: better-sqlite3
     connection: ':memory:'
-
 integrations:
   github:
-    - host: github.com
-      # Optional: improves links + enables importing entities from GitHub.
-      # Create a classic PAT with at least "repo:read" for private repos (not needed for public).
-      token: ${GITHUB_TOKEN}
-
+  - host: github.com
+    token: ${GITHUB_TOKEN}
 techdocs:
   builder: local
   generator:
     runIn: docker
   publisher:
     type: local
-
+    local:
+      publishDirectory: packages/backend/static/docs
 auth:
   providers:
     guest: {}
-
 catalog:
   import:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
   rules:
-    - allow: [Component, System, API, Resource, Location, Domain, Group, User]
+  - allow:
+    - Component
+    - System
+    - API
+    - Resource
+    - Location
+    - Domain
+    - Group
+    - User
   locations:
-    # IMPORTANT:
-    # File locations are resolved from the backend process working directory
-    # (typically `backstage/packages/backend` when running `yarn dev`).
-    - type: file
-      target: ../../../catalog-info.yaml
-
+  - type: file
+    target: ../../../catalog-info.yaml
 permission:
   enabled: true

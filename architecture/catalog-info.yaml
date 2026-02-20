@@ -3,13 +3,14 @@ kind: Component
 metadata:
   name: contoso-architecture
   title: Contoso Orders Architecture
-  description: Architecture documentation and diagrams for the Contoso Orders reference platform.
+  description: Architecture documentation and diagrams for the Contoso Orders reference
+    platform.
   tags:
   - architecture
   - diagram
   - adr
   annotations:
-    backstage.io/techdocs-ref: dir:.
+    backstage.io/techdocs-ref: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/architecture
     github.com/project-slug: ivantorres89/event-driven-microservices-orders
     backstage.io/source-location: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/architecture
   links:

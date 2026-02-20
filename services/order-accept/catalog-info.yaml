@@ -5,27 +5,27 @@ metadata:
   title: Order Accept Service
   description: Ingress REST API for order submission; publishes OrderAccepted events.
   tags:
-    - dotnet
-    - azure
-    - kubernetes
-    - redis
-    - messaging
+  - dotnet
+  - azure
+  - kubernetes
+  - redis
+  - messaging
   annotations:
-    backstage.io/techdocs-ref: dir:.
+    backstage.io/techdocs-ref: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-accept
     backstage.io/source-location: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-accept
     github.com/project-slug: ivantorres89/event-driven-microservices-orders
   links:
-    - url: https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-accept
-      title: Source (repo)
-      icon: github
-    - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/services/order-accept/README.md
-      title: Service README
-      icon: docs
+  - url: https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-accept
+    title: Source (repo)
+    icon: github
+  - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/services/order-accept/README.md
+    title: Service README
+    icon: docs
 spec:
   type: service
   lifecycle: experimental
   owner: group:platform
   system: contoso-orders
   dependsOn:
-    - resource:redis
-    - resource:message-broker
+  - resource:redis
+  - resource:message-broker

@@ -10,7 +10,7 @@ metadata:
   - spa
   - signalr
   annotations:
-    backstage.io/techdocs-ref: dir:.
+    backstage.io/techdocs-ref: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/frontend
     github.com/project-slug: ivantorres89/event-driven-microservices-orders
     backstage.io/source-location: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/frontend
   links:
@@ -29,5 +29,5 @@ spec:
   owner: group:platform
   system: contoso-orders
   dependsOn:
-    - component:order-accept
-    - component:order-notification
+  - component:order-accept
+  - component:order-notification

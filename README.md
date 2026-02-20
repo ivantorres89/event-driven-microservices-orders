@@ -418,3 +418,13 @@ This portfolio includes a **Backstage** (Internal Developer Portal) setup so you
   powershell -ExecutionPolicy Bypass -File .\scripts\backstage-stop.ps1
 
 > The portfolio uses static `catalog-info.yaml` files (no Azure discovery / Resource Graph).
+
+- Some screenshots:
+
+![Service catalog](/docs/images/backstage/service-catalog.png)
+
+![Resource Graph for Message Broker (ServiceBus)](/docs/images/backstage/resource-graph.png)
+
+![Runbook for microservice order-accept](/docs/images/backstage/runbook-01.png)
+
+![Runbook for microservice order-accept](/docs/images/backstage/runbook-02.png)

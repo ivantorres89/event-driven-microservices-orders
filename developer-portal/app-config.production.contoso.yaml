@@ -1,12 +1,9 @@
 app:
   baseUrl: ${APP_BASE_URL}
-
 backend:
   baseUrl: ${BACKEND_BASE_URL}
   listen:
     port: ${BACKEND_PORT}
-
-  # For real deployments, Backstage recommends Postgres.
   database:
     client: pg
     connection:
@@ -15,13 +12,15 @@ backend:
       user: ${POSTGRES_USER}
       password: ${POSTGRES_PASSWORD}
       database: ${POSTGRES_DB}
-
 techdocs:
   builder: external
   publisher:
     type: local
-
+    local:
+      publishDirectory: packages/backend/static/docs
+  generator:
+    runIn: docker
 catalog:
   locations:
-    - type: file
-      target: ../../../catalog-info.yaml
+  - type: file
+    target: ../../../catalog-info.yaml
