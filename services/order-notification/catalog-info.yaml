@@ -2,20 +2,38 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: order-notification
-  description: SignalR notification edge for real-time order status.
+  title: Order Notification Service
+  description: SignalR hub for real-time order status updates; consumes OrderProcessed.
   tags:
-    - contoso-orders
-    - azure
-    - aks
-    - dotnet
+  - dotnet
+  - azure
+  - kubernetes
+  - signalr
+  - redis
+  - messaging
+  - websockets
   annotations:
-    backstage.io/techdocs-ref: dir:.
-    backstage.io/kubernetes-id: order-notification
+    backstage.io/techdocs-ref: dir:services/order-notification/docs
+    github.com/project-slug: ivantorres89/event-driven-microservices-orders
+    backstage.io/source-location: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-notification
+  links:
+  - url: https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-notification
+    title: Source (repo)
+    icon: github
+  - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/services/order-notification/README.md
+    title: Service README
+    icon: docs
+  - url: https://localhost:5007/healthz
+    title: Local Health (HTTPS)
+    icon: dashboard
+  - url: https://localhost:5007/hubs/order-status
+    title: Local Hub (base path)
+    icon: dashboard
 spec:
   type: service
-  lifecycle: production
+  lifecycle: experimental
   owner: group:platform
   system: contoso-orders
   dependsOn:
-    - resource:default/contoso-orders-redis
-    - resource:default/contoso-orders-servicebus
+    - resource:redis
+    - resource:message-broker

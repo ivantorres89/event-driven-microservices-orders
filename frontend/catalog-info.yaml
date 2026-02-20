@@ -1,0 +1,33 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: contoso-frontend
+  title: Contoso Shop Frontend
+  description: Angular SPA demo consuming order-accept and SignalR notifications.
+  tags:
+  - angular
+  - frontend
+  - spa
+  - signalr
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: ivantorres89/event-driven-microservices-orders
+    backstage.io/source-location: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/frontend
+  links:
+  - url: https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/frontend
+    title: Source (repo)
+    icon: github
+  - url: http://localhost:4200
+    title: Local SPA
+    icon: dashboard
+  - url: http://localhost:8081/swagger
+    title: Order Accept Swagger (local)
+    icon: dashboard
+spec:
+  type: website
+  lifecycle: experimental
+  owner: group:platform
+  system: contoso-orders
+  dependsOn:
+    - component:order-accept
+    - component:order-notification

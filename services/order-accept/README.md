@@ -368,3 +368,13 @@ This service prioritizes:
 - Operational safety
 
 It is designed to remain simple, predictable, and easy to reason about under load.
+
+## Backstage
+
+This service is registered in the **Backstage** software catalog.
+
+- Entity definition: `catalog-info.yaml`
+- TechDocs: `mkdocs.yml` + `docs/`
+- Runbook is available in Backstage under the **Docs** tab.
+
+To run the portal locally, follow: `developer-portal/README.md`

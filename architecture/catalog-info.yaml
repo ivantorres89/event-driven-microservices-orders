@@ -1,0 +1,29 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: contoso-architecture
+  title: Contoso Orders Architecture
+  description: Architecture documentation and diagrams for the Contoso Orders reference platform.
+  tags:
+  - architecture
+  - diagram
+  - adr
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+    github.com/project-slug: ivantorres89/event-driven-microservices-orders
+    backstage.io/source-location: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/architecture
+  links:
+  - url: https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/architecture
+    title: Architecture folder (repo)
+    icon: docs
+  - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/architecture/eventdriven-k8s-websockets-redisbackplane-orderprocessing.drawio
+    title: Diagram (draw.io)
+    icon: diagram
+  - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/architecture/eventdriven-k8s-websockets-redisbackplane-orderprocessing.jpg
+    title: Diagram (preview)
+    icon: diagram
+spec:
+  type: documentation
+  lifecycle: experimental
+  owner: group:platform
+  system: contoso-orders

@@ -390,3 +390,13 @@ The seed script uses a jsDelivr URL template:
    - `src/OrderProcess.DatabaseMigrations/Sql/0002_SeedDemoData.sql`
 
 jsDelivr will then serve the images via CDN and your frontend can show them in the product detail view.
+
+## Backstage
+
+This service is registered in the **Backstage** software catalog.
+
+- Entity definition: `catalog-info.yaml`
+- TechDocs: `mkdocs.yml` + `docs/`
+- Runbook is available in Backstage under the **Docs** tab.
+
+To run the portal locally, follow: `developer-portal/README.md`

@@ -1,72 +1,102 @@
 apiVersion: backstage.io/v1alpha1
-kind: Location
+kind: Domain
 metadata:
-  name: contoso-orders-services
-  description: Backstage entrypoint for Contoso Orders (monorepo)
+  name: contoso-platform
+  title: Contoso Platform
+  description: Shared platform capabilities and reference implementation for squads.
 spec:
-  targets:
-    - ./services/order-accept/catalog-info.yaml
-    - ./services/order-process/catalog-info.yaml
-    - ./services/order-notification/catalog-info.yaml
+  owner: group:platform
+
 ---
 apiVersion: backstage.io/v1alpha1
 kind: System
 metadata:
   name: contoso-orders
-  description: Event-driven order processing with real-time notifications (portfolio).
+  title: Contoso Orders Platform
+  description: Event-driven order processing with real-time notifications (reference implementation).
   tags:
+    - azure
+    - kubernetes
+    - dotnet
     - event-driven
-    - aks
-    - servicebus
-    - redis
-    - azure-sql
-    - signalr
-  annotations:
-    azure.com/tag-selector: workload/contoso-orders
+  links:
+    - url: https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/architecture
+      title: Architecture docs (repo)
+      icon: docs
+    - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/architecture/eventdriven-orders-signalr-redis-backplane.drawio
+      title: Architecture diagram (draw.io)
+      icon: diagram
+    - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/architecture/eventdriven-orders-signalr-redis-backplane.jpg
+      title: Architecture diagram (preview)
+      icon: diagram
+    - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/architecture/decisions.md
+      title: Architecture decisions (ADR-style)
+      icon: docs
 spec:
   owner: group:platform
+  domain: contoso-platform
+
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: platform
+  title: Platform Engineering
+  description: Platform team owning the reference platform and shared building blocks.
+spec:
+  type: team
+  profile:
+    displayName: Platform Engineering
+    email: platform@contoso.example
+  children: []
+
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: contoso-orders-aks
-  description: AKS cluster hosting the microservices.
-spec:
-  type: kubernetes-cluster
-  owner: group:platform
----
-apiVersion: backstage.io/v1alpha1
-kind: Resource
-metadata:
-  name: contoso-orders-sql
-  description: Azure SQL Database (system of record for orders).
+  name: sql-database
+  title: Relational Database (Azure SQL Database)
+  description: System-of-record for orders (SQL Server locally; Azure SQL Database in Azure).
 spec:
   type: database
   owner: group:platform
+  system: contoso-orders
+
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: contoso-orders-redis
-  description: Azure Cache for Redis (workflow state + SignalR backplane).
+  name: redis
+  title: Redis Cache
+  description: Ephemeral workflow/session state for real-time UX and SignalR scale-out.
 spec:
   type: cache
   owner: group:platform
+  system: contoso-orders
+
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Resource
 metadata:
-  name: contoso-orders-servicebus
-  description: Azure Service Bus queues for order workflow events.
+  name: message-broker
+  title: Message Broker (Azure Service Bus)
+  description: Asynchronous integration events (RabbitMQ locally; Azure Service Bus in Azure).
 spec:
-  type: message-broker
+  type: queue
   owner: group:platform
+  system: contoso-orders
+
 ---
 apiVersion: backstage.io/v1alpha1
-kind: Resource
+kind: Location
 metadata:
-  name: contoso-orders-apim
-  description: API Management gateway (optional).
+  name: contoso-orders-catalog
+  description: Service catalog definition for the Contoso Orders reference platform.
 spec:
-  type: gateway
-  owner: group:platform
+  type: file
+  targets:
+    - ./services/order-accept/catalog-info.yaml
+    - ./services/order-process/catalog-info.yaml
+    - ./services/order-notification/catalog-info.yaml
+    - ./frontend/catalog-info.yaml
+    - ./architecture/catalog-info.yaml

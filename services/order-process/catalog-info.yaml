@@ -2,21 +2,33 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: order-process
-  description: Background worker that persists orders and publishes completion events.
+  title: Order Process Service
+  description: Background worker consuming OrderAccepted, persisting orders to SQL, publishing OrderProcessed.
   tags:
-    - contoso-orders
-    - azure
-    - aks
     - dotnet
+    - azure
+    - kubernetes
+    - worker
+    - sql
+    - redis
+    - messaging
   annotations:
     backstage.io/techdocs-ref: dir:.
-    backstage.io/kubernetes-id: order-process
+    backstage.io/source-location: url:https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-process
+    github.com/project-slug: ivantorres89/event-driven-microservices-orders
+  links:
+    - url: https://github.com/ivantorres89/event-driven-microservices-orders/tree/main/services/order-process
+      title: Source (repo)
+      icon: github
+    - url: https://github.com/ivantorres89/event-driven-microservices-orders/blob/main/services/order-process/README.md
+      title: Service README
+      icon: docs
 spec:
   type: service
-  lifecycle: production
+  lifecycle: experimental
   owner: group:platform
   system: contoso-orders
   dependsOn:
-    - resource:default/contoso-orders-redis
-    - resource:default/contoso-orders-sql
-    - resource:default/contoso-orders-servicebus
+    - resource:sql-database
+    - resource:redis
+    - resource:message-broker

@@ -1,0 +1,8 @@
+site_name: Contoso Orders Architecture
+nav:
+  - Overview: index.md
+  - Diagram: diagram.md
+  - Decisions: decisions.md
+  - Workflow: workflow.md
+plugins:
+  - techdocs-core

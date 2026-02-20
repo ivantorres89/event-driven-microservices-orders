@@ -191,3 +191,13 @@ Then it reconnects to SignalR and:
 
 ## License
 Internal demo (Contoso).
+
+## Backstage
+
+This service is registered in the **Backstage** software catalog.
+
+- Entity definition: `catalog-info.yaml`
+- TechDocs: `mkdocs.yml` + `docs/`
+- Runbook is available in Backstage under the **Docs** tab.
+
+To run the portal locally, follow: `developer-portal/README.md`

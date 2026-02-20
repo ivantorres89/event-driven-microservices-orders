@@ -1,0 +1,6 @@
+site_name: Contoso Shop Frontend
+nav:
+  - Overview: index.md
+  - Runbook: runbook.md
+plugins:
+  - techdocs-core
