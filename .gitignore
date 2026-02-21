@@ -119,3 +119,9 @@ backstage/.backstage/
 backstage/tmp/
 backstage/temp/
 
+# =========================
+# Structurizr (C4) / Structurizr Lite
+# =========================
+# Structurizr Lite creates a local cache/index folder next to the workspace file.
+# Example: architecture/structurizr/.structurizr/index/*
+**/.structurizr/
