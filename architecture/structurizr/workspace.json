@@ -1,0 +1,562 @@
+{
+  "configuration" : { },
+  "description" : "C4 model (Structurizr DSL) generated from repo structure + draw.io diagram",
+  "documentation" : { },
+  "id" : 1,
+  "lastModifiedAgent" : "structurizr-ui",
+  "lastModifiedDate" : "2026-02-21T12:29:19Z",
+  "model" : {
+    "people" : [ {
+      "description" : "Uses the web app to place orders and track status updates.",
+      "id" : "1",
+      "name" : "Customer",
+      "properties" : {
+        "structurizr.dsl.identifier" : "customer"
+      },
+      "relationships" : [ {
+        "description" : "Uses",
+        "destinationId" : "3",
+        "id" : "13",
+        "sourceId" : "1",
+        "tags" : "Relationship",
+        "technology" : "HTTPS"
+      }, {
+        "description" : "Uses",
+        "destinationId" : "2",
+        "id" : "14",
+        "linkedRelationshipId" : "13",
+        "sourceId" : "1",
+        "technology" : "HTTPS"
+      } ],
+      "tags" : "Element,Person"
+    } ],
+    "softwareSystems" : [ {
+      "containers" : [ {
+        "description" : "Web UI where customers browse and place orders.",
+        "documentation" : { },
+        "id" : "3",
+        "name" : "Client SPA",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.spa"
+        },
+        "relationships" : [ {
+          "description" : "POST /api/orders (auth)",
+          "destinationId" : "4",
+          "id" : "15",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "HTTPS"
+        }, {
+          "description" : "Connects for real-time updates",
+          "destinationId" : "8",
+          "id" : "17",
+          "sourceId" : "3",
+          "tags" : "Relationship",
+          "technology" : "WSS"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Angular (web)"
+      }, {
+        "description" : "Public perimeter: authentication, rate limiting, request forwarding.",
+        "documentation" : { },
+        "id" : "4",
+        "name" : "API Gateway",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.apim"
+        },
+        "relationships" : [ {
+          "description" : "Forwards authenticated traffic",
+          "destinationId" : "5",
+          "id" : "16",
+          "sourceId" : "4",
+          "tags" : "Relationship",
+          "technology" : "HTTPS"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "Azure API Management"
+      }, {
+        "description" : "Routes incoming traffic to Kubernetes services.",
+        "documentation" : { },
+        "id" : "5",
+        "name" : "Ingress",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.ingress"
+        },
+        "relationships" : [ {
+          "description" : "Routes /api/orders",
+          "destinationId" : "6",
+          "id" : "19",
+          "sourceId" : "5",
+          "tags" : "Relationship",
+          "technology" : "HTTP"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : "NGINX Ingress Controller (AKS)"
+      }, {
+        "description" : "Accepts orders quickly; creates correlation ID; enqueues work; stores initial workflow state.",
+        "documentation" : { },
+        "id" : "6",
+        "name" : "Order Accept API",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.orderAccept"
+        },
+        "relationships" : [ {
+          "description" : "Publishes OrderAccepted",
+          "destinationId" : "9",
+          "id" : "20",
+          "sourceId" : "6",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Sets correlation/status (TTL)",
+          "destinationId" : "11",
+          "id" : "24",
+          "sourceId" : "6",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : ".NET API (AKS)"
+      }, {
+        "description" : "Consumes accepted orders; persists to SQL; publishes processed events; updates workflow state.",
+        "documentation" : { },
+        "id" : "7",
+        "name" : "Order Process Worker",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.orderProcess"
+        },
+        "relationships" : [ {
+          "description" : "Consumes OrderAccepted",
+          "destinationId" : "9",
+          "id" : "21",
+          "sourceId" : "7",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Publishes order.processed",
+          "destinationId" : "10",
+          "id" : "22",
+          "sourceId" : "7",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Updates workflow status",
+          "destinationId" : "11",
+          "id" : "25",
+          "sourceId" : "7",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Persists order",
+          "destinationId" : "12",
+          "id" : "27",
+          "sourceId" : "7",
+          "tags" : "Relationship",
+          "technology" : "TDS"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : ".NET Worker (AKS)"
+      }, {
+        "description" : "WebSocket/SignalR hub that pushes order status updates to customers.",
+        "documentation" : { },
+        "id" : "8",
+        "name" : "Order Notification Service",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.orderNotification"
+        },
+        "relationships" : [ {
+          "description" : "Pushes status updates",
+          "destinationId" : "3",
+          "id" : "18",
+          "sourceId" : "8",
+          "tags" : "Relationship",
+          "technology" : "WSS"
+        }, {
+          "description" : "Consumes order.processed",
+          "destinationId" : "10",
+          "id" : "23",
+          "sourceId" : "8",
+          "tags" : "Relationship"
+        }, {
+          "description" : "Reads mapping/status; fan-out notifications",
+          "destinationId" : "11",
+          "id" : "26",
+          "sourceId" : "8",
+          "tags" : "Relationship"
+        } ],
+        "tags" : "Element,Container",
+        "technology" : ".NET (AKS)"
+      }, {
+        "description" : "Queue for accepted orders (async processing).",
+        "documentation" : { },
+        "id" : "9",
+        "name" : "Queue: order.accepted",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.acceptedQueue"
+        },
+        "tags" : "Element,Container,Queue",
+        "technology" : "Azure Service Bus (cloud) / RabbitMQ (local)"
+      }, {
+        "description" : "Queue for processed orders (used to notify clients).",
+        "documentation" : { },
+        "id" : "10",
+        "name" : "Queue: order.processed",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.processedQueue"
+        },
+        "tags" : "Element,Container,Queue",
+        "technology" : "Azure Service Bus (cloud) / RabbitMQ (local)"
+      }, {
+        "description" : "Workflow state + Pub/Sub backplane for SignalR scale-out (not system of record).",
+        "documentation" : { },
+        "id" : "11",
+        "name" : "Redis",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.redis"
+        },
+        "tags" : "Element,Container,DataStore",
+        "technology" : "Azure Cache for Redis (cloud) / Redis (local)"
+      }, {
+        "description" : "System of record for orders (OLTP).",
+        "documentation" : { },
+        "id" : "12",
+        "name" : "SQL Database",
+        "properties" : {
+          "structurizr.dsl.identifier" : "contosoOrders.sql"
+        },
+        "tags" : "Element,Container,Database",
+        "technology" : "Azure SQL Database (cloud) / SQL Server (local)"
+      } ],
+      "description" : "Event-driven order processing with real-time notifications.",
+      "documentation" : { },
+      "id" : "2",
+      "name" : "Contoso Orders Platform",
+      "properties" : {
+        "structurizr.dsl.identifier" : "contosoOrders"
+      },
+      "tags" : "Element,Software System"
+    } ]
+  },
+  "name" : "Contoso Orders — Living Architecture",
+  "properties" : {
+    "structurizr.inspection.info" : "0",
+    "structurizr.inspection.ignore" : "0",
+    "structurizr.inspection.error" : "10",
+    "structurizr.inspection.warning" : "0",
+    "structurizr.dsl" : "d29ya3NwYWNlICJDb250b3NvIE9yZGVycyDigJQgTGl2aW5nIEFyY2hpdGVjdHVyZSIgIkM0IG1vZGVsIChTdHJ1Y3R1cml6ciBEU0wpIGdlbmVyYXRlZCBmcm9tIHJlcG8gc3RydWN0dXJlICsgZHJhdy5pbyBkaWFncmFtIiB7CgogICFpZGVudGlmaWVycyBoaWVyYXJjaGljYWwKCiAgbW9kZWwgewogICAgLy8gLS0tIFBlb3BsZSAtLS0KICAgIGN1c3RvbWVyID0gcGVyc29uICJDdXN0b21lciIgIlVzZXMgdGhlIHdlYiBhcHAgdG8gcGxhY2Ugb3JkZXJzIGFuZCB0cmFjayBzdGF0dXMgdXBkYXRlcy4iCgogICAgLy8gLS0tIFNvZnR3YXJlIFN5c3RlbSAtLS0KICAgIGNvbnRvc29PcmRlcnMgPSBzb2Z0d2FyZVN5c3RlbSAiQ29udG9zbyBPcmRlcnMgUGxhdGZvcm0iICJFdmVudC1kcml2ZW4gb3JkZXIgcHJvY2Vzc2luZyB3aXRoIHJlYWwtdGltZSBub3RpZmljYXRpb25zLiIgewoKICAgICAgLy8gLS0tIENvbnRhaW5lcnMgKEM0IExldmVsIDIpIC0tLQogICAgICBzcGEgPSBjb250YWluZXIgIkNsaWVudCBTUEEiICJXZWIgVUkgd2hlcmUgY3VzdG9tZXJzIGJyb3dzZSBhbmQgcGxhY2Ugb3JkZXJzLiIgIkFuZ3VsYXIgKHdlYikiCgogICAgICBhcGltID0gY29udGFpbmVyICJBUEkgR2F0ZXdheSIgIlB1YmxpYyBwZXJpbWV0ZXI6IGF1dGhlbnRpY2F0aW9uLCByYXRlIGxpbWl0aW5nLCByZXF1ZXN0IGZvcndhcmRpbmcuIiAiQXp1cmUgQVBJIE1hbmFnZW1lbnQiCiAgICAgIGluZ3Jlc3MgPSBjb250YWluZXIgIkluZ3Jlc3MiICJSb3V0ZXMgaW5jb21pbmcgdHJhZmZpYyB0byBLdWJlcm5ldGVzIHNlcnZpY2VzLiIgIk5HSU5YIEluZ3Jlc3MgQ29udHJvbGxlciAoQUtTKSIKCiAgICAgIG9yZGVyQWNjZXB0ID0gY29udGFpbmVyICJPcmRlciBBY2NlcHQgQVBJIiAiQWNjZXB0cyBvcmRlcnMgcXVpY2tseTsgY3JlYXRlcyBjb3JyZWxhdGlvbiBJRDsgZW5xdWV1ZXMgd29yazsgc3RvcmVzIGluaXRpYWwgd29ya2Zsb3cgc3RhdGUuIiAiLk5FVCBBUEkgKEFLUykiCiAgICAgIG9yZGVyUHJvY2VzcyA9IGNvbnRhaW5lciAiT3JkZXIgUHJvY2VzcyBXb3JrZXIiICJDb25zdW1lcyBhY2NlcHRlZCBvcmRlcnM7IHBlcnNpc3RzIHRvIFNRTDsgcHVibGlzaGVzIHByb2Nlc3NlZCBldmVudHM7IHVwZGF0ZXMgd29ya2Zsb3cgc3RhdGUuIiAiLk5FVCBXb3JrZXIgKEFLUykiCiAgICAgIG9yZGVyTm90aWZpY2F0aW9uID0gY29udGFpbmVyICJPcmRlciBOb3RpZmljYXRpb24gU2VydmljZSIgIldlYlNvY2tldC9TaWduYWxSIGh1YiB0aGF0IHB1c2hlcyBvcmRlciBzdGF0dXMgdXBkYXRlcyB0byBjdXN0b21lcnMuIiAiLk5FVCAoQUtTKSIKCiAgICAgIGFjY2VwdGVkUXVldWUgPSBjb250YWluZXIgIlF1ZXVlOiBvcmRlci5hY2NlcHRlZCIgIlF1ZXVlIGZvciBhY2NlcHRlZCBvcmRlcnMgKGFzeW5jIHByb2Nlc3NpbmcpLiIgIkF6dXJlIFNlcnZpY2UgQnVzIChjbG91ZCkgLyBSYWJiaXRNUSAobG9jYWwpIiB7CiAgICAgICAgdGFncyAiUXVldWUiCiAgICAgIH0KCiAgICAgIHByb2Nlc3NlZFF1ZXVlID0gY29udGFpbmVyICJRdWV1ZTogb3JkZXIucHJvY2Vzc2VkIiAiUXVldWUgZm9yIHByb2Nlc3NlZCBvcmRlcnMgKHVzZWQgdG8gbm90aWZ5IGNsaWVudHMpLiIgIkF6dXJlIFNlcnZpY2UgQnVzIChjbG91ZCkgLyBSYWJiaXRNUSAobG9jYWwpIiB7CiAgICAgICAgdGFncyAiUXVldWUiCiAgICAgIH0KCiAgICAgIHJlZGlzID0gY29udGFpbmVyICJSZWRpcyIgIldvcmtmbG93IHN0YXRlICsgUHViL1N1YiBiYWNrcGxhbmUgZm9yIFNpZ25hbFIgc2NhbGUtb3V0IChub3Qgc3lzdGVtIG9mIHJlY29yZCkuIiAiQXp1cmUgQ2FjaGUgZm9yIFJlZGlzIChjbG91ZCkgLyBSZWRpcyAobG9jYWwpIiB7CiAgICAgICAgdGFncyAiRGF0YVN0b3JlIgogICAgICB9CgogICAgICBzcWwgPSBjb250YWluZXIgIlNRTCBEYXRhYmFzZSIgIlN5c3RlbSBvZiByZWNvcmQgZm9yIG9yZGVycyAoT0xUUCkuIiAiQXp1cmUgU1FMIERhdGFiYXNlIChjbG91ZCkgLyBTUUwgU2VydmVyIChsb2NhbCkiIHsKICAgICAgICB0YWdzICJEYXRhYmFzZSIKICAgICAgfQogICAgfQoKICAgIC8vIC0tLSBSZWxhdGlvbnNoaXBzIChyZWZlcmVuY2UgY29udGFpbmVycyB2aWEgdGhlIHNvZnR3YXJlU3lzdGVtIHNjb3BlKSAtLS0KICAgIGN1c3RvbWVyIC0+IGNvbnRvc29PcmRlcnMuc3BhICJVc2VzIiAiSFRUUFMiCiAgICBjb250b3NvT3JkZXJzLnNwYSAtPiBjb250b3NvT3JkZXJzLmFwaW0gIlBPU1QgL2FwaS9vcmRlcnMgKGF1dGgpIiAiSFRUUFMiCiAgICBjb250b3NvT3JkZXJzLmFwaW0gLT4gY29udG9zb09yZGVycy5pbmdyZXNzICJGb3J3YXJkcyBhdXRoZW50aWNhdGVkIHRyYWZmaWMiICJIVFRQUyIKCiAgICAvLyBXZWJTb2NrZXQgcmVhbHRpbWUgY2hhbm5lbAogICAgY29udG9zb09yZGVycy5zcGEgLT4gY29udG9zb09yZGVycy5vcmRlck5vdGlmaWNhdGlvbiAiQ29ubmVjdHMgZm9yIHJlYWwtdGltZSB1cGRhdGVzIiAiV1NTIgogICAgY29udG9zb09yZGVycy5vcmRlck5vdGlmaWNhdGlvbiAtPiBjb250b3NvT3JkZXJzLnNwYSAiUHVzaGVzIHN0YXR1cyB1cGRhdGVzIiAiV1NTIgoKICAgIC8vIFJlcXVlc3QgcGF0aCBpbnRvIEFLUwogICAgY29udG9zb09yZGVycy5pbmdyZXNzIC0+IGNvbnRvc29PcmRlcnMub3JkZXJBY2NlcHQgIlJvdXRlcyAvYXBpL29yZGVycyIgIkhUVFAiCgogICAgLy8gRXZlbnQtZHJpdmVuIHByb2Nlc3NpbmcKICAgIGNvbnRvc29PcmRlcnMub3JkZXJBY2NlcHQgLT4gY29udG9zb09yZGVycy5hY2NlcHRlZFF1ZXVlICJQdWJsaXNoZXMgT3JkZXJBY2NlcHRlZCIgIiIKICAgIGNvbnRvc29PcmRlcnMub3JkZXJQcm9jZXNzIC0+IGNvbnRvc29PcmRlcnMuYWNjZXB0ZWRRdWV1ZSAiQ29uc3VtZXMgT3JkZXJBY2NlcHRlZCIgIiIKICAgIGNvbnRvc29PcmRlcnMub3JkZXJQcm9jZXNzIC0+IGNvbnRvc29PcmRlcnMucHJvY2Vzc2VkUXVldWUgIlB1Ymxpc2hlcyBvcmRlci5wcm9jZXNzZWQiICIiCiAgICBjb250b3NvT3JkZXJzLm9yZGVyTm90aWZpY2F0aW9uIC0+IGNvbnRvc29PcmRlcnMucHJvY2Vzc2VkUXVldWUgIkNvbnN1bWVzIG9yZGVyLnByb2Nlc3NlZCIgIiIKCiAgICAvLyBTdGF0ZSArIHBlcnNpc3RlbmNlCiAgICBjb250b3NvT3JkZXJzLm9yZGVyQWNjZXB0IC0+IGNvbnRvc29PcmRlcnMucmVkaXMgIlNldHMgY29ycmVsYXRpb24vc3RhdHVzIChUVEwpIiAiIgogICAgY29udG9zb09yZGVycy5vcmRlclByb2Nlc3MgLT4gY29udG9zb09yZGVycy5yZWRpcyAiVXBkYXRlcyB3b3JrZmxvdyBzdGF0dXMiICIiCiAgICBjb250b3NvT3JkZXJzLm9yZGVyTm90aWZpY2F0aW9uIC0+IGNvbnRvc29PcmRlcnMucmVkaXMgIlJlYWRzIG1hcHBpbmcvc3RhdHVzOyBmYW4tb3V0IG5vdGlmaWNhdGlvbnMiICIiCiAgICBjb250b3NvT3JkZXJzLm9yZGVyUHJvY2VzcyAtPiBjb250b3NvT3JkZXJzLnNxbCAiUGVyc2lzdHMgb3JkZXIiICJURFMiCiAgfQoKICB2aWV3cyB7CiAgICAvLyBDNCBMZXZlbCAxCiAgICBzeXN0ZW1Db250ZXh0IGNvbnRvc29PcmRlcnMgIlN5c3RlbUNvbnRleHQiIHsKICAgICAgaW5jbHVkZSAqCiAgICAgIGF1dG9sYXlvdXQgbHIKICAgIH0KCiAgICAvLyBDNCBMZXZlbCAyCiAgICBjb250YWluZXIgY29udG9zb09yZGVycyAiQ29udGFpbmVycyIgewogICAgICBpbmNsdWRlICoKICAgICAgYXV0b2xheW91dCBscgogICAgfQoKICAgIC8vIFNlcXVlbmNlIC8gZmxvdyB2aWV3ICh1c2VmdWwgdG8gZXhwbGFpbiB0aGUgd29ya2Zsb3cgcXVpY2tseSkKICAgIGR5bmFtaWMgY29udG9zb09yZGVycyAiT3JkZXJGbG93IiB7CiAgICAgIHRpdGxlICJPcmRlciBmbG93IChoYXBweSBwYXRoKSIKCiAgICAgIGN1c3RvbWVyIC0+IGNvbnRvc29PcmRlcnMuc3BhICJVc2VzIgogICAgICBjb250b3NvT3JkZXJzLnNwYSAtPiBjb250b3NvT3JkZXJzLmFwaW0gIlBPU1QgL2FwaS9vcmRlcnMiCiAgICAgIGNvbnRvc29PcmRlcnMuYXBpbSAtPiBjb250b3NvT3JkZXJzLmluZ3Jlc3MgIkZvcndhcmQiCiAgICAgIGNvbnRvc29PcmRlcnMuaW5ncmVzcyAtPiBjb250b3NvT3JkZXJzLm9yZGVyQWNjZXB0ICJSb3V0ZSByZXF1ZXN0IgoKICAgICAgY29udG9zb09yZGVycy5vcmRlckFjY2VwdCAtPiBjb250b3NvT3JkZXJzLnJlZGlzICJTZXQgY29ycmVsYXRpb24vc3RhdHVzIgogICAgICBjb250b3NvT3JkZXJzLm9yZGVyQWNjZXB0IC0+IGNvbnRvc29PcmRlcnMuYWNjZXB0ZWRRdWV1ZSAiUHVibGlzaCBPcmRlckFjY2VwdGVkIgoKICAgICAgY29udG9zb09yZGVycy5vcmRlclByb2Nlc3MgLT4gY29udG9zb09yZGVycy5hY2NlcHRlZFF1ZXVlICJDb25zdW1lIgogICAgICBjb250b3NvT3JkZXJzLm9yZGVyUHJvY2VzcyAtPiBjb250b3NvT3JkZXJzLnNxbCAiUGVyc2lzdCBvcmRlciIKICAgICAgY29udG9zb09yZGVycy5vcmRlclByb2Nlc3MgLT4gY29udG9zb09yZGVycy5yZWRpcyAiVXBkYXRlIHN0YXR1cyIKICAgICAgY29udG9zb09yZGVycy5vcmRlclByb2Nlc3MgLT4gY29udG9zb09yZGVycy5wcm9jZXNzZWRRdWV1ZSAiUHVibGlzaCBvcmRlci5wcm9jZXNzZWQiCgogICAgICBjb250b3NvT3JkZXJzLm9yZGVyTm90aWZpY2F0aW9uIC0+IGNvbnRvc29PcmRlcnMucHJvY2Vzc2VkUXVldWUgIkNvbnN1bWUiCiAgICAgIGNvbnRvc29PcmRlcnMub3JkZXJOb3RpZmljYXRpb24gLT4gY29udG9zb09yZGVycy5yZWRpcyAiTG9va3VwIG1hcHBpbmcvc3RhdHVzIgogICAgICBjb250b3NvT3JkZXJzLm9yZGVyTm90aWZpY2F0aW9uIC0+IGNvbnRvc29PcmRlcnMuc3BhICJQdXNoIG9yZGVyIHN0YXR1cyIKCiAgICAgIGF1dG9sYXlvdXQgbHIKICAgIH0KCiAgICBzdHlsZXMgewogICAgICBlbGVtZW50ICJQZXJzb24iIHsKICAgICAgICBzaGFwZSBQZXJzb24KICAgICAgfQoKICAgICAgZWxlbWVudCAiRGF0YWJhc2UiIHsKICAgICAgICBzaGFwZSBDeWxpbmRlcgogICAgICB9CgogICAgICBlbGVtZW50ICJRdWV1ZSIgewogICAgICAgIHNoYXBlIFBpcGUKICAgICAgfQoKICAgICAgZWxlbWVudCAiRGF0YVN0b3JlIiB7CiAgICAgICAgc2hhcGUgQ3lsaW5kZXIKICAgICAgfQogICAgfQoKICAgIHRoZW1lIGRlZmF1bHQKICB9Cn0="
+  },
+  "views" : {
+    "configuration" : {
+      "branding" : { },
+      "lastSavedView" : "Containers",
+      "metadataSymbols" : "SquareBrackets",
+      "styles" : {
+        "elements" : [ {
+          "shape" : "Cylinder",
+          "tag" : "Database"
+        }, {
+          "shape" : "Cylinder",
+          "tag" : "DataStore"
+        }, {
+          "shape" : "Person",
+          "tag" : "Person"
+        }, {
+          "shape" : "Pipe",
+          "tag" : "Queue"
+        } ]
+      },
+      "terminology" : { },
+      "themes" : [ "https://static.structurizr.com/themes/default/theme.json" ]
+    },
+    "containerViews" : [ {
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "dimensions" : {
+        "height" : 2619,
+        "width" : 4570
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 200,
+        "y" : 220
+      }, {
+        "id" : "3",
+        "x" : 900,
+        "y" : 270
+      }, {
+        "id" : "4",
+        "x" : 1650,
+        "y" : 795
+      }, {
+        "id" : "5",
+        "x" : 2400,
+        "y" : 870
+      }, {
+        "id" : "6",
+        "x" : 3150,
+        "y" : 870
+      }, {
+        "id" : "7",
+        "x" : 3150,
+        "y" : 1470
+      }, {
+        "id" : "8",
+        "x" : 2400,
+        "y" : 270
+      }, {
+        "id" : "9",
+        "x" : 3900,
+        "y" : 1379
+      }, {
+        "id" : "10",
+        "x" : 3900,
+        "y" : 779
+      }, {
+        "id" : "11",
+        "x" : 3900,
+        "y" : 179
+      }, {
+        "id" : "12",
+        "x" : 3900,
+        "y" : 1979
+      } ],
+      "externalSoftwareSystemBoundariesVisible" : false,
+      "key" : "Containers",
+      "name" : "Container View: Contoso Orders Platform",
+      "order" : 2,
+      "relationships" : [ {
+        "id" : "13"
+      }, {
+        "id" : "15"
+      }, {
+        "id" : "16"
+      }, {
+        "id" : "17",
+        "vertices" : [ {
+          "x" : 1875,
+          "y" : 570
+        } ]
+      }, {
+        "id" : "18",
+        "vertices" : [ {
+          "x" : 1875,
+          "y" : 270
+        } ]
+      }, {
+        "id" : "19"
+      }, {
+        "id" : "20"
+      }, {
+        "id" : "21"
+      }, {
+        "id" : "22"
+      }, {
+        "id" : "23",
+        "vertices" : [ {
+          "x" : 3600,
+          "y" : 720
+        } ]
+      }, {
+        "id" : "24"
+      }, {
+        "id" : "25",
+        "vertices" : [ {
+          "x" : 3600,
+          "y" : 1320
+        }, {
+          "x" : 3900,
+          "y" : 629
+        } ]
+      }, {
+        "id" : "26"
+      }, {
+        "id" : "27"
+      } ],
+      "softwareSystemId" : "2"
+    } ],
+    "dynamicViews" : [ {
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "dimensions" : {
+        "height" : 3128,
+        "width" : 4640
+      },
+      "elementId" : "2",
+      "elements" : [ {
+        "id" : "1",
+        "x" : 244,
+        "y" : 2488
+      }, {
+        "id" : "3",
+        "x" : 969,
+        "y" : 1909
+      }, {
+        "id" : "4",
+        "x" : 1719,
+        "y" : 1909
+      }, {
+        "id" : "5",
+        "x" : 2469,
+        "y" : 1909
+      }, {
+        "id" : "6",
+        "x" : 3219,
+        "y" : 1909
+      }, {
+        "id" : "7",
+        "x" : 3219,
+        "y" : 855
+      }, {
+        "id" : "8",
+        "x" : 219,
+        "y" : 1380
+      }, {
+        "id" : "9",
+        "x" : 3969,
+        "y" : 1980
+      }, {
+        "id" : "10",
+        "x" : 3969,
+        "y" : 180
+      }, {
+        "id" : "11",
+        "x" : 3969,
+        "y" : 1380
+      }, {
+        "id" : "12",
+        "x" : 3969,
+        "y" : 780
+      } ],
+      "externalBoundariesVisible" : false,
+      "key" : "OrderFlow",
+      "name" : "Dynamic View: Contoso Orders Platform",
+      "order" : 3,
+      "relationships" : [ {
+        "description" : "Uses",
+        "id" : "13",
+        "order" : "1",
+        "response" : false
+      }, {
+        "description" : "POST /api/orders",
+        "id" : "15",
+        "order" : "2",
+        "response" : false
+      }, {
+        "description" : "Forward",
+        "id" : "16",
+        "order" : "3",
+        "response" : false
+      }, {
+        "description" : "Route request",
+        "id" : "19",
+        "order" : "4",
+        "response" : false
+      }, {
+        "description" : "Set correlation/status",
+        "id" : "24",
+        "order" : "5",
+        "response" : false
+      }, {
+        "description" : "Publish OrderAccepted",
+        "id" : "20",
+        "order" : "6",
+        "response" : false
+      }, {
+        "description" : "Consume",
+        "id" : "21",
+        "order" : "7",
+        "response" : false,
+        "vertices" : [ {
+          "x" : 3969,
+          "y" : 1830
+        } ]
+      }, {
+        "description" : "Persist order",
+        "id" : "27",
+        "order" : "8",
+        "response" : false
+      }, {
+        "description" : "Update status",
+        "id" : "25",
+        "order" : "9",
+        "response" : false
+      }, {
+        "description" : "Publish order.processed",
+        "id" : "22",
+        "order" : "10",
+        "response" : false
+      }, {
+        "description" : "Consume",
+        "id" : "23",
+        "order" : "11",
+        "response" : false,
+        "vertices" : [ {
+          "x" : 1940,
+          "y" : 442
+        }, {
+          "x" : 2698,
+          "y" : 442
+        } ]
+      }, {
+        "description" : "Lookup mapping/status",
+        "id" : "26",
+        "order" : "12",
+        "response" : false,
+        "vertices" : [ {
+          "x" : 1940,
+          "y" : 1530
+        }, {
+          "x" : 2698,
+          "y" : 1530
+        } ]
+      }, {
+        "description" : "Push order status",
+        "id" : "18",
+        "order" : "13",
+        "response" : false
+      } ],
+      "title" : "Order flow (happy path)"
+    } ],
+    "systemContextViews" : [ {
+      "automaticLayout" : {
+        "applied" : true,
+        "edgeSeparation" : 0,
+        "implementation" : "Graphviz",
+        "nodeSeparation" : 300,
+        "rankDirection" : "LeftRight",
+        "rankSeparation" : 300,
+        "vertices" : false
+      },
+      "dimensions" : {
+        "height" : 800,
+        "width" : 1550
+      },
+      "elements" : [ {
+        "id" : "1",
+        "x" : 200,
+        "y" : 159
+      }, {
+        "id" : "2",
+        "x" : 900,
+        "y" : 209
+      } ],
+      "enterpriseBoundaryVisible" : true,
+      "key" : "SystemContext",
+      "name" : "System Context View: Contoso Orders Platform",
+      "order" : 1,
+      "relationships" : [ {
+        "id" : "14"
+      } ],
+      "softwareSystemId" : "2"
+    } ]
+  }
+}
