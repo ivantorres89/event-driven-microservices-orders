@@ -41,4 +41,4 @@ Happy Path:
 
 Containers:
 
-![Context](../../docs/images/structurizr/03_containers.png
+![Context](../../docs/images/structurizr/03_containers.png)
